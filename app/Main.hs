@@ -9,8 +9,8 @@ import Brick.Widgets.Border.Style
 import Brick.Widgets.Center
 import Graphics.Vty
 
-x :: Widget n
-x =
+placeholder :: Widget n
+placeholder =
     joinBorders
         $ borderWithLabel
             (str "Hello!")
@@ -28,7 +28,7 @@ data GameState = GameState deriving (Show)
 app :: App GameState () String
 app =
     App
-        { appDraw = const [x]
+        { appDraw = const [placeholder]
         , appChooseCursor = neverShowCursor
         , appHandleEvent = \case
             VtyEvent e -> case e of
