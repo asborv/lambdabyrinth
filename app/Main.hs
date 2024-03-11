@@ -12,38 +12,47 @@ import qualified Data.Map as Map
 import GHC.Arr
 import Graphics.Vty
 
-class Entity a where
-    position :: a -> Coordinate
-    draw :: a -> Widget n
-
-type World = [Room]
+type World = [Level]
+type Level = [Room]
 type Name = ()
+type Coordinate = (Int, Int)
+
 data Player = Player
     { name :: String
     , pos :: Coordinate
     }
-    deriving (Show)
+
+data Monster = Zombie | Ghost
+
 data Room = Room
     { cells :: Array Coordinate Cell
-    , entities :: Map.Map Coordinate Player
+    , monsters :: Map.Map Coordinate Monster
     }
+    deriving (Show)
 
-instance Entity Player where
-    position (Player _ pos) = pos
-    draw _ = str "😎"
+data VerticalDirection = Upwards | Downwards
 
-type Coordinate = (Int, Int)
-
-data Cell = Floor | Wall
-
-instance Show Cell where
-    show Floor = ".."
-    show Wall = "##"
+data Cell = Floor | Wall | Door | Stair VerticalDirection
 
 data GameState = GameState
     { player :: Player
     , world :: World
     }
+    deriving (Show)
+
+instance Show Cell where
+    show Floor = ".."
+    show Wall = "##"
+    show Door = "λ "
+    show (Stair Upwards) = "Λ "
+    show (Stair Downwards) = "V "
+
+instance Show Monster where
+    show Zombie = "🧟"
+    show Ghost = "👻"
+
+instance Show Player where
+    show _ = "😎"
 
 app :: App GameState () Name
 app =
@@ -63,32 +72,26 @@ emptyRoom :: Room
 emptyRoom =
     Room
         { cells = listArray ((0, 0), (9, 9)) (replicate 100 Floor)
-        , entities = Map.empty
+        , monsters = Map.fromList [((2, 2), Zombie), ((4, 5), Ghost)]
         }
 
 drawGame :: GameState -> [Widget Name]
-drawGame g@(GameState {world}) = [center $ vBox $ drawRoom g]
+drawGame g = [center $ vBox $ drawRoom g]
 
 drawRoom :: GameState -> [Widget Name]
-drawRoom g@(GameState {world, player}) = [vBox (hBox <$> rows)]
+drawRoom (GameState {world, player}) = [vBox (hBox <$> rows)]
   where
+    currentRoom = head $ head world
     rows = chunksOf 10 $ do
-        (coord, cell) <- assocs $ cells $ head world
-        let ents = entities $ head world
-            x = Map.lookup coord ents
+        (coord, cell) <- assocs $ cells currentRoom
+        let x = Map.lookup coord (monsters currentRoom)
         return $
             if pos player == coord
-                then draw player
-                else case x of
-                    Just p -> str (show p)
-                    Nothing -> str (show cell)
-
--- drawRoom Room {cells, entities} = [vBox (hBox <$> rows)]
---   where
---     rows = chunksOf 10 $ elems (str . show <$> cells)
+                then str $ show player
+                else str $ maybe (show cell) show x
 
 main :: IO ()
 main = do
-    let initialState = GameState (Player "Mr. Bean" (0, 0)) [emptyRoom]
+    let initialState = GameState (Player "Mr. Bean" (0, 0)) [[emptyRoom]]
     finalState <- defaultMain app initialState
-    print "hei"
+    print finalState
