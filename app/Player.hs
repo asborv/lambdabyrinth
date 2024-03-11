@@ -8,8 +8,8 @@ module Player where
 import World (Coordinate)
 
 data Player = Player
-    { name :: String
-    , pos :: Coordinate
+    { _name :: String
+    , _pos :: Coordinate
     }
 
 instance Show Player where

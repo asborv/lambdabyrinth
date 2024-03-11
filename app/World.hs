@@ -18,8 +18,8 @@ data VerticalDirection = Upwards | Downwards
 data Cell = Floor | Wall | Door | Stair VerticalDirection
 
 data Room = Room
-    { cells :: Array Coordinate Cell
-    , monsters :: Map.Map Coordinate Monster
+    { _cells :: Array Coordinate Cell
+    , _monsters :: Map.Map Coordinate Monster
     }
     deriving (Show)
 
@@ -33,6 +33,5 @@ instance Show Cell where
 emptyRoom :: Room
 emptyRoom =
     Room
-        { cells = listArray ((0, 0), (9, 9)) (replicate 100 Floor)
-        , monsters = Map.fromList [((2, 2), Zombie), ((4, 5), Ghost)]
-        }
+        (listArray ((0, 0), (9, 9)) (replicate 100 Floor))
+        (Map.fromList [((2, 2), Zombie), ((4, 5), Ghost)])
