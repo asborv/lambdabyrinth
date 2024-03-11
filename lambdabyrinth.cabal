@@ -65,7 +65,7 @@ executable lambdabyrinth
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    -- other-modules:
+    other-modules: Player World Monsters
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
@@ -74,7 +74,10 @@ executable lambdabyrinth
     build-depends:    base ^>=4.18.2.0,
                       brick,
                       vty >= 6.0,
-                      vty-crossplatform
+                      vty-crossplatform,
+                      random >= 1.2.1.2,
+                      split >= 0.2.5,
+                      containers >= 0.6.7
 
     -- Directories containing source files.
     hs-source-dirs:   app
