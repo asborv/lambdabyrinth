@@ -10,14 +10,13 @@ import GHC.Arr
 import Monsters
 
 type World = [Level]
-type Level = [Room]
 type Coordinate = (Int, Int)
 
 data VerticalDirection = Upwards | Downwards
 
 data Cell = Floor | Wall | Door | Stair VerticalDirection
 
-data Room = Room
+data Level = Level
     { _cells :: Array Coordinate Cell
     , _monsters :: Map.Map Coordinate Monster
     }
@@ -30,8 +29,8 @@ instance Show Cell where
     show (Stair Upwards) = "Λ "
     show (Stair Downwards) = "V "
 
-emptyRoom :: Room
-emptyRoom =
-    Room
+emptyLevel :: Level
+emptyLevel =
+    Level
         (listArray ((0, 0), (9, 9)) (replicate 100 Floor))
         (Map.fromList [((2, 2), Zombie), ((4, 5), Ghost)])

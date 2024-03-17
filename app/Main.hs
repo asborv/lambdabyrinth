@@ -27,7 +27,7 @@ data GameState = GameState
 
 makeLenses ''GameState
 makeLenses ''Player
-makeLenses ''Room
+makeLenses ''Level
 
 app :: App GameState () Name
 app =
@@ -54,7 +54,7 @@ drawGame game = [center $ vBox $ drawRoom game]
 drawRoom :: GameState -> [Widget Name]
 drawRoom game = [vBox (hBox <$> rows)]
   where
-    currentRoom = head $ head (game ^. world)
+    currentRoom = head (game ^. world)
     rows = chunksOf 10 $ do
         (coord, cell) <- assocs $ currentRoom ^. cells
         let x = Map.lookup coord (currentRoom ^. monsters)
@@ -65,6 +65,6 @@ drawRoom game = [vBox (hBox <$> rows)]
 
 main :: IO ()
 main = do
-    let initialState = GameState (Player "Mr. Bean" (0, 0)) [[emptyRoom]]
+    let initialState = GameState (Player "Mr. Bean" (0, 0)) [emptyLevel]
     finalState <- defaultMain app initialState
     print finalState
