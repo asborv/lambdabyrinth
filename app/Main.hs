@@ -16,6 +16,7 @@ import GHC.Arr
 import Graphics.Vty
 import Player
 import World
+import Control.Lens.Lens ((&))
 
 type Name = ()
 
@@ -41,6 +42,8 @@ app =
                 EvKey (KChar 'a') [] -> modify (player . pos %~ \(y, x) -> (y, x - 1))
                 EvKey (KChar 's') [] -> modify (player . pos %~ \(y, x) -> (y + 1, x))
                 EvKey (KChar 'd') [] -> modify (player . pos %~ \(y, x) -> (y, x + 1))
+                EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
+                EvKey (KChar 'B') [] -> modify (currentLevel %~ (\l -> l - 1))
                 _ -> return ()
             _ -> return ()
         , appStartEvent = return ()
@@ -55,7 +58,7 @@ drawLevel game = [vBox (hBox <$> rows)]
   where
     level = (game ^. world) !! (game ^. currentLevel)
     rows = chunksOf (width level) $ do
-        (coord, cell) <- assocs $ level ^. cells
+        (coord, cell) <- level ^. cells & assocs
         let monster = level ^. monsters . to (Map.lookup coord)
         return $
             if (game ^. player . pos) == coord
