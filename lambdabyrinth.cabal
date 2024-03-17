@@ -78,9 +78,7 @@ executable lambdabyrinth
                       random >= 1.2.1.2,
                       split >= 0.2.5,
                       containers >= 0.6.7,
-                      microlens,
-                      microlens-th
-
+                      lens
     -- Directories containing source files.
     hs-source-dirs:   app
 
