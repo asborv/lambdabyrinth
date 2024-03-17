@@ -17,6 +17,7 @@ import Graphics.Vty
 import Player
 import World
 import Control.Lens.Lens ((&))
+import Items 
 
 type Name = ()
 
@@ -51,10 +52,10 @@ app =
         }
 
 drawGame :: GameState -> [Widget Name]
-drawGame game = [center $ vBox $ drawLevel game]
+drawGame game = [center $ drawLevel game]
 
-drawLevel :: GameState -> [Widget Name]
-drawLevel game = [vBox (hBox <$> rows)]
+drawLevel :: GameState -> Widget Name
+drawLevel game = vBox (hBox <$> rows)
   where
     level = (game ^. world) !! (game ^. currentLevel)
     rows = chunksOf (width level) $ do
@@ -67,6 +68,9 @@ drawLevel game = [vBox (hBox <$> rows)]
 
 main :: IO ()
 main = do
-    let initialState = GameState (Player "Mr. Bean" (0, 0)) 0 [emptyLevel, firstLevel]
+    let initialState = GameState mrBean 0 [emptyLevel, firstLevel]
     finalState <- defaultMain app initialState
     print finalState
+
+mrBean :: Player
+mrBean = Player "Mr. Bean" (0, 0) Nothing Nothing Nothing Nothing Nothing [Armour Iron Helmet, Weapon Wood Sword]
