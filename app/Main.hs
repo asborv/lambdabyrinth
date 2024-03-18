@@ -1,6 +1,7 @@
 module Main where
 
 import Brick
+import Brick.Widgets.Border
 import Brick.Widgets.Center
 import Control.Lens (to, (%~), (^.))
 import Control.Lens.Lens ((&))
@@ -8,12 +9,11 @@ import Control.Lens.TH
 import Creatures.Player
 import Data.List.Split
 import qualified Data.Map as Map
+import qualified Data.Text as T
 import GHC.Arr
 import Graphics.Vty
 import Items
 import World
-import Brick.Widgets.Border (border)
-import qualified Data.Text as T
 
 type Name = ()
 
@@ -48,10 +48,18 @@ app =
         }
 
 drawGame :: GameState -> [Widget Name]
-drawGame game = [center $ setAvailableSize (80, 80) $ border $ drawLevel game <=> txt "helo"]
+drawGame game =
+    let ui = drawLevel game <=> drawInventory game
+     in [ui]
+
+drawInventory :: GameState -> Widget Name
+drawInventory _ =
+    borderWithLabel
+        (txt "Inventory")
+        (center $ txt "I AM A PLACEHOLDER")
 
 drawLevel :: GameState -> Widget Name
-drawLevel game = vBox (hBox <$> rows)
+drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$> rows)
   where
     level = (game ^. world) !! (game ^. currentLevel)
     rows = chunksOf (width level) $ do
