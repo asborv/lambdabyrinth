@@ -76,14 +76,22 @@ executable lambdabyrinth
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.2.0,
-                      brick,
-                      vty >= 6.0,
-                      vty-crossplatform,
-                      random >= 1.2.1.2,
-                      split >= 0.2.5,
-                      containers >= 0.6.7,
-                      lens
+    build-depends:
+        base ^>=4.18.2.0,
+        brick,
+        vty >= 6.0,
+        vty-crossplatform,
+        random >= 1.2.1.2,
+        split >= 0.2.5,
+        containers >= 0.6.7,
+        lens
+
+    default-extensions:
+        LambdaCase,
+        InstanceSigs,
+        TemplateHaskell,
+        OverloadedStrings
+
     -- Directories containing source files.
     hs-source-dirs:   app
 

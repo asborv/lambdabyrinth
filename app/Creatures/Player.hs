@@ -1,8 +1,3 @@
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE TemplateHaskell #-}
-
 {- |
 Module      : Player
 Description : Everything that has to do with the player

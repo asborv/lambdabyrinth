@@ -1,5 +1,3 @@
-{-# LANGUAGE LambdaCase #-}
-
 {- |
 Module      : Items
 Description : Items and friends

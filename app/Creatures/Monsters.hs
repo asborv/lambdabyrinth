@@ -1,6 +1,3 @@
-{-# LANGUAGE InstanceSigs #-}
-{-# LANGUAGE LambdaCase #-}
-
 {- |
 Module      : Monsters
 Description : Definition of all the monsters in the game
