@@ -60,7 +60,7 @@ emptyLevel :: Level
 emptyLevel = Level (listArray ((0, 0), (9, 9)) (repeat Floor)) Map.empty
 
 firstLevel :: Level
-firstLevel = Level cs Map.empty
+firstLevel = Level cs ms
   where
     cs = listArray
         ((0, 0), (12, 9))
@@ -78,3 +78,4 @@ firstLevel = Level cs Map.empty
         , Empty, Empty, Wall,  Wall,  Wall,   Door,  Wall,  Wall,  Empty, Empty
         , Empty, Empty, Empty, Empty, Empty,  Empty, Empty, Empty, Empty, Empty
         ]
+    ms = Map.fromList [((1, 0), Zombie)]

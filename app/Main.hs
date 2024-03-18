@@ -12,6 +12,8 @@ import GHC.Arr
 import Graphics.Vty
 import Items
 import World
+import Brick.Widgets.Border (border)
+import qualified Data.Text as T
 
 type Name = ()
 
@@ -46,7 +48,7 @@ app =
         }
 
 drawGame :: GameState -> [Widget Name]
-drawGame game = [center $ drawLevel game]
+drawGame game = [center $ setAvailableSize (80, 80) $ border $ drawLevel game <=> txt "helo"]
 
 drawLevel :: GameState -> Widget Name
 drawLevel game = vBox (hBox <$> rows)
@@ -57,8 +59,8 @@ drawLevel game = vBox (hBox <$> rows)
         let monster = level ^. monsters . to (Map.lookup coord)
         return $
             if (game ^. player . pos) == coord
-                then str $ show (game ^. player)
-                else str $ maybe (show cell) show monster
+                then txt $ T.pack $ show $ game ^. player
+                else txt $ maybe (T.pack $ show cell) (T.pack . show) monster
 
 main :: IO ()
 main = do

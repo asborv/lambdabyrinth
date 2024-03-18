@@ -28,7 +28,7 @@ data Player = Player
 makeLenses ''Player
 
 instance Show Player where
-    show _ = "😎"
+    show _ = "😎\b "
 
 instance Creature Player where
     attackPower :: Player -> Int

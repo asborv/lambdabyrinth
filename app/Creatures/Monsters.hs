@@ -10,8 +10,8 @@ import Creatures.Creature
 data Monster = Zombie | Ghost
 
 instance Show Monster where
-    show Zombie = "🧟"
-    show Ghost = "👻"
+    show Zombie = "🧟\b "
+    show Ghost = "👻\b "
 
 instance Creature Monster where
     attackPower :: Monster -> Int
