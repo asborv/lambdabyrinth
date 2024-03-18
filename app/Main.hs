@@ -41,6 +41,7 @@ app =
                 EvKey (KChar 'd') [] -> modify (player . pos %~ \(y, x) -> (y, x + 1))
                 EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
                 EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
+                EvKey (KChar 'i') [] -> modify (player .inventory %~ (Weapon Diamond Spear:))
                 _ -> return ()
             _ -> return ()
         , appStartEvent = return ()
@@ -53,10 +54,10 @@ drawGame game =
      in [ui]
 
 drawInventory :: GameState -> Widget Name
-drawInventory _ =
+drawInventory game =
     borderWithLabel
         (txt "Inventory")
-        (center $ txt "I AM A PLACEHOLDER")
+        (center $ vBox $ map (txt . T.pack . show) (game ^. player . inventory))
 
 drawLevel :: GameState -> Widget Name
 drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$> rows)
@@ -86,7 +87,7 @@ mrBean =
         , _cuirass = Nothing
         , _gloves = Nothing
         , _boots = Nothing
-        , _inventory = [Armour Iron Helmet, Weapon Wood Sword]
+        , _inventory = [Armour Iron Helmet, Weapon Stone Sword]
         , _health = 10
         , _characterClass = Wizard
         }

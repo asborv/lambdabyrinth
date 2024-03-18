@@ -78,4 +78,4 @@ firstLevel = Level cs ms
         , Empty, Empty, Wall,  Wall,  Wall,   Door,  Wall,  Wall,  Empty, Empty
         , Empty, Empty, Empty, Empty, Empty,  Empty, Empty, Empty, Empty, Empty
         ]
-    ms = Map.fromList [((1, 0), Zombie)]
+    ms = Map.fromList [((3, 2), Zombie)]

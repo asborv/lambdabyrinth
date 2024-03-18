@@ -6,12 +6,16 @@ Maintainer  : asbjorn.orvedal@gmail.com
 module Items where
 
 data ArmourPiece = Helmet | Cuirass | Gloves | Boots deriving (Show)
-data WeaponType = Sword | Spear
-data Material = Wood | Stone | Iron | Diamond deriving (Show)
+data WeaponType = Sword | Spear deriving (Show)
+data Material = Stone | Iron | Diamond deriving (Show)
 
 data Item
     = Armour Material ArmourPiece
     | Weapon Material WeaponType
+
+instance Show Item where
+    show (Armour material piece) = show material <> " " <> show piece
+    show (Weapon material weaponType) = show material <> " " <> show weaponType
 
 power :: Item -> Int
 power (Weapon material weaponType) = materialBonus material * weaponBonus
@@ -23,7 +27,6 @@ power _ = 0
 
 materialBonus :: Material -> Int
 materialBonus = \case
-    Wood -> 2
     Stone -> 5
     Iron -> 15
     Diamond -> 30
