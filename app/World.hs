@@ -11,7 +11,7 @@ import Control.Arrow ((>>>))
 import Control.Lens (both, makeLenses, over, to, (^.))
 import qualified Data.Map as Map
 import GHC.Arr
-import Monsters
+import Creatures.Monsters
 
 type Coordinate = (Int, Int)
 type World = [Level]

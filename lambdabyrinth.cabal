@@ -65,7 +65,12 @@ executable lambdabyrinth
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules: Player World Monsters Items
+    other-modules:
+        Creatures.Creature
+        Creatures.Monsters
+        Creatures.Player
+        Items
+        World
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
