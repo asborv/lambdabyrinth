@@ -1,22 +1,19 @@
-{-# LANGUAGE LambdaCase #-}
-{-# LANGUAGE NamedFieldPuns #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE TemplateHaskell #-}
-
 module Main where
 
 import Brick
 import Brick.Widgets.Center
 import Control.Lens (to, (%~), (^.))
+import Control.Lens.Lens ((&))
 import Control.Lens.TH
+import Creatures.Player
 import Data.List.Split
 import qualified Data.Map as Map
 import GHC.Arr
 import Graphics.Vty
-import Player
+import Items
 import World
-import Control.Lens.Lens ((&))
+import Brick.Widgets.Border (border)
+import qualified Data.Text as T
 
 type Name = ()
 
@@ -42,8 +39,8 @@ app =
                 EvKey (KChar 'a') [] -> modify (player . pos %~ \(y, x) -> (y, x - 1))
                 EvKey (KChar 's') [] -> modify (player . pos %~ \(y, x) -> (y + 1, x))
                 EvKey (KChar 'd') [] -> modify (player . pos %~ \(y, x) -> (y, x + 1))
-                EvKey (KChar 'b') [] -> modify (\game -> game & currentLevel %~ (\l -> min (l + 1) (length (game ^. world) - 1)))
-                EvKey (KChar 'B') [] -> modify (currentLevel %~ (\l -> max (l - 1) 0))
+                EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
+                EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
                 _ -> return ()
             _ -> return ()
         , appStartEvent = return ()
@@ -51,10 +48,10 @@ app =
         }
 
 drawGame :: GameState -> [Widget Name]
-drawGame game = [center $ vBox $ drawLevel game]
+drawGame game = [center $ setAvailableSize (80, 80) $ border $ drawLevel game <=> txt "helo"]
 
-drawLevel :: GameState -> [Widget Name]
-drawLevel game = [vBox (hBox <$> rows)]
+drawLevel :: GameState -> Widget Name
+drawLevel game = vBox (hBox <$> rows)
   where
     level = (game ^. world) !! (game ^. currentLevel)
     rows = chunksOf (width level) $ do
@@ -62,11 +59,26 @@ drawLevel game = [vBox (hBox <$> rows)]
         let monster = level ^. monsters . to (Map.lookup coord)
         return $
             if (game ^. player . pos) == coord
-                then str $ show (game ^. player)
-                else str $ maybe (show cell) show monster
+                then txt $ T.pack $ show $ game ^. player
+                else txt $ maybe (T.pack $ show cell) (T.pack . show) monster
 
 main :: IO ()
 main = do
-    let initialState = GameState (Player "Mr. Bean" (0, 0)) 0 [emptyLevel, firstLevel]
+    let initialState = GameState mrBean 0 [emptyLevel, firstLevel]
     finalState <- defaultMain app initialState
     print finalState
+
+mrBean :: Player
+mrBean =
+    Player
+        { _name = "Mr. Bean"
+        , _pos = (0, 0)
+        , _hand = Nothing
+        , _helmet = Nothing
+        , _cuirass = Nothing
+        , _gloves = Nothing
+        , _boots = Nothing
+        , _inventory = [Armour Iron Helmet, Weapon Wood Sword]
+        , _health = 10
+        , _characterClass = Wizard
+        }

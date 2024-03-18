@@ -65,20 +65,34 @@ executable lambdabyrinth
     main-is:          Main.hs
 
     -- Modules included in this executable, other than Main.
-    other-modules: Player World Monsters
+    other-modules:
+        Creatures.Creature
+        Creatures.Monsters
+        Creatures.Player
+        Items
+        World
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
     -- Other library packages from which modules are imported.
-    build-depends:    base ^>=4.18.2.0,
-                      brick,
-                      vty >= 6.0,
-                      vty-crossplatform,
-                      random >= 1.2.1.2,
-                      split >= 0.2.5,
-                      containers >= 0.6.7,
-                      lens
+    build-depends:
+        base ^>=4.18.2.0,
+        brick,
+        vty >= 6.0,
+        vty-crossplatform,
+        random >= 1.2.1.2,
+        split >= 0.2.5,
+        containers >= 0.6.7,
+        lens,
+        text
+
+    default-extensions:
+        LambdaCase,
+        InstanceSigs,
+        TemplateHaskell,
+        OverloadedStrings
+
     -- Directories containing source files.
     hs-source-dirs:   app
 
