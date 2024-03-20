@@ -7,11 +7,7 @@ module Creatures.Monsters where
 
 import Creatures.Creature
 
-data Monster = Zombie | Ghost
-
-instance Show Monster where
-    show Zombie = "🧟\b "
-    show Ghost = "👻\b "
+data Monster = Zombie | Ghost deriving (Show)
 
 instance Creature Monster where
     attackPower :: Monster -> Int

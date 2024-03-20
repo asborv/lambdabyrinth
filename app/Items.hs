@@ -1,3 +1,7 @@
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE ImpredicativeTypes #-}
+{-# LANGUAGE KindSignatures #-}
+
 {- |
 Module      : Items
 Description : Items and friends
@@ -5,25 +9,40 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Items where
 
-data ArmourPiece = Helmet | Cuirass | Gloves | Boots deriving (Show)
-data WeaponType = Sword | Spear deriving (Show)
+class Show a => Item a
+
+data SomeItem = forall a. (Item a, Show a) => SomeItem a
 data Material = Stone | Iron | Diamond deriving (Show)
 
-data Item
-    = Armour Material ArmourPiece
-    | Weapon Material WeaponType
+data Weapon
+    = Sword Material
+    | Spear Material
 
-instance Show Item where
-    show (Armour material piece) = show material <> " " <> show piece
-    show (Weapon material weaponType) = show material <> " " <> show weaponType
+data Armour
+    = Helmet Material
+    | Cuirass Material
+    | Gloves Material
+    | Boots Material
 
-power :: Item -> Int
-power (Weapon material weaponType) = materialBonus material * weaponBonus
-  where
-    weaponBonus = case weaponType of
-        Sword -> 5
-        Spear -> 3
-power _ = 0
+instance Item Weapon
+instance Item Armour
+
+instance Show SomeItem where
+    show (SomeItem i) = show i
+
+instance Show Weapon where
+    show (Sword material) = show material <> " sword"
+    show (Spear material) = show material <> " spear"
+
+instance Show Armour where
+    show (Helmet material)  = show material <> " helmet"
+    show (Cuirass material) = show material <> " cuirass"
+    show (Gloves material)  = show material <> " gloves"
+    show (Boots material)   = show material <> " boots"
+
+power :: Weapon -> Int
+power (Sword material) = materialBonus material * 5
+power (Spear material) = materialBonus material * 3
 
 materialBonus :: Material -> Int
 materialBonus = \case
@@ -31,13 +50,8 @@ materialBonus = \case
     Iron -> 15
     Diamond -> 30
 
-armorPieceBonus :: ArmourPiece -> Int
-armorPieceBonus = \case
-    Helmet -> 12
-    Cuirass -> 24
-    Gloves -> 8
-    Boots -> 10
-
-armourDefence :: Item -> Int
-armourDefence (Armour material piece) = materialBonus material * armorPieceBonus piece
-armourDefence _ = 0
+armourDefence :: Armour -> Int
+armourDefence (Helmet material)  = materialBonus material * 10
+armourDefence (Cuirass material) = materialBonus material * 8
+armourDefence (Gloves material)  = materialBonus material * 24
+armourDefence (Boots material)   = materialBonus material * 12

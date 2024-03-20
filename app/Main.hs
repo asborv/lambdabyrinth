@@ -3,13 +3,12 @@ module Main where
 import Brick
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Control.Lens (to, (%~), (^.))
-import Control.Lens.Lens ((&))
-import Control.Lens.TH
+import Control.Lens
 import Creatures.Player
 import Data.List.Split
 import qualified Data.Map as Map
 import qualified Data.Text as T
+import Draw
 import GHC.Arr
 import Graphics.Vty
 import Items
@@ -41,7 +40,6 @@ app =
                 EvKey (KChar 'd') [] -> modify (player . pos %~ \(y, x) -> (y, x + 1))
                 EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
                 EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
-                EvKey (KChar 'i') [] -> modify (player .inventory %~ (Weapon Diamond Spear:))
                 _ -> return ()
             _ -> return ()
         , appStartEvent = return ()
@@ -65,11 +63,12 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$>
     level = (game ^. world) !! (game ^. currentLevel)
     rows = chunksOf (width level) $ do
         (coord, cell) <- level ^. cells & assocs
-        let monster = level ^. monsters . to (Map.lookup coord)
+        let monster = Map.lookup coord (level ^. monsters)
+
         return $
-            if (game ^. player . pos) == coord
-                then txt $ T.pack $ show $ game ^. player
-                else txt $ maybe (T.pack $ show cell) (T.pack . show) monster
+            if game ^. player . pos == coord
+                then draw $ game ^. player
+                else maybe (draw cell) draw monster
 
 main :: IO ()
 main = do
@@ -87,7 +86,7 @@ mrBean =
         , _cuirass = Nothing
         , _gloves = Nothing
         , _boots = Nothing
-        , _inventory = [Armour Iron Helmet, Weapon Stone Sword]
+        , _inventory = [SomeItem (Sword Stone), SomeItem (Helmet Diamond)]
         , _health = 10
         , _characterClass = Wizard
         }

@@ -70,6 +70,7 @@ executable lambdabyrinth
         Creatures.Monsters
         Creatures.Player
         Items
+        Draw
         World
 
     -- LANGUAGE extensions used by modules in this package.
