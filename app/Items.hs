@@ -1,7 +1,3 @@
-{-# LANGUAGE ExistentialQuantification #-}
-{-# LANGUAGE ImpredicativeTypes #-}
-{-# LANGUAGE KindSignatures #-}
-
 {- |
 Module      : Items
 Description : Items and friends
@@ -23,7 +19,7 @@ data Armour
 
 instance Show Weapon where
     show (Dagger material) = show material <> " dagger"
-    show (Spear material) = show material <> " spear"
+    show (Spear material)  = show material <> " spear"
 
 instance Show Armour where
     show (Helmet material)  = show material <> " helmet"
@@ -32,18 +28,18 @@ instance Show Armour where
     show (Boots material)   = show material <> " boots"
 
 instance Show Material where
-    show Stone = "🪨 \b"
-    show Wood = "🪵 \b"
+    show Stone   = "🪨 \b"
+    show Wood    = "🪵 \b"
     show Diamond = "💎 \b"
 
 power :: Weapon -> Int
 power (Dagger material) = materialBonus material * 5
-power (Spear material) = materialBonus material * 3
+power (Spear material)  = materialBonus material * 3
 
 materialBonus :: Material -> Int
 materialBonus = \case
-    Wood -> 5
-    Stone -> 15
+    Wood    -> 5
+    Stone   -> 15
     Diamond -> 30
 
 armourDefence :: Armour -> Int

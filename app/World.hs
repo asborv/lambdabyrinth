@@ -10,12 +10,11 @@ import Control.Lens (both, makeLenses, over, to, (^.))
 import qualified Data.Map as Map
 import GHC.Arr
 import Creatures.Monsters
-import Brick
-import Data.Text as T
 
 type Coordinate = (Int, Int)
 type World = [Level]
 
+data Direction = North | East | South | West
 data VerticalDirection = Upwards | Downwards
 data Cell
     = Door
@@ -54,6 +53,14 @@ width = snd . dimensions
 -- | Get only the height of the level
 height :: Level -> Int
 height = fst . dimensions
+
+isTraversible :: Cell -> Bool
+isTraversible Door = True
+isTraversible Empty = False
+isTraversible Floor = True
+isTraversible (Stair _) = True
+isTraversible Tunnel = True
+isTraversible Wall = False
 
 -- ===============
 -- Constant levels

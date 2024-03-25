@@ -1,17 +1,35 @@
 module Main where
 
-import Brick
+import Brick (
+    App (..),
+    BrickEvent (VtyEvent),
+    EventM,
+    Widget,
+    attrMap,
+    defaultMain,
+    hBox,
+    hLimit,
+    txt,
+    vBox,
+    vLimit,
+    (<+>),
+    (<=>),
+ )
+import Brick.Main (halt, neverShowCursor)
+import Brick.Types (modify)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Control.Lens
+import Control.Lens (makeLenses, use, (%~), (&), (.~), (^.))
+import Control.Lens.Getter (to)
+import Control.Monad (when)
 import Creatures.Player
 import Data.List.Split
 import qualified Data.Map as Map
 import Draw
 import GHC.Arr
 import Graphics.Vty
-import World
 import Items
+import World
 
 type Name = ()
 
@@ -33,10 +51,10 @@ app =
             VtyEvent e -> case e of
                 EvKey (KChar 'q') [] -> halt
                 -- Movement
-                EvKey (KChar 'w') [] -> modify (player . pos %~ \(y, x) -> (y - 1, x))
-                EvKey (KChar 'a') [] -> modify (player . pos %~ \(y, x) -> (y, x - 1))
-                EvKey (KChar 's') [] -> modify (player . pos %~ \(y, x) -> (y + 1, x))
-                EvKey (KChar 'd') [] -> modify (player . pos %~ \(y, x) -> (y, x + 1))
+                EvKey (KChar 'w') [] -> move North
+                EvKey (KChar 'a') [] -> move West
+                EvKey (KChar 's') [] -> move South
+                EvKey (KChar 'd') [] -> move East
                 -- Manual level select (DEBUGGING)
                 EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
                 EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
@@ -45,6 +63,28 @@ app =
         , appStartEvent = return ()
         , appAttrMap = const $ attrMap defAttr []
         }
+
+{- | Move the player in the specified direction.
+Accept a `Direction` and perform the necessary
+checks to determine if the player can move in that direction.
+If the target cell is a valid cell and is traversable,
+the player's position is updated accordingly. Otherwise, nothing happens.
+-}
+move :: Direction -> EventM Name GameState ()
+move direction = do
+    -- Get the player's position and the current level
+    (y, x) <- use (player . pos)
+    level <- use (world . to (!!)) <*> use currentLevel
+    let levelCells = level ^. cells
+        isLegalMove = target `elem` indices levelCells && isTraversible (levelCells ! target)
+        target = case direction of
+            North -> (y - 1, x)
+            East  -> (y, x + 1)
+            South -> (y + 1, x)
+            West  -> (y, x - 1)
+
+    -- Update the player's position only when the movement is legal
+    when isLegalMove (modify (player . pos .~ target))
 
 drawGame :: GameState -> [Widget Name]
 drawGame game =
