@@ -14,6 +14,7 @@ import Creatures.Monsters
 type Coordinate = (Int, Int)
 type World = [Level]
 
+data Direction = North | East | South | West
 data VerticalDirection = Upwards | Downwards
 data Cell
     = Door
@@ -52,6 +53,14 @@ width = snd . dimensions
 -- | Get only the height of the level
 height :: Level -> Int
 height = fst . dimensions
+
+isTraversible :: Cell -> Bool
+isTraversible Door = True
+isTraversible Empty = False
+isTraversible Floor = True
+isTraversible (Stair _) = True
+isTraversible Tunnel = True
+isTraversible Wall = False
 
 -- ===============
 -- Constant levels

@@ -30,8 +30,6 @@ import World
 
 type Name = ()
 
-data Direction = North | East | South | West
-
 data GameState = GameState
     { _player :: Player
     , _currentLevel :: Int
@@ -78,14 +76,6 @@ move direction game
         West -> (y, x - 1)
     level = (game ^. world) !! (game ^. currentLevel)
     cell = (level ^. cells) ! target
-
-isTraversible :: Cell -> Bool
-isTraversible Door = True
-isTraversible Empty = False
-isTraversible Floor = True
-isTraversible (Stair _) = True
-isTraversible Tunnel = True
-isTraversible Wall = False
 
 drawGame :: GameState -> [Widget Name]
 drawGame game =
