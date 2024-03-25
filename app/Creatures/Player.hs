@@ -23,7 +23,6 @@ data Player = Player
     , _cuirass :: Maybe Armour
     , _gloves :: Maybe Armour
     , _boots :: Maybe Armour
-    , _inventory :: [SomeItem]
     , _health :: Int
     , _characterClass :: Class
     }

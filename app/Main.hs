@@ -7,11 +7,9 @@ import Control.Lens
 import Creatures.Player
 import Data.List.Split
 import qualified Data.Map as Map
-import qualified Data.Text as T
 import Draw
 import GHC.Arr
 import Graphics.Vty
-import Items
 import World
 
 type Name = ()
@@ -38,6 +36,7 @@ app =
                 EvKey (KChar 'a') [] -> modify (player . pos %~ \(y, x) -> (y, x - 1))
                 EvKey (KChar 's') [] -> modify (player . pos %~ \(y, x) -> (y + 1, x))
                 EvKey (KChar 'd') [] -> modify (player . pos %~ \(y, x) -> (y, x + 1))
+                -- Manual level select (DEBUGGING)
                 EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
                 EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
                 _ -> return ()
@@ -48,14 +47,9 @@ app =
 
 drawGame :: GameState -> [Widget Name]
 drawGame game =
-    let ui = drawLevel game <=> drawInventory game
+    let ui = drawLevel game
      in [ui]
 
-drawInventory :: GameState -> Widget Name
-drawInventory game =
-    borderWithLabel
-        (txt "Inventory")
-        (center $ vBox $ map (txt . T.pack . show) (game ^. player . inventory))
 
 drawLevel :: GameState -> Widget Name
 drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$> rows)
@@ -86,7 +80,6 @@ mrBean =
         , _cuirass = Nothing
         , _gloves = Nothing
         , _boots = Nothing
-        , _inventory = [SomeItem (Sword Stone), SomeItem (Helmet Diamond)]
         , _health = 10
         , _characterClass = Wizard
         }

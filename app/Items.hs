@@ -9,9 +9,6 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Items where
 
-class Show a => Item a
-
-data SomeItem = forall a. (Item a, Show a) => SomeItem a
 data Material = Stone | Iron | Diamond deriving (Show)
 
 data Weapon
@@ -23,12 +20,6 @@ data Armour
     | Cuirass Material
     | Gloves Material
     | Boots Material
-
-instance Item Weapon
-instance Item Armour
-
-instance Show SomeItem where
-    show (SomeItem i) = show i
 
 instance Show Weapon where
     show (Sword material) = show material <> " sword"
