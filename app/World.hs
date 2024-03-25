@@ -10,8 +10,6 @@ import Control.Lens (both, makeLenses, over, to, (^.))
 import qualified Data.Map as Map
 import GHC.Arr
 import Creatures.Monsters
-import Brick
-import Data.Text as T
 
 type Coordinate = (Int, Int)
 type World = [Level]

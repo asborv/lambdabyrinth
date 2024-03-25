@@ -101,12 +101,12 @@ drawStats _ = border $ vLimit 3 $ center $ txt "Stats"
 drawEquipment :: GameState -> Widget Name
 drawEquipment game = border $ hLimit 20 $ center $ vBox slots
   where
-    slots = [handSlot, helmetSlot, cuirassSlot, glovesSlot, bootsSlot]
-    handSlot = itemSlot (game ^. player . hand)
-    helmetSlot = itemSlot (game ^. player . helmet)
+    slots       = [handSlot, helmetSlot, cuirassSlot, glovesSlot, bootsSlot]
+    handSlot    = itemSlot (game ^. player . hand)
+    helmetSlot  = itemSlot (game ^. player . helmet)
     cuirassSlot = itemSlot (game ^. player . cuirass)
-    glovesSlot = itemSlot (game ^. player . gloves)
-    bootsSlot = itemSlot (game ^. player . boots)
+    glovesSlot  = itemSlot (game ^. player . gloves)
+    bootsSlot   = itemSlot (game ^. player . boots)
 
     itemSlot :: Drawable a => Maybe a -> Widget Name
     itemSlot Nothing = border $ txt "    "
@@ -116,7 +116,7 @@ drawLevel :: GameState -> Widget Name
 drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$> rows)
   where
     level = (game ^. world) !! (game ^. currentLevel)
-    rows = chunksOf (width level) $ do
+    rows  = chunksOf (width level) $ do
         (coord, cell) <- level ^. cells & assocs
         let monster = Map.lookup coord (level ^. monsters)
 
