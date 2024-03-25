@@ -1,19 +1,36 @@
 module Main where
 
-import Brick
+import Brick (
+    App (..),
+    BrickEvent (VtyEvent),
+    Widget,
+    attrMap,
+    defaultMain,
+    hBox,
+    hLimit,
+    txt,
+    vBox,
+    vLimit,
+    (<+>),
+    (<=>),
+ )
+import Brick.Main (halt, neverShowCursor)
+import Brick.Types (modify)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Control.Lens
+import Control.Lens (makeLenses, (%~), (&), (.~), (^.))
 import Creatures.Player
 import Data.List.Split
 import qualified Data.Map as Map
 import Draw
 import GHC.Arr
 import Graphics.Vty
-import World
 import Items
+import World
 
 type Name = ()
+
+data Direction = North | East | South | West
 
 data GameState = GameState
     { _player :: Player
@@ -33,10 +50,10 @@ app =
             VtyEvent e -> case e of
                 EvKey (KChar 'q') [] -> halt
                 -- Movement
-                EvKey (KChar 'w') [] -> modify (player . pos %~ \(y, x) -> (y - 1, x))
-                EvKey (KChar 'a') [] -> modify (player . pos %~ \(y, x) -> (y, x - 1))
-                EvKey (KChar 's') [] -> modify (player . pos %~ \(y, x) -> (y + 1, x))
-                EvKey (KChar 'd') [] -> modify (player . pos %~ \(y, x) -> (y, x + 1))
+                EvKey (KChar 'w') [] -> modify (move North)
+                EvKey (KChar 'a') [] -> modify (move West)
+                EvKey (KChar 's') [] -> modify (move South)
+                EvKey (KChar 'd') [] -> modify (move East)
                 -- Manual level select (DEBUGGING)
                 EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
                 EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
@@ -45,6 +62,30 @@ app =
         , appStartEvent = return ()
         , appAttrMap = const $ attrMap defAttr []
         }
+
+move :: Direction -> GameState -> GameState
+move direction game
+    | target `elem` indices (level ^. cells)
+    , isTraversible cell =
+        game & player . pos .~ target
+    | otherwise = game
+  where
+    (y, x) = game ^. player . pos
+    target = case direction of
+        North -> (y - 1, x)
+        East -> (y, x + 1)
+        South -> (y + 1, x)
+        West -> (y, x - 1)
+    level = (game ^. world) !! (game ^. currentLevel)
+    cell = (level ^. cells) ! target
+
+isTraversible :: Cell -> Bool
+isTraversible Door = True
+isTraversible Empty = False
+isTraversible Floor = True
+isTraversible (Stair _) = True
+isTraversible Tunnel = True
+isTraversible Wall = False
 
 drawGame :: GameState -> [Widget Name]
 drawGame game =
