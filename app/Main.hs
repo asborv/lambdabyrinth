@@ -11,6 +11,7 @@ import Draw
 import GHC.Arr
 import Graphics.Vty
 import World
+import Items (Material(Diamond), Weapon (Dagger))
 
 type Name = ()
 
@@ -57,7 +58,18 @@ drawStats :: GameState -> Widget Name
 drawStats _ = border $ vLimit 3 $ center $ txt "Stats"
 
 drawEquipment :: GameState -> Widget Name
-drawEquipment _ = border $ hLimit 20 $ center $ txt "Equipment"
+drawEquipment game = border $ hLimit 20 $ center $ vBox slots
+  where
+    slots = [handSlot, helmetSlot, cuirassSlot, glovesSlot, bootsSlot]
+    handSlot = itemSlot (game ^. player . hand)
+    helmetSlot = itemSlot (game ^. player . helmet)
+    cuirassSlot = itemSlot (game ^. player . cuirass)
+    glovesSlot = itemSlot (game ^. player . gloves)
+    bootsSlot = itemSlot (game ^. player . boots)
+
+    itemSlot :: Drawable a => Maybe a -> Widget Name
+    itemSlot Nothing = border $ txt "    "
+    itemSlot (Just item) = border (draw item)
 
 drawLevel :: GameState -> Widget Name
 drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$> rows)
@@ -83,7 +95,7 @@ mrBean =
     Player
         { _name = "Mr. Bean"
         , _pos = (0, 0)
-        , _hand = Nothing
+        , _hand = Just (Dagger Diamond)
         , _helmet = Nothing
         , _cuirass = Nothing
         , _gloves = Nothing

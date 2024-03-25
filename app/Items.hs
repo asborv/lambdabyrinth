@@ -9,10 +9,10 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Items where
 
-data Material = Stone | Iron | Diamond deriving (Show)
+data Material = Stone | Wood | Diamond
 
 data Weapon
-    = Sword Material
+    = Dagger Material
     | Spear Material
 
 data Armour
@@ -22,7 +22,7 @@ data Armour
     | Boots Material
 
 instance Show Weapon where
-    show (Sword material) = show material <> " sword"
+    show (Dagger material) = show material <> " dagger"
     show (Spear material) = show material <> " spear"
 
 instance Show Armour where
@@ -31,14 +31,19 @@ instance Show Armour where
     show (Gloves material)  = show material <> " gloves"
     show (Boots material)   = show material <> " boots"
 
+instance Show Material where
+    show Stone = "🪨 \b"
+    show Wood = "🪵 \b"
+    show Diamond = "💎 \b"
+
 power :: Weapon -> Int
-power (Sword material) = materialBonus material * 5
+power (Dagger material) = materialBonus material * 5
 power (Spear material) = materialBonus material * 3
 
 materialBonus :: Material -> Int
 materialBonus = \case
-    Stone -> 5
-    Iron -> 15
+    Wood -> 5
+    Stone -> 15
     Diamond -> 30
 
 armourDefence :: Armour -> Int
