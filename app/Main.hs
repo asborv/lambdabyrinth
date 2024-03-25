@@ -1,19 +1,17 @@
 module Main where
 
 import Brick
+import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Control.Lens (to, (%~), (^.))
-import Control.Lens.Lens ((&))
-import Control.Lens.TH
+import Control.Lens
 import Creatures.Player
 import Data.List.Split
 import qualified Data.Map as Map
+import Draw
 import GHC.Arr
 import Graphics.Vty
-import Items
 import World
-import Brick.Widgets.Border (border)
-import qualified Data.Text as T
+import Items
 
 type Name = ()
 
@@ -39,6 +37,7 @@ app =
                 EvKey (KChar 'a') [] -> modify (player . pos %~ \(y, x) -> (y, x - 1))
                 EvKey (KChar 's') [] -> modify (player . pos %~ \(y, x) -> (y + 1, x))
                 EvKey (KChar 'd') [] -> modify (player . pos %~ \(y, x) -> (y, x + 1))
+                -- Manual level select (DEBUGGING)
                 EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
                 EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
                 _ -> return ()
@@ -48,19 +47,42 @@ app =
         }
 
 drawGame :: GameState -> [Widget Name]
-drawGame game = [center $ setAvailableSize (80, 80) $ border $ drawLevel game <=> txt "helo"]
+drawGame game =
+    let ui = drawLog game <+> (drawLevel game <=> drawStats game) <+> drawEquipment game
+     in [ui]
+
+drawLog :: GameState -> Widget Name
+drawLog _ = border $ hLimit 10 $ center $ txt "Log"
+
+drawStats :: GameState -> Widget Name
+drawStats _ = border $ vLimit 3 $ center $ txt "Stats"
+
+drawEquipment :: GameState -> Widget Name
+drawEquipment game = border $ hLimit 20 $ center $ vBox slots
+  where
+    slots = [handSlot, helmetSlot, cuirassSlot, glovesSlot, bootsSlot]
+    handSlot = itemSlot (game ^. player . hand)
+    helmetSlot = itemSlot (game ^. player . helmet)
+    cuirassSlot = itemSlot (game ^. player . cuirass)
+    glovesSlot = itemSlot (game ^. player . gloves)
+    bootsSlot = itemSlot (game ^. player . boots)
+
+    itemSlot :: Drawable a => Maybe a -> Widget Name
+    itemSlot Nothing = border $ txt "    "
+    itemSlot (Just item) = border (draw item)
 
 drawLevel :: GameState -> Widget Name
-drawLevel game = vBox (hBox <$> rows)
+drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$> rows)
   where
     level = (game ^. world) !! (game ^. currentLevel)
     rows = chunksOf (width level) $ do
         (coord, cell) <- level ^. cells & assocs
-        let monster = level ^. monsters . to (Map.lookup coord)
+        let monster = Map.lookup coord (level ^. monsters)
+
         return $
-            if (game ^. player . pos) == coord
-                then txt $ T.pack $ show $ game ^. player
-                else txt $ maybe (T.pack $ show cell) (T.pack . show) monster
+            if game ^. player . pos == coord
+                then draw $ game ^. player
+                else maybe (draw cell) draw monster
 
 main :: IO ()
 main = do
@@ -73,12 +95,11 @@ mrBean =
     Player
         { _name = "Mr. Bean"
         , _pos = (0, 0)
-        , _hand = Nothing
+        , _hand = Just (Dagger Diamond)
         , _helmet = Nothing
         , _cuirass = Nothing
         , _gloves = Nothing
         , _boots = Nothing
-        , _inventory = [Armour Iron Helmet, Weapon Wood Sword]
         , _health = 10
         , _characterClass = Wizard
         }

@@ -1,3 +1,6 @@
+{-# LANGUAGE ImpredicativeTypes #-}
+{-# LANGUAGE KindSignatures #-}
+
 {- |
 Module      : Player
 Description : Everything that has to do with the player
@@ -10,31 +13,28 @@ import Creatures.Creature
 import Items
 import World (Coordinate)
 
-data Class = Wizard | Warrior | Rogue
+data Class = Wizard | Warrior | Rogue deriving (Show)
 
 data Player = Player
     { _name :: String
     , _pos :: Coordinate
-    , _hand :: Maybe Item
-    , _helmet :: Maybe Item
-    , _cuirass :: Maybe Item
-    , _gloves :: Maybe Item
-    , _boots :: Maybe Item
-    , _inventory :: [Item]
+    , _hand :: Maybe Weapon
+    , _helmet :: Maybe Armour
+    , _cuirass :: Maybe Armour
+    , _gloves :: Maybe Armour
+    , _boots :: Maybe Armour
     , _health :: Int
     , _characterClass :: Class
     }
+    deriving (Show)
 
 makeLenses ''Player
-
-instance Show Player where
-    show _ = "😎\b "
 
 instance Creature Player where
     attackPower :: Player -> Int
     attackPower player = (player ^. characterClass & classPower) + weaponPower
       where
-        weaponPower = player ^. hand & maybe 0 power
+        weaponPower = maybe 0 power (player ^. hand)
 
     defence :: Player -> Int
     defence player = classDefence + armourBonus

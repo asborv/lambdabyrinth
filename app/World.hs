@@ -10,6 +10,8 @@ import Control.Lens (both, makeLenses, over, to, (^.))
 import qualified Data.Map as Map
 import GHC.Arr
 import Creatures.Monsters
+import Brick
+import Data.Text as T
 
 type Coordinate = (Int, Int)
 type World = [Level]
@@ -31,6 +33,7 @@ instance Show Cell where
     show Floor = ". "
     show Tunnel = "| "
     show Wall = "# "
+
 
 data Level = Level
     { _cells :: Array Coordinate Cell
@@ -78,4 +81,4 @@ firstLevel = Level cs ms
         , Empty, Empty, Wall,  Wall,  Wall,   Door,  Wall,  Wall,  Empty, Empty
         , Empty, Empty, Empty, Empty, Empty,  Empty, Empty, Empty, Empty, Empty
         ]
-    ms = Map.fromList [((1, 0), Zombie)]
+    ms = Map.fromList [((3, 2), Zombie)]
