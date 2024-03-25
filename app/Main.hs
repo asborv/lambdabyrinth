@@ -11,7 +11,7 @@ import Draw
 import GHC.Arr
 import Graphics.Vty
 import World
-import Items (Material(Diamond), Weapon (Dagger))
+import Items
 
 type Name = ()
 

@@ -33,6 +33,6 @@ instance Drawable Weapon where
 
 instance Drawable Armour where
     draw (Helmet material) = txt $ T.pack (show material) <> "🪖 \b"
-    draw (Cuirass material) = txt $ T.pack (show material) <> "🛡️️ \b"
+    draw (Cuirass material) = txt $ T.pack (show material) <> "🛡️️ "
     draw (Gloves material) = txt $ T.pack (show material) <> "🧤 \b"
     draw (Boots material) = txt $ T.pack (show material) <> "🥾 \b"
