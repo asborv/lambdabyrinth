@@ -47,9 +47,17 @@ app =
 
 drawGame :: GameState -> [Widget Name]
 drawGame game =
-    let ui = drawLevel game
+    let ui = drawLog game <+> (drawLevel game <=> drawStats game) <+> drawEquipment game
      in [ui]
 
+drawLog :: GameState -> Widget Name
+drawLog _ = border $ hLimit 10 $ center $ txt "Log"
+
+drawStats :: GameState -> Widget Name
+drawStats _ = border $ vLimit 3 $ center $ txt "Stats"
+
+drawEquipment :: GameState -> Widget Name
+drawEquipment _ = border $ hLimit 20 $ center $ txt "Equipment"
 
 drawLevel :: GameState -> Widget Name
 drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$> rows)
