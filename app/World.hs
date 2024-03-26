@@ -67,7 +67,7 @@ isTraversible Wall = False
 -- ===============
 
 emptyLevel :: Level
-emptyLevel = Level (listArray ((0, 0), (9, 9)) (repeat Floor)) Map.empty
+emptyLevel = Level (listArray ((0, 0), (9, 9)) (repeat Floor) // [((3, 3), Stair Downwards)]) Map.empty
 
 firstLevel :: Level
 firstLevel = Level cs ms
@@ -83,7 +83,7 @@ firstLevel = Level cs ms
         , Empty, Empty, Empty, Empty, Tunnel, Empty, Empty, Empty, Empty, Empty
         , Empty, Empty, Empty, Empty, Tunnel, Empty, Empty, Empty, Empty, Empty
         , Empty, Empty, Wall,  Wall,  Door,   Wall,  Wall,  Wall,  Empty, Empty
-        , Empty, Empty, Wall,  Floor, Floor,  Floor, Floor, Wall,  Empty, Empty
+        , Empty, Empty, Wall,  Floor, Floor, Stair Upwards, Floor, Wall,  Empty, Empty
         , Empty, Empty, Wall,  Floor, Floor,  Floor, Floor, Wall,  Empty, Empty
         , Empty, Empty, Wall,  Wall,  Wall,   Door,  Wall,  Wall,  Empty, Empty
         , Empty, Empty, Empty, Empty, Empty,  Empty, Empty, Empty, Empty, Empty

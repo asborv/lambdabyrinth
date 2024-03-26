@@ -55,7 +55,7 @@ extra-doc-files:    CHANGELOG.md
 -- extra-source-files:
 
 common warnings
-    ghc-options: -Wall -threaded
+    ghc-options: -Wall -threaded -Wno-unused-do-bind
 
 executable lambdabyrinth
     -- Import common warning flags.
