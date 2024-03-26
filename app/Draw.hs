@@ -1,5 +1,3 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 {- |
 Module      : Draw
 Description : Everything and anything that should be drawn to the TUI.
@@ -19,7 +17,7 @@ class Drawable a where
 
 instance Drawable Monster where
     draw Zombie = txt "🧟\b "
-    draw Ghost  = txt "👻\b "
+    draw Ghost = txt "👻\b "
 
 instance Drawable Player where
     draw = const $ txt "😎\b "
@@ -28,11 +26,11 @@ instance Drawable Cell where
     draw = txt . T.pack . show
 
 instance Drawable Weapon where
-    draw (Spear material)  = txt $ T.pack (show material) <> "🔱"
+    draw (Spear material) = txt $ T.pack (show material) <> "🔱"
     draw (Dagger material) = txt $ T.pack (show material) <> "🗡️ "
 
 instance Drawable Armour where
-    draw (Helmet material)  = txt $ T.pack (show material) <> "🪖 \b"
+    draw (Helmet material) = txt $ T.pack (show material) <> "🪖 \b"
     draw (Cuirass material) = txt $ T.pack (show material) <> "🛡️️ "
-    draw (Gloves material)  = txt $ T.pack (show material) <> "🧤 \b"
-    draw (Boots material)   = txt $ T.pack (show material) <> "🥾 \b"
+    draw (Gloves material) = txt $ T.pack (show material) <> "🧤 \b"
+    draw (Boots material) = txt $ T.pack (show material) <> "🥾 \b"

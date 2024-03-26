@@ -19,31 +19,31 @@ data Armour
 
 instance Show Weapon where
     show (Dagger material) = show material <> " dagger"
-    show (Spear material)  = show material <> " spear"
+    show (Spear material) = show material <> " spear"
 
 instance Show Armour where
-    show (Helmet material)  = show material <> " helmet"
+    show (Helmet material) = show material <> " helmet"
     show (Cuirass material) = show material <> " cuirass"
-    show (Gloves material)  = show material <> " gloves"
-    show (Boots material)   = show material <> " boots"
+    show (Gloves material) = show material <> " gloves"
+    show (Boots material) = show material <> " boots"
 
 instance Show Material where
-    show Stone   = "🪨 \b"
-    show Wood    = "🪵 \b"
+    show Stone = "🪨 \b"
+    show Wood = "🪵 \b"
     show Diamond = "💎 \b"
 
 power :: Weapon -> Int
 power (Dagger material) = materialBonus material * 5
-power (Spear material)  = materialBonus material * 3
+power (Spear material) = materialBonus material * 3
 
 materialBonus :: Material -> Int
 materialBonus = \case
-    Wood    -> 5
-    Stone   -> 15
+    Wood -> 5
+    Stone -> 15
     Diamond -> 30
 
 armourDefence :: Armour -> Int
-armourDefence (Helmet material)  = materialBonus material * 10
+armourDefence (Helmet material) = materialBonus material * 10
 armourDefence (Cuirass material) = materialBonus material * 8
-armourDefence (Gloves material)  = materialBonus material * 24
-armourDefence (Boots material)   = materialBonus material * 12
+armourDefence (Gloves material) = materialBonus material * 24
+armourDefence (Boots material) = materialBonus material * 12

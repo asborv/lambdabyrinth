@@ -76,15 +76,26 @@ move direction = do
     (y, x) <- use (player . pos)
     level <- use (world . to (!!)) <*> use currentLevel
     let levelCells = level ^. cells
-        isLegalMove = target `elem` indices levelCells && isTraversible (levelCells ! target)
+        cell = levelCells ! target
+        isLegalMove = target `elem` indices levelCells && isTraversible cell
         target = case direction of
             North -> (y - 1, x)
-            East  -> (y, x + 1)
+            East -> (y, x + 1)
             South -> (y + 1, x)
-            West  -> (y, x - 1)
+            West -> (y, x - 1)
 
     -- Update the player's position only when the movement is legal
-    when isLegalMove (modify (player . pos .~ target))
+    when isLegalMove $ do
+        modify (player . pos .~ target)
+        reactToPlayerMove cell
+
+{- | Modify the game state as a reaction to a player entering a cell
+(1) Increment/decrement level for staircases
+-}
+reactToPlayerMove :: Cell -> EventM Name GameState ()
+reactToPlayerMove (Stair Downwards) = modify (currentLevel %~ (+ 1))
+reactToPlayerMove (Stair Upwards) = modify (currentLevel %~ subtract 1)
+reactToPlayerMove _ = return ()
 
 drawGame :: GameState -> [Widget Name]
 drawGame game =
