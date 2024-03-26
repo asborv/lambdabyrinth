@@ -7,9 +7,9 @@ module World where
 
 import Control.Arrow ((>>>))
 import Control.Lens (both, makeLenses, over, to, (^.))
+import Creatures.Monsters
 import qualified Data.Map as Map
 import GHC.Arr
-import Creatures.Monsters
 
 type Coordinate = (Int, Int)
 type World = [Level]
@@ -32,7 +32,6 @@ instance Show Cell where
     show Floor = ". "
     show Tunnel = "| "
     show Wall = "# "
-
 
 data Level = Level
     { _cells :: Array Coordinate Cell
@@ -67,25 +66,30 @@ isTraversible Wall = False
 -- ===============
 
 emptyLevel :: Level
-emptyLevel = Level (listArray ((0, 0), (9, 9)) (repeat Floor) // [((3, 3), Stair Downwards)]) Map.empty
+emptyLevel =
+    Level
+        (listArray ((0, 0), (9, 9)) (repeat Floor) // [((3, 3), Stair Downwards)])
+        Map.empty
 
 firstLevel :: Level
 firstLevel = Level cs ms
   where
-    cs = listArray
-        ((0, 0), (12, 9))
-        [ Empty, Empty, Empty, Empty, Empty,  Empty, Empty, Empty, Empty, Empty
-        , Empty, Wall, Wall,   Wall,  Wall,   Wall,  Wall,  Wall,  Empty, Empty
-        , Empty, Door, Floor,  Floor, Floor,  Floor, Floor, Wall,  Empty, Empty
-        , Empty, Wall, Floor,  Floor, Floor,  Floor, Floor, Wall,  Empty, Empty
-        , Empty, Wall, Wall,   Wall,  Door,   Wall,  Wall,  Wall,  Empty, Empty
-        , Empty, Empty, Empty, Empty, Tunnel, Empty, Empty, Empty, Empty, Empty
-        , Empty, Empty, Empty, Empty, Tunnel, Empty, Empty, Empty, Empty, Empty
-        , Empty, Empty, Empty, Empty, Tunnel, Empty, Empty, Empty, Empty, Empty
-        , Empty, Empty, Wall,  Wall,  Door,   Wall,  Wall,  Wall,  Empty, Empty
-        , Empty, Empty, Wall,  Floor, Floor, Stair Upwards, Floor, Wall,  Empty, Empty
-        , Empty, Empty, Wall,  Floor, Floor,  Floor, Floor, Wall,  Empty, Empty
-        , Empty, Empty, Wall,  Wall,  Wall,   Door,  Wall,  Wall,  Empty, Empty
-        , Empty, Empty, Empty, Empty, Empty,  Empty, Empty, Empty, Empty, Empty
-        ]
+    cs =
+        listArray
+            ((0, 0), (12, 9))
+            ( [Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty]
+                <> [Empty, Wall, Wall, Wall, Wall, Wall, Wall, Wall, Empty, Empty]
+                <> [Empty, Door, Floor, Floor, Floor, Floor, Floor, Wall, Empty, Empty]
+                <> [Empty, Wall, Floor, Floor, Floor, Floor, Floor, Wall, Empty, Empty]
+                <> [Empty, Wall, Wall, Wall, Door, Wall, Wall, Wall, Empty, Empty]
+                <> [Empty, Empty, Empty, Empty, Tunnel, Empty, Empty, Empty, Empty, Empty]
+                <> [Empty, Empty, Empty, Empty, Tunnel, Empty, Empty, Empty, Empty, Empty]
+                <> [Empty, Empty, Empty, Empty, Tunnel, Empty, Empty, Empty, Empty, Empty]
+                <> [Empty, Empty, Wall, Wall, Door, Wall, Wall, Wall, Empty, Empty]
+                <> [Empty, Empty, Wall, Floor, Floor, Stair Upwards, Floor, Wall, Empty, Empty]
+                <> [Empty, Empty, Wall, Floor, Floor, Floor, Floor, Wall, Empty, Empty]
+                <> [Empty, Empty, Wall, Wall, Wall, Door, Wall, Wall, Empty, Empty]
+                <> [Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty]
+            )
+
     ms = Map.fromList [((3, 2), Zombie)]

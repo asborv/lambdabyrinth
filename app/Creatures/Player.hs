@@ -16,14 +16,14 @@ import World (Coordinate)
 data Class = Wizard | Warrior | Rogue deriving (Show)
 
 data Player = Player
-    { _name           :: String
-    , _pos            :: Coordinate
-    , _hand           :: Maybe Weapon
-    , _helmet         :: Maybe Armour
-    , _cuirass        :: Maybe Armour
-    , _gloves         :: Maybe Armour
-    , _boots          :: Maybe Armour
-    , _health         :: Int
+    { _name :: String
+    , _pos :: Coordinate
+    , _hand :: Maybe Weapon
+    , _helmet :: Maybe Armour
+    , _cuirass :: Maybe Armour
+    , _gloves :: Maybe Armour
+    , _boots :: Maybe Armour
+    , _health :: Int
     , _characterClass :: Class
     }
     deriving (Show)
@@ -40,16 +40,16 @@ instance Creature Player where
     defence player = classDefence + armourBonus
       where
         -- Intermediate values
-        helmetBonus  = player ^. helmet & maybe 0 armourDefence
+        helmetBonus = player ^. helmet & maybe 0 armourDefence
         cuirassBonus = player ^. cuirass & maybe 0 armourDefence
-        gloveBonus   = player ^. gloves & maybe 0 armourDefence
-        bootBonus    = player ^. boots & maybe 0 armourDefence
+        gloveBonus = player ^. gloves & maybe 0 armourDefence
+        bootBonus = player ^. boots & maybe 0 armourDefence
         -- Values actually used in computation
-        armourBonus  = helmetBonus + cuirassBonus + gloveBonus + bootBonus
+        armourBonus = helmetBonus + cuirassBonus + gloveBonus + bootBonus
         classDefence = player ^. characterClass & classPower
 
 classPower :: Class -> Int
 classPower = \case
-    Wizard  -> 15
+    Wizard -> 15
     Warrior -> 85
-    Rogue   -> 45
+    Rogue -> 45

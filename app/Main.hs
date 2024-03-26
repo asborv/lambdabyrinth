@@ -80,9 +80,9 @@ move direction = do
         isLegalMove = target `elem` indices levelCells && isTraversible cell
         target = case direction of
             North -> (y - 1, x)
-            East  -> (y, x + 1)
+            East -> (y, x + 1)
             South -> (y + 1, x)
-            West  -> (y, x - 1)
+            West -> (y, x - 1)
 
     -- Update the player's position only when the movement is legal
     when isLegalMove $ do
@@ -94,8 +94,8 @@ move direction = do
 -}
 reactToPlayerMove :: Cell -> EventM Name GameState ()
 reactToPlayerMove (Stair Downwards) = modify (currentLevel %~ (+ 1))
-reactToPlayerMove (Stair Upwards  ) = modify (currentLevel %~ subtract 1)
-reactToPlayerMove _                 = return ()
+reactToPlayerMove (Stair Upwards) = modify (currentLevel %~ subtract 1)
+reactToPlayerMove _ = return ()
 
 drawGame :: GameState -> [Widget Name]
 drawGame game =
