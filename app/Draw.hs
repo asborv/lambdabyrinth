@@ -1,5 +1,3 @@
-{-# LANGUAGE MultiParamTypeClasses #-}
-
 {- |
 Module      : Draw
 Description : Everything and anything that should be drawn to the TUI.

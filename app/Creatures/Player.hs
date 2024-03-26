@@ -1,6 +1,3 @@
-{-# LANGUAGE ImpredicativeTypes #-}
-{-# LANGUAGE KindSignatures #-}
-
 {- |
 Module      : Player
 Description : Everything that has to do with the player
