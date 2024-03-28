@@ -5,8 +5,9 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Creatures.Player where
 
-import Control.Lens (makeLenses, (&), (^.))
-import Creatures.Creature
+import Control.Lens (makeLenses, (%~), (&), (^.))
+import Control.Lens.Combinators (to)
+import Creatures.Combatant
 import Items
 import World (Coordinate)
 
@@ -27,23 +28,16 @@ data Player = Player
 
 makeLenses ''Player
 
-instance Creature Player where
-    attackPower :: Player -> Int
-    attackPower player = (player ^. characterClass & classPower) + weaponPower
+instance Combatant Player where
+    attack :: Combatant c => Player -> c -> c
+    me `attack` you = you `acceptDamage` damage
       where
-        weaponPower = maybe 0 power (player ^. hand)
+        classDamage = me ^. characterClass & classPower
+        weaponDamage = me ^. hand . to (maybe 0 power)
+        damage = classDamage + weaponDamage
 
-    defence :: Player -> Int
-    defence player = classDefence + armourBonus
-      where
-        -- Intermediate values
-        helmetBonus = player ^. helmet & maybe 0 armourDefence
-        cuirassBonus = player ^. cuirass & maybe 0 armourDefence
-        gloveBonus = player ^. gloves & maybe 0 armourDefence
-        bootBonus = player ^. boots & maybe 0 armourDefence
-        -- Values actually used in computation
-        armourBonus = helmetBonus + cuirassBonus + gloveBonus + bootBonus
-        classDefence = player ^. characterClass & classPower
+    acceptDamage :: Player -> Int -> Player
+    acceptDamage me damage = me & health %~ subtract damage
 
 classPower :: Class -> Int
 classPower = \case

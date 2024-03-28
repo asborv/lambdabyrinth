@@ -1,40 +1,44 @@
 module Main where
 
-import Brick (
-    App (..),
-    BrickEvent (VtyEvent),
-    EventM,
-    Widget,
-    attrMap,
-    defaultMain,
-    hBox,
-    hLimit,
-    txt,
-    vBox,
-    vLimit,
-    (<+>),
-    (<=>),
- )
+import Brick
+    ( App (..)
+    , BrickEvent (VtyEvent)
+    , EventM
+    , Widget
+    , attrMap
+    , defaultMain
+    , hBox
+    , hLimit
+    , txt
+    , vBox
+    , vLimit
+    , (<+>)
+    , (<=>)
+    )
 import Brick.Main (halt, neverShowCursor)
 import Brick.Types (modify)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Control.Lens (makeLenses, use, (%~), (&), (.~), (^.))
-import Control.Lens.Getter (to)
+import Control.Arrow ((>>>))
+import Control.Lens (element, makeLenses, use, (%~), (&), (.~), (^.))
+import Control.Lens.Combinators (to)
 import Control.Monad (when)
-import Creatures.Player
+import Creatures.Combatant
+import qualified Creatures.Monsters as M
+import qualified Creatures.Player as P
+import Data.List (find, intercalate)
 import Data.List.Split
-import qualified Data.Map as Map
+import qualified Data.Text as T
 import Draw
 import GHC.Arr
 import Graphics.Vty
-import Items
 import World
 
 type Name = ()
+type GameEvent = EventM Name GameState ()
 
 data GameState = GameState
-    { _player :: Player
+    { _player :: P.Player
     , _currentLevel :: Int
     , _world :: World
     }
@@ -51,13 +55,14 @@ app =
             VtyEvent e -> case e of
                 EvKey (KChar 'q') [] -> halt
                 -- Movement
-                EvKey (KChar 'w') [] -> move North
-                EvKey (KChar 'a') [] -> move West
-                EvKey (KChar 's') [] -> move South
-                EvKey (KChar 'd') [] -> move East
+                EvKey (KChar 'w') [] -> playerMove North
+                EvKey (KChar 'a') [] -> playerMove West
+                EvKey (KChar 's') [] -> playerMove South
+                EvKey (KChar 'd') [] -> playerMove East
                 -- Manual level select (DEBUGGING)
                 EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
                 EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
+                EvKey (KChar 'R') [] -> modify (world . element 0 . monsters %~ (M.zombie :))
                 _ -> return ()
             _ -> return ()
         , appStartEvent = return ()
@@ -70,11 +75,12 @@ checks to determine if the player can move in that direction.
 If the target cell is a valid cell and is traversable,
 the player's position is updated accordingly. Otherwise, nothing happens.
 -}
-move :: Direction -> EventM Name GameState ()
-move direction = do
+playerMove :: Direction -> GameEvent
+playerMove direction = do
     -- Get the player's position and the current level
-    (y, x) <- use (player . pos)
-    level <- use (world . to (!!)) <*> use currentLevel
+    (y, x) <- use (player . P.pos)
+    curr <- use currentLevel
+    level <- use (world . to (!! curr))
     let levelCells = level ^. cells
         cell = levelCells ! target
         isLegalMove = target `elem` indices levelCells && isTraversible cell
@@ -86,13 +92,36 @@ move direction = do
 
     -- Update the player's position only when the movement is legal
     when isLegalMove $ do
-        modify (player . pos .~ target)
+        let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
+        case monster of
+            (Just m) -> playerAttackEvent m
+            Nothing -> modify (player . P.pos .~ target)
         reactToPlayerMove cell
+
+playerAttackEvent :: M.Monster -> GameEvent
+playerAttackEvent monster = do
+    me <- use player
+    curr <- use currentLevel
+    everyone <- use (world . element curr . monsters)
+
+    -- All other monsters than the target
+    let others = filter (/= monster) everyone
+
+    -- The monster after being attacked
+    let monster' = me `attack` monster
+
+    -- The remaining monsters after attacking the target
+    let remaining =
+            if monster' ^. M.health <= 0
+                then others
+                else monster' : others
+
+    modify $ world . element curr . monsters .~ remaining
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
-reactToPlayerMove :: Cell -> EventM Name GameState ()
+reactToPlayerMove :: Cell -> GameEvent
 reactToPlayerMove (Stair Downwards) = modify (currentLevel %~ (+ 1))
 reactToPlayerMove (Stair Upwards) = modify (currentLevel %~ subtract 1)
 reactToPlayerMove _ = return ()
@@ -106,17 +135,29 @@ drawLog :: GameState -> Widget Name
 drawLog _ = border $ hLimit 10 $ center $ txt "Log"
 
 drawStats :: GameState -> Widget Name
-drawStats _ = border $ vLimit 3 $ center $ txt "Stats"
+drawStats game =
+    border
+        $ vLimit 3
+        $ center
+        $ txt
+        $ T.pack
+        $ intercalate
+            ", "
+        $ game
+            ^. world
+                . element (game ^. currentLevel)
+                . monsters
+                . to (map ((^. M.health) >>> show))
 
 drawEquipment :: GameState -> Widget Name
 drawEquipment game = border $ hLimit 20 $ center $ vBox slots
   where
     slots = [handSlot, helmetSlot, cuirassSlot, glovesSlot, bootsSlot]
-    handSlot = itemSlot (game ^. player . hand)
-    helmetSlot = itemSlot (game ^. player . helmet)
-    cuirassSlot = itemSlot (game ^. player . cuirass)
-    glovesSlot = itemSlot (game ^. player . gloves)
-    bootsSlot = itemSlot (game ^. player . boots)
+    handSlot = itemSlot (game ^. player . P.hand)
+    helmetSlot = itemSlot (game ^. player . P.helmet)
+    cuirassSlot = itemSlot (game ^. player . P.cuirass)
+    glovesSlot = itemSlot (game ^. player . P.gloves)
+    bootsSlot = itemSlot (game ^. player . P.boots)
 
     itemSlot :: Drawable a => Maybe a -> Widget Name
     itemSlot Nothing = border $ txt "    "
@@ -128,10 +169,10 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$>
     level = (game ^. world) !! (game ^. currentLevel)
     rows = chunksOf (width level) $ do
         (coord, cell) <- level ^. cells & assocs
-        let monster = Map.lookup coord (level ^. monsters)
+        let monster = find (\m -> m ^. M.position == coord) (level ^. monsters)
 
         return $
-            if game ^. player . pos == coord
+            if game ^. player . P.pos == coord
                 then draw $ game ^. player
                 else maybe (draw cell) draw monster
 
@@ -141,16 +182,16 @@ main = do
     finalState <- defaultMain app initialState
     print finalState
 
-mrBean :: Player
+mrBean :: P.Player
 mrBean =
-    Player
-        { _name = "Mr. Bean"
-        , _pos = (0, 0)
-        , _hand = Just (Dagger Diamond)
-        , _helmet = Nothing
-        , _cuirass = Nothing
-        , _gloves = Nothing
-        , _boots = Nothing
-        , _health = 10
-        , _characterClass = Wizard
+    P.Player
+        { P._name = "Mr. Bean"
+        , P._pos = (0, 0)
+        , P._hand = Nothing
+        , P._helmet = Nothing
+        , P._cuirass = Nothing
+        , P._gloves = Nothing
+        , P._boots = Nothing
+        , P._health = 10
+        , P._characterClass = P.Wizard
         }

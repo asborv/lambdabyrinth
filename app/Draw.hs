@@ -16,8 +16,7 @@ class Drawable a where
     draw :: a -> Widget n
 
 instance Drawable Monster where
-    draw Zombie = txt "🧟\b "
-    draw Ghost = txt "👻\b "
+    draw = txt . T.pack . show
 
 instance Drawable Player where
     draw = const $ txt "😎\b "
