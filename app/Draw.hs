@@ -6,6 +6,7 @@ Maintainer  : asbjorn.orvedal@gmail.com
 module Draw where
 
 import Brick (Widget, txt)
+import Control.Lens ((^.))
 import Creatures.Monsters
 import Creatures.Player
 import qualified Data.Text as T
@@ -16,8 +17,7 @@ class Drawable a where
     draw :: a -> Widget n
 
 instance Drawable Monster where
-    draw Zombie = txt "🧟\b "
-    draw Ghost = txt "👻\b "
+    draw = txt . T.pack . show
 
 instance Drawable Player where
     draw = const $ txt "😎\b "

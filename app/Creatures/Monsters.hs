@@ -5,17 +5,36 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Creatures.Monsters where
 
+import Control.Lens ((%~), (^.))
+import Control.Lens.Lens ((&))
+import Control.Lens.TH (makeLenses)
 import Creatures.Combatant
 
-data Monster = Zombie | Ghost deriving (Show)
+data MonsterType = Zombie | Ghost deriving (Show)
+data Monster = Monster
+    { _health :: Int
+    , _monsterType :: MonsterType
+    , _power :: Int
+    }
 
-power :: Monster -> Int
-power Zombie = 32
-power Ghost = 4
+makeLenses ''Monster
+
+instance Show Monster where
+    show monster = case monster ^. monsterType of
+        Zombie -> "🧟\b "
+        Ghost -> "👻\b "
+
+zombie :: Monster
+zombie =
+    Monster
+        { _health = 32
+        , _power = 32
+        , _monsterType = Zombie
+        }
 
 instance Combatant Monster where
     attack :: Combatant c => Monster -> c -> c
-    me `attack` you = you `acceptDamage` power me
+    me `attack` you = you `acceptDamage` (me ^. power)
 
     acceptDamage :: Monster -> Int -> Monster
-    acceptDamage _ _ = Ghost
+    acceptDamage me damage = me & health %~ subtract damage

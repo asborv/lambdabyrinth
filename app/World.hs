@@ -92,4 +92,4 @@ firstLevel = Level cs ms
                 <> [Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty]
             )
 
-    ms = Map.fromList [((3, 2), Zombie)]
+    ms = Map.fromList [((3, 2), zombie)]
