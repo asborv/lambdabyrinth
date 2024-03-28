@@ -19,20 +19,19 @@ import Brick.Main (halt, neverShowCursor)
 import Brick.Types (modify)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Control.Lens (Ixed (ix), element, makeLenses, use, (%~), (&), (.~), (^.))
+import Control.Arrow ((>>>))
+import Control.Lens (element, makeLenses, use, (%~), (&), (.~), (^.))
 import Control.Lens.Combinators (to)
 import Control.Monad (when)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
 import qualified Creatures.Player as P
-import Data.List (intercalate)
+import Data.List (find, intercalate)
 import Data.List.Split
-import qualified Data.Map as Map
 import qualified Data.Text as T
 import Draw
 import GHC.Arr
 import Graphics.Vty
-import Items
 import World
 
 type Name = ()
@@ -62,7 +61,7 @@ app =
                 -- Manual level select (DEBUGGING)
                 EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
                 EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
-                EvKey (KChar 'R') [] -> modify (world . element 0 . monsters %~ Map.insert (4, 4) M.zombie)
+                EvKey (KChar 'R') [] -> modify (world . element 0 . monsters %~ (M.zombie :))
                 _ -> return ()
             _ -> return ()
         , appStartEvent = return ()
@@ -79,7 +78,6 @@ playerMove :: Direction -> EventM Name GameState ()
 playerMove direction = do
     -- Get the player's position and the current level
     (y, x) <- use (player . P.pos)
-    me <- use player
     curr <- use currentLevel
     level <- use (world . to (!! curr))
     let levelCells = level ^. cells
@@ -93,11 +91,31 @@ playerMove direction = do
 
     -- Update the player's position only when the movement is legal
     when isLegalMove $ do
-        case Map.lookup target (level ^. monsters) of
-            (Just monster) ->
-                modify (world . element curr . monsters . ix target .~ me `attack` monster)
+        let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
+        case monster of
+            (Just m) -> playerAttackEvent m
             Nothing -> modify (player . P.pos .~ target)
         reactToPlayerMove cell
+
+playerAttackEvent :: M.Monster -> EventM Name GameState ()
+playerAttackEvent monster = do
+    me <- use player
+    curr <- use currentLevel
+    everyone <- use (world . element curr . monsters)
+
+    -- All other monsters than the target
+    let others = filter (/= monster) everyone
+
+    -- The monster after being attacked
+    let monster' = me `attack` monster
+
+    -- The remaining monsters after attacking the target
+    let remaining =
+            if monster' ^. M.health <= 0
+                then others
+                else monster' : others
+
+    modify $ world . element curr . monsters .~ remaining
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
@@ -128,7 +146,7 @@ drawStats game =
             ^. world
                 . element (game ^. currentLevel)
                 . monsters
-                . to (map (show . (^. M.health)) . Map.elems)
+                . to (map ((^. M.health) >>> show))
 
 drawEquipment :: GameState -> Widget Name
 drawEquipment game = border $ hLimit 20 $ center $ vBox slots
@@ -150,7 +168,7 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$>
     level = (game ^. world) !! (game ^. currentLevel)
     rows = chunksOf (width level) $ do
         (coord, cell) <- level ^. cells & assocs
-        let monster = Map.lookup coord (level ^. monsters)
+        let monster = find (\m -> m ^. M.position == coord) (level ^. monsters)
 
         return $
             if game ^. player . P.pos == coord
@@ -168,7 +186,7 @@ mrBean =
     P.Player
         { P._name = "Mr. Bean"
         , P._pos = (0, 0)
-        , P._hand = Just (Dagger Diamond)
+        , P._hand = Nothing
         , P._helmet = Nothing
         , P._cuirass = Nothing
         , P._gloves = Nothing

@@ -6,9 +6,8 @@ Maintainer  : asbjorn.orvedal@gmail.com
 module World where
 
 import Control.Arrow ((>>>))
-import Control.Lens (both, makeLenses, over, to, (^.))
+import Control.Lens (both, makeLenses, over, to, (&), (.~), (^.))
 import Creatures.Monsters
-import qualified Data.Map as Map
 import GHC.Arr
 
 type Coordinate = (Int, Int)
@@ -35,7 +34,7 @@ instance Show Cell where
 
 data Level = Level
     { _cells :: Array Coordinate Cell
-    , _monsters :: Map.Map Coordinate Monster
+    , _monsters :: [Monster]
     }
     deriving (Show)
 
@@ -69,7 +68,7 @@ emptyLevel :: Level
 emptyLevel =
     Level
         (listArray ((0, 0), (9, 9)) (repeat Floor) // [((3, 3), Stair Downwards)])
-        Map.empty
+        []
 
 firstLevel :: Level
 firstLevel = Level cs ms
@@ -92,4 +91,4 @@ firstLevel = Level cs ms
                 <> [Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty, Empty]
             )
 
-    ms = Map.fromList [((3, 2), zombie)]
+    ms = [zombie, zombie & position .~ (2, 4)]
