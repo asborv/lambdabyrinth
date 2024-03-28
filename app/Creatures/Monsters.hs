@@ -5,17 +5,17 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Creatures.Monsters where
 
-import Creatures.Creature
+import Creatures.Combatant
 
 data Monster = Zombie | Ghost deriving (Show)
 
-instance Creature Monster where
-    attackPower :: Monster -> Int
-    attackPower = \case
-        Zombie -> 15
-        Ghost -> 8
+power :: Monster -> Int
+power Zombie = 32
+power Ghost = 4
 
-    defence :: Monster -> Int
-    defence = \case
-        Zombie -> 32
-        Ghost -> 4
+instance Combatant Monster where
+    attack :: Combatant c => Monster -> c -> c
+    me `attack` you = you `acceptDamage` power me
+
+    acceptDamage :: Monster -> Int -> Monster
+    acceptDamage _ _ = Ghost

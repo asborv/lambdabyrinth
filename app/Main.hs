@@ -51,10 +51,10 @@ app =
             VtyEvent e -> case e of
                 EvKey (KChar 'q') [] -> halt
                 -- Movement
-                EvKey (KChar 'w') [] -> move North
-                EvKey (KChar 'a') [] -> move West
-                EvKey (KChar 's') [] -> move South
-                EvKey (KChar 'd') [] -> move East
+                EvKey (KChar 'w') [] -> playerMove North
+                EvKey (KChar 'a') [] -> playerMove West
+                EvKey (KChar 's') [] -> playerMove South
+                EvKey (KChar 'd') [] -> playerMove East
                 -- Manual level select (DEBUGGING)
                 EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
                 EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
@@ -70,8 +70,8 @@ checks to determine if the player can move in that direction.
 If the target cell is a valid cell and is traversable,
 the player's position is updated accordingly. Otherwise, nothing happens.
 -}
-move :: Direction -> EventM Name GameState ()
-move direction = do
+playerMove :: Direction -> EventM Name GameState ()
+playerMove direction = do
     -- Get the player's position and the current level
     (y, x) <- use (player . pos)
     level <- use (world . to (!!)) <*> use currentLevel
