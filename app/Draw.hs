@@ -6,7 +6,6 @@ Maintainer  : asbjorn.orvedal@gmail.com
 module Draw where
 
 import Brick (Widget, txt)
-import Control.Lens ((^.))
 import Creatures.Monsters
 import Creatures.Player
 import qualified Data.Text as T
