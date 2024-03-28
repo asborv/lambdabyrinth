@@ -35,6 +35,7 @@ import Graphics.Vty
 import World
 
 type Name = ()
+type GameEvent = EventM Name GameState ()
 
 data GameState = GameState
     { _player :: P.Player
@@ -74,7 +75,7 @@ checks to determine if the player can move in that direction.
 If the target cell is a valid cell and is traversable,
 the player's position is updated accordingly. Otherwise, nothing happens.
 -}
-playerMove :: Direction -> EventM Name GameState ()
+playerMove :: Direction -> GameEvent
 playerMove direction = do
     -- Get the player's position and the current level
     (y, x) <- use (player . P.pos)
@@ -97,7 +98,7 @@ playerMove direction = do
             Nothing -> modify (player . P.pos .~ target)
         reactToPlayerMove cell
 
-playerAttackEvent :: M.Monster -> EventM Name GameState ()
+playerAttackEvent :: M.Monster -> GameEvent
 playerAttackEvent monster = do
     me <- use player
     curr <- use currentLevel
@@ -120,7 +121,7 @@ playerAttackEvent monster = do
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
-reactToPlayerMove :: Cell -> EventM Name GameState ()
+reactToPlayerMove :: Cell -> GameEvent
 reactToPlayerMove (Stair Downwards) = modify (currentLevel %~ (+ 1))
 reactToPlayerMove (Stair Upwards) = modify (currentLevel %~ subtract 1)
 reactToPlayerMove _ = return ()
