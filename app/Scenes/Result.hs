@@ -11,11 +11,10 @@ import Brick
     , halt
     , txt
     , vBox
-    , (<=>)
     )
 import Brick.Main (neverShowCursor)
 import Brick.Widgets.Border (borderWithLabel)
-import Brick.Widgets.Center (center, hCenter, vCenter)
+import Brick.Widgets.Center (hCenter, vCenter)
 import Data.Text (Text)
 import Graphics.Vty (Event (..), defAttr)
 import Scenes.Scene (Name, Scene)

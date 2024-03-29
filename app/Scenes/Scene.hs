@@ -1,4 +1,5 @@
 module Scenes.Scene where
+
 import Brick (App)
 
 type Name = ()
