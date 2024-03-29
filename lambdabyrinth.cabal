@@ -75,6 +75,7 @@ executable lambdabyrinth
         Scenes.CreateCharacter
         Scenes.Game
         Scenes.Result
+        Scenes.Scene
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
