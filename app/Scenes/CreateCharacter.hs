@@ -51,6 +51,11 @@ app =
 drawScene :: Maybe Player -> [Widget Name]
 drawScene _ = [borderWithLabel (txt "Create character") $ center $ txt "hello"]
 
+{- | Display a scene to allow character creation.
+When the character has been created, the user can press 'Enter' to continue with this character.
+If the user presses 'q', Nothing will be returned,
+which the 'main' function can handle accordingly (most likely quitting the game).
+-}
 createCharacter :: IO (Maybe Player)
 createCharacter = do
     defaultMain app Nothing

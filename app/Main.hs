@@ -7,10 +7,11 @@ import Scenes.Result (showResult)
 main :: IO ()
 main = do
     character <- createCharacter
+
+    -- If user quits, just return
+    -- Otherwise, run the game with the created character
     case character of
         Nothing -> return ()
         Just c -> do
-            fin <- playGame c
-            showResult fin
-
--- finalState <- playGame character showResult finalState
+            result <- playGame c
+            showResult result
