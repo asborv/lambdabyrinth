@@ -16,6 +16,7 @@ import Brick.Widgets.Center (center)
 import Creatures.Player (Class (..), Player (..))
 import Graphics.Vty (Event (..), Key (KChar, KEnter), defAttr)
 import Scenes.Scene (Name, Scene)
+import Items
 
 mrBean :: Player
 mrBean =
@@ -27,7 +28,7 @@ mrBean =
         , _cuirass = Nothing
         , _gloves = Nothing
         , _boots = Nothing
-        , _health = 10
+        , _health = 200
         , _characterClass = Wizard
         }
 
