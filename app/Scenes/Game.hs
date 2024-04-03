@@ -32,6 +32,7 @@ import Control.Lens.Combinators (to)
 import Control.Monad (when)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
+import Creatures.Player (health)
 import qualified Creatures.Player as P
 import Data.List (find, intercalate)
 import Data.List.Split
@@ -105,6 +106,9 @@ playerMove direction = do
             Nothing -> player . P.pos .= target
         reactToPlayerMove cell
 
+    me <- use player
+    when (me ^. health <= 0) halt
+
 playerAttackEvent :: M.Monster -> GameEvent
 playerAttackEvent monster = do
     me <- use player
@@ -116,14 +120,19 @@ playerAttackEvent monster = do
 
     -- The monster after being attacked
     let monster' = me `attack` monster
+        monsterIsAlive = monster ^. M.health > 0
 
     -- The remaining monsters after attacking the target
     let remaining =
             if monster' ^. M.health <= 0
                 then others
-                else monster' : others
+                else me `attack` monster' : others
 
+    -- Update the global list of monsters
     world . element curr . monsters .= remaining
+
+    -- If the monster is alive, attack the player
+    when monsterIsAlive (player %= (monster' `attack`))
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
