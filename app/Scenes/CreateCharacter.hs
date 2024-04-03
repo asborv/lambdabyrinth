@@ -15,8 +15,8 @@ import Brick.Widgets.Border (borderWithLabel)
 import Brick.Widgets.Center (center)
 import Creatures.Player (Class (..), Player (..))
 import Graphics.Vty (Event (..), Key (KChar, KEnter), defAttr)
-import Scenes.Scene (Name, Scene)
 import Items
+import Scenes.Scene (Name, Scene)
 
 mrBean :: Player
 mrBean =
@@ -58,5 +58,4 @@ If the user presses 'q', Nothing will be returned,
 which the 'main' function can handle accordingly (most likely quitting the game).
 -}
 createCharacter :: IO (Maybe Player)
-createCharacter = do
-    defaultMain app Nothing
+createCharacter = defaultMain app Nothing

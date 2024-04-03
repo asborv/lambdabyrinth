@@ -40,9 +40,9 @@ import qualified Data.Text as T
 import Draw
 import GHC.Arr
 import Graphics.Vty
+import Scenes.Scene
 import World
 
-type Name = ()
 type GameEvent = EventM Name GameState ()
 
 data GameState = GameState
@@ -54,7 +54,7 @@ data GameState = GameState
 
 makeLenses ''GameState
 
-app :: App GameState () Name
+app :: Scene GameState
 app =
     App
         { appDraw = drawGame
@@ -191,6 +191,6 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$>
                 else maybe (draw cell) draw monster
 
 playGame :: P.Player -> IO GameState
-playGame character = do
+playGame character =
     let initialState = GameState character 0 [emptyLevel, firstLevel]
-    defaultMain app initialState
+     in defaultMain app initialState

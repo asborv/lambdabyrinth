@@ -12,6 +12,4 @@ main = do
     -- Otherwise, run the game with the created character
     case character of
         Nothing -> return ()
-        Just c -> do
-            result <- playGame c
-            showResult result
+        Just c -> playGame c >>= showResult
