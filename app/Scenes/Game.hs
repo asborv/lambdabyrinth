@@ -16,11 +16,18 @@ import Brick
     , (<=>)
     )
 import Brick.Main (halt, neverShowCursor)
-import Brick.Types (modify)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
 import Control.Arrow ((>>>))
-import Control.Lens (element, makeLenses, use, (%~), (&), (.~), (^.))
+import Control.Lens
+    ( element
+    , makeLenses
+    , use
+    , (%=)
+    , (&)
+    , (.=)
+    , (^.)
+    )
 import Control.Lens.Combinators (to)
 import Control.Monad (when)
 import Creatures.Combatant
@@ -60,9 +67,9 @@ app =
                 EvKey (KChar 's') [] -> playerMove South
                 EvKey (KChar 'd') [] -> playerMove East
                 -- Manual level select (DEBUGGING)
-                EvKey (KChar 'b') [] -> modify (currentLevel %~ (+ 1))
-                EvKey (KChar 'B') [] -> modify (currentLevel %~ subtract 1)
-                EvKey (KChar 'R') [] -> modify (world . element 0 . monsters %~ (M.zombie :))
+                EvKey (KChar 'b') [] -> currentLevel %= (+ 1)
+                EvKey (KChar 'B') [] -> currentLevel %= subtract 1
+                EvKey (KChar 'R') [] -> world . element 0 . monsters %= (M.zombie :)
                 _ -> return ()
             _ -> return ()
         , appStartEvent = return ()
@@ -95,7 +102,7 @@ playerMove direction = do
         let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
         case monster of
             (Just m) -> playerAttackEvent m
-            Nothing -> modify (player . P.pos .~ target)
+            Nothing -> player . P.pos .= target
         reactToPlayerMove cell
 
 playerAttackEvent :: M.Monster -> GameEvent
@@ -116,14 +123,14 @@ playerAttackEvent monster = do
                 then others
                 else monster' : others
 
-    modify $ world . element curr . monsters .~ remaining
+    world . element curr . monsters .= remaining
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
 reactToPlayerMove :: Cell -> GameEvent
-reactToPlayerMove (Stair Downwards) = modify (currentLevel %~ (+ 1))
-reactToPlayerMove (Stair Upwards) = modify (currentLevel %~ subtract 1)
+reactToPlayerMove (Stair Downwards) = currentLevel %= (+ 1)
+reactToPlayerMove (Stair Upwards) = currentLevel %= subtract 1
 reactToPlayerMove _ = return ()
 
 drawGame :: GameState -> [Widget Name]
@@ -137,12 +144,11 @@ drawLog _ = border $ hLimit 10 $ center $ txt "Log"
 drawStats :: GameState -> Widget Name
 drawStats game =
     border
-        $ vLimit 3
-        $ center
-        $ txt
-        $ T.pack
-        $ intercalate
-            ", "
+        . vLimit 3
+        . center
+        . txt
+        . T.pack
+        . intercalate ", "
         $ game
             ^. world
                 . element (game ^. currentLevel)
