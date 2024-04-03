@@ -15,7 +15,6 @@ import Brick.Widgets.Border (borderWithLabel)
 import Brick.Widgets.Center (center)
 import Creatures.Player (Class (..), Player (..))
 import Graphics.Vty (Event (..), Key (KChar, KEnter), defAttr)
-import Items
 import Scenes.Scene (Name, Scene)
 
 mrBean :: Player
