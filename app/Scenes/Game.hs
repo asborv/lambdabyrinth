@@ -115,20 +115,16 @@ playerAttackEvent monster = do
     curr <- use currentLevel
     everyone <- use (world . element curr . monsters)
 
-    -- All other monsters than the target
+    -- Get target monster, attack it, and grab the remaining monsters
     let others = filter (/= monster) everyone
-
-    -- The monster after being attacked
-    let monster' = me `attack` monster
-        monsterIsAlive = monster ^. M.health > 0
-
-    -- The remaining monsters after attacking the target
-    let remaining =
-            if monster' ^. M.health <= 0
+        monster' = me `attack` monster
+        monsterIsAlive = monster' ^. M.health > 0
+        remaining =
+            if not monsterIsAlive
                 then others
-                else me `attack` monster' : others
+                else monster' : others
 
-    -- Update the global list of monsters
+    -- Update the list of all the monsters
     world . element curr . monsters .= remaining
 
     -- If the monster is alive, attack the player
