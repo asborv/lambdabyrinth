@@ -18,7 +18,6 @@ import Brick
 import Brick.Main (halt, neverShowCursor)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Control.Arrow ((>>>))
 import Control.Lens
     ( element
     , makeLenses
@@ -34,7 +33,7 @@ import Creatures.Combatant
 import qualified Creatures.Monsters as M
 import Creatures.Player (health)
 import qualified Creatures.Player as P
-import Data.List (find, intercalate)
+import Data.List (find)
 import Data.List.Split
 import qualified Data.Text as T
 import Draw
