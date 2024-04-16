@@ -119,7 +119,7 @@ mst nodes = take (n - 1) $ sortBy (compare `on` weight) edges
         b <- nodes
         if a == b
             then []
-            else minimumBy (compare `on` weight) [(x, y) | x <- range a, y <- range b]
+            else return $ minimumBy (compare `on` weight) [(x, y) | x <- range a, y <- range b]
         
         -- [(a, b) | a <- nodes, b <- nodes, a /= b]
 
