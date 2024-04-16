@@ -3,7 +3,7 @@ module World.WorldGeneration (create) where
 import Control.Monad.Fix (fix)
 import GHC.Arr (Array, assocs, bounds, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
-import World.World (Cell (..), Coordinate, Level (..), World)
+import World.World (Cell (..), Coordinate, Level (..))
 
 -- | Binary tree with data only in its leaves
 data BinaryTree a
