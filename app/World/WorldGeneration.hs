@@ -5,6 +5,7 @@ import GHC.Arr (Array, assocs, bounds, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.World (Cell (..), Coordinate)
 
+-- | Binary tree with data only in its leaves
 data BinaryTree a
     = Leaf a
     | (BinaryTree a) :-: (BinaryTree a)
@@ -27,9 +28,10 @@ split (left :-: right) = do
     if shouldSplitLeft
         then split left >>= return . (:-: right)
         else split right >>= return . (left :-:)
-split (Leaf r@(upperLeft, lowerRight)) = do
-    splitRatio <- randomRIO (0.3, 0.7) :: IO Double
-    direction <- randomRIO (Vertical, Horizontal)
+split (Leaf (upperLeft, lowerRight)) = do
+    splitRatio <- randomRIO (0.4, 0.6) :: IO Double
+    direction <- randomIO :: IO Direction
+
     -- The available room for splitting
     let splitBasis = fromIntegral $ case direction of
             Vertical -> (snd lowerRight - snd upperLeft)
@@ -43,35 +45,29 @@ split (Leaf r@(upperLeft, lowerRight)) = do
         -- Split at some point in range of the split basis
         splitPoint = round (splitRatio * splitBasis) + offset
 
+        -- The new bounding rectangle corners
         lowerRight' = case direction of
             Vertical -> (fst lowerRight, splitPoint)
             Horizontal -> (splitPoint, snd lowerRight)
-        left = (upperLeft, lowerRight')
-        right = (upperLeft', lowerRight)
         upperLeft' = case direction of
             Vertical -> (fst upperLeft, splitPoint)
             Horizontal -> (splitPoint, snd upperLeft)
-    print $
-        "Leaf "
-            <> show r
-            <> ". Splitting "
-            <> show direction
-            <> "ly at "
-            <> show splitPoint
-            <> "."
-    print $ "After split: " <> show ((Leaf left) :-: (Leaf right))
+
+        -- The branches to split this leaf into
+        left = (upperLeft, lowerRight')
+        right = (upperLeft', lowerRight)
+
     return $ (Leaf left) :-: (Leaf right)
 
-combine :: BinaryTree Rectangle -> Array Coordinate Cell
-combine (Leaf rectangle) = listArray rectangle (repeat Floor)
--- fill bounding rect with walls, and fill in the rooms recursively with rooms (using (//) or something)
-combine (left :-: right) =
+toCells :: BinaryTree Rectangle -> Array Coordinate Cell
+toCells (Leaf rectangle) = listArray rectangle (repeat Floor)
+toCells (left :-: right) =
     listArray ((y0, x0), (y1, x1)) (repeat Wall)
         // assocs leftRoom
         // assocs rightRoom
   where
-    leftRoom = combine left
-    rightRoom = combine right
+    leftRoom = toCells left
+    rightRoom = toCells right
     x0 = min (snd $ fst $ bounds leftRoom) (snd $ fst $ bounds rightRoom)
     y0 = min (fst $ fst $ bounds leftRoom) (fst $ fst $ bounds rightRoom)
     x1 = max (snd $ snd $ bounds leftRoom) (snd $ snd $ bounds rightRoom)
@@ -86,26 +82,24 @@ shrinkWalls (Leaf ((y0, x0), (y1, x1))) = do
     ratio <- randomRIO (0.1, 0.15) :: IO Double
     let width = fromIntegral (x1 - x0) :: Double
         height = fromIntegral (y1 - y0) :: Double
-        dx = round (ratio * width)
-        dy = round (ratio * height)
+        dx = max 1 (round (ratio * width))
+        dy = max 1 (round (ratio * height))
     return $ Leaf (((y0 + dy), (x0 + dx)), ((y1 - dy), (x1 - dx)))
 
--- Leaf ((y0 + 1, x0 + 1), (y1 - 1, x1 - 1))
-
-leafs :: BinaryTree a -> Int
-leafs (Leaf _) = 1
-leafs (left :-: right) = leafs left + leafs right
+leaves :: BinaryTree a -> Int
+leaves (Leaf _) = 1
+leaves (left :-: right) = leaves left + leaves right
 
 create :: Int -> Int -> IO (Array Coordinate Cell)
 create width height = do
     let boundingRectangle = ((0, 0), (height - 1, width - 1))
-    let initial = Leaf boundingRectangle
+        initial = Leaf boundingRectangle
+        walledRoom = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
         tree' <- split tree
-        print (leafs tree')
-        if leafs tree' <= 8
+        if leaves tree' <= 10
             then loop tree'
             else do
                 tree'' <- shrinkWalls tree'
-                print tree''
-                return $ listArray boundingRectangle (repeat Wall) // assocs (combine tree'')
+                let cells = toCells tree''
+                return $ walledRoom // assocs cells

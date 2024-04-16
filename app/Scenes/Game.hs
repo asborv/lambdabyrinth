@@ -92,7 +92,7 @@ playerMove direction = do
     level <- use (world . to (!! curr))
     let levelCells = level ^. cells
         cell = levelCells ! target
-        isLegalMove = target `elem` indices levelCells && isTraversible cell
+        isLegalMove = target `elem` indices levelCells -- && isTraversible cell
         target = case direction of
             North -> (y - 1, x)
             East -> (y, x + 1)
@@ -157,12 +157,7 @@ drawStats game =
         . center
         . txt
         . T.pack
-        . intercalate ", "
-        $ game
-            ^. world
-                . element (game ^. currentLevel)
-                . monsters
-                . to (map ((^. M.health) >>> show))
+        $ game ^. player . P.pos . to show
 
 drawEquipment :: GameState -> Widget Name
 drawEquipment game = border $ hLimit 20 $ center $ vBox slots
@@ -193,6 +188,6 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$>
 
 playGame :: P.Player -> IO GameState
 playGame character = do
-    w <- create 50 50
+    w <- create 40 40
     let initialState = GameState character 0 [Level w []]
     defaultMain app initialState
