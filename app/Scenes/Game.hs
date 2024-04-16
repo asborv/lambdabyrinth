@@ -42,6 +42,7 @@ import GHC.Arr
 import Graphics.Vty
 import Scenes.Scene
 import World.World
+import World.WorldGeneration (create)
 
 type GameEvent = EventM Name GameState ()
 
@@ -191,6 +192,7 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$>
                 else maybe (draw cell) draw monster
 
 playGame :: P.Player -> IO GameState
-playGame character =
-    let initialState = GameState character 0 [emptyLevel, firstLevel]
-     in defaultMain app initialState
+playGame character = do
+    w <- create 50 50
+    let initialState = GameState character 0 [Level w []]
+    defaultMain app initialState
