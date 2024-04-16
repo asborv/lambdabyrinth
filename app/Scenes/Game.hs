@@ -41,7 +41,7 @@ import Draw
 import GHC.Arr
 import Graphics.Vty
 import Scenes.Scene
-import World
+import World.World
 
 type GameEvent = EventM Name GameState ()
 

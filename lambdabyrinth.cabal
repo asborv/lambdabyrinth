@@ -71,7 +71,8 @@ executable lambdabyrinth
         Creatures.Player
         Items
         Draw
-        World
+        World.World
+        World.WorldGeneration
         Scenes.CreateCharacter
         Scenes.Game
         Scenes.Result

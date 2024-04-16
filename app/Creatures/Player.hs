@@ -9,7 +9,7 @@ import Control.Lens (makeLenses, (%~), (&), (^.))
 import Control.Lens.Combinators (to)
 import Creatures.Combatant
 import Items
-import World (Coordinate)
+import World.World (Coordinate)
 
 data Class = Wizard | Warrior | Rogue deriving (Show)
 

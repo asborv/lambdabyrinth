@@ -10,7 +10,7 @@ import Creatures.Monsters
 import Creatures.Player
 import qualified Data.Text as T
 import Items
-import World
+import World.World
 
 class Drawable a where
     draw :: a -> Widget n
