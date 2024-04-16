@@ -39,6 +39,7 @@ import qualified Data.Text as T
 import Draw
 import GHC.Arr
 import Graphics.Vty
+import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
 import Scenes.Scene
 import World.World
 import World.WorldGeneration (create)
@@ -187,6 +188,6 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$>
 
 playGame :: P.Player -> IO GameState
 playGame character = do
-    w <- create 40 40
+    w <- interleaveSequenceIO $ repeat (create 40 40)
     let initialState = GameState character 0 w
     defaultMain app initialState

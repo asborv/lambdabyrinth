@@ -90,7 +90,7 @@ leaves :: BinaryTree a -> Int
 leaves (Leaf _) = 1
 leaves (left :-: right) = leaves left + leaves right
 
-create :: Int -> Int -> IO World
+create :: Int -> Int -> IO Level
 create width height = do
     let boundingRectangle = ((0, 0), (height - 1, width - 1))
         initial = Leaf boundingRectangle
@@ -102,4 +102,4 @@ create width height = do
             else do
                 tree'' <- shrinkWalls tree'
                 let cells = toCells tree''
-                return [Level (allWalls // assocs cells) []]
+                return $ Level (allWalls // assocs cells) []

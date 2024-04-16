@@ -91,7 +91,8 @@ executable lambdabyrinth
         split >= 0.2.5,
         containers >= 0.6.7,
         lens,
-        text
+        text,
+        hw-prim
 
     default-extensions:
         LambdaCase,
