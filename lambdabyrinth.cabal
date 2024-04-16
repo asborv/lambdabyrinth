@@ -83,7 +83,7 @@ executable lambdabyrinth
 
     -- Other library packages from which modules are imported.
     build-depends:
-        base ^>=4.19.0.0,
+        base <5,
         brick,
         vty >= 6.0,
         vty-crossplatform,
