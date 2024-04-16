@@ -1,6 +1,7 @@
 module World.WorldGeneration (create) where
 
 import Control.Monad.Fix (fix)
+import Data.Functor ((<&>))
 import GHC.Arr (Array, assocs, bounds, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.World (Cell (..), Coordinate, Level (..))
@@ -17,7 +18,7 @@ instance Random Direction where
     random g = case randomR (True, False) g of
         (False, g') -> (Vertical, g')
         (True, g') -> (Horizontal, g')
-    randomR _ g = random g
+    randomR _ = random
 
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
@@ -26,16 +27,16 @@ split :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
 split (left :-: right) = do
     shouldSplitLeft <- randomIO :: IO Bool
     if shouldSplitLeft
-        then split left >>= return . (:-: right)
-        else split right >>= return . (left :-:)
+        then split left <&> (:-: right)
+        else split right <&> (:-: left)
 split (Leaf (upperLeft, lowerRight)) = do
     splitRatio <- randomRIO (0.4, 0.6) :: IO Double
     direction <- randomIO :: IO Direction
 
     -- The available room for splitting
     let splitBasis = fromIntegral $ case direction of
-            Vertical -> (snd lowerRight - snd upperLeft)
-            Horizontal -> (fst lowerRight - fst upperLeft)
+            Vertical -> snd lowerRight - snd upperLeft
+            Horizontal -> fst lowerRight - fst upperLeft
 
         -- Offset for which to compute the split
         offset = case direction of
@@ -57,7 +58,7 @@ split (Leaf (upperLeft, lowerRight)) = do
         left = (upperLeft, lowerRight')
         right = (upperLeft', lowerRight)
 
-    return $ (Leaf left) :-: (Leaf right)
+    return $ Leaf left :-: Leaf right
 
 toCells :: BinaryTree Rectangle -> Array Coordinate Cell
 toCells (Leaf rectangle) = listArray rectangle (repeat Floor)
@@ -84,7 +85,7 @@ shrinkWalls (Leaf ((y0, x0), (y1, x1))) = do
         height = fromIntegral (y1 - y0) :: Double
         dx = max 1 (round (ratio * width))
         dy = max 1 (round (ratio * height))
-    return $ Leaf (((y0 + dy), (x0 + dx)), ((y1 - dy), (x1 - dx)))
+    return $ Leaf ((y0 + dy, x0 + dx), (y1 - dy, x1 - dx))
 
 leaves :: BinaryTree a -> Int
 leaves (Leaf _) = 1
