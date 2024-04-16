@@ -1,8 +1,10 @@
 module World.WorldGeneration (create) where
 
 import Control.Monad.Fix (fix)
+import Data.Function (on)
 import Data.Functor ((<&>))
-import GHC.Arr (Array, assocs, bounds, listArray, (//))
+import Data.List (sortBy, minimumBy)
+import GHC.Arr (Array, assocs, bounds, listArray, (//), range)
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.World (Cell (..), Coordinate, Level (..))
 
@@ -22,6 +24,8 @@ instance Random Direction where
 
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
+
+type Edge = (Coordinate, Coordinate)
 
 split :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
 split (left :-: right) = do
@@ -91,6 +95,37 @@ leaves :: BinaryTree a -> Int
 leaves (Leaf _) = 1
 leaves (left :-: right) = leaves left + leaves right
 
+flatten :: BinaryTree a -> [a]
+flatten (Leaf a) = [a]
+flatten (left :-: right) = flatten left <> flatten right
+
+mst :: [Rectangle] -> [Edge]
+mst nodes = take (n - 1) $ sortBy (compare `on` weight) edges
+  where
+    n = length nodes
+
+    -- | The weight of an edge is the distance between its nodes
+    weight :: Edge -> Double
+    weight (a, b) = a `distance` b
+
+    -- | The Euclidean distance between two coordinates
+    distance :: Coordinate -> Coordinate -> Double
+    distance (y0, x0) (y1, x1) = sqrt (fromIntegral (y1 - y0) ^ 2 + fromIntegral (x1 - x0) ^ 2)
+
+    -- | Cartesian product of all possible nodes (excluding reflexive edges)
+    edges :: [Edge]
+    edges = do
+        a <- nodes
+        b <- nodes
+        if a == b
+            then []
+            else minimumBy (compare `on` weight) [(x, y) | x <- range a, y <- range b]
+        
+        -- [(a, b) | a <- nodes, b <- nodes, a /= b]
+
+center :: Rectangle -> Coordinate
+center ((y0, x0), (y1, x1)) = ((y0 + y1) `div` 2, (x0 + x1) `div` 2)
+
 create :: Int -> Int -> IO Level
 create width height = do
     let boundingRectangle = ((0, 0), (height - 1, width - 1))
@@ -103,4 +138,6 @@ create width height = do
             else do
                 tree'' <- shrinkWalls tree'
                 let cells = toCells tree''
-                return $ Level (allWalls // assocs cells) []
+                    centers = map ((, Door) . center) $ flatten tree''
+                print centers
+                return $ Level (allWalls // assocs cells // centers) []
