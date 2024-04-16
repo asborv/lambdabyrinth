@@ -188,5 +188,5 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$>
 playGame :: P.Player -> IO GameState
 playGame character = do
     w <- create 40 40
-    let initialState = GameState character 0 [Level w []]
+    let initialState = GameState character 0 w
     defaultMain app initialState

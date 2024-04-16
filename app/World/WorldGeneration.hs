@@ -3,7 +3,7 @@ module World.WorldGeneration (create) where
 import Control.Monad.Fix (fix)
 import GHC.Arr (Array, assocs, bounds, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
-import World.World (Cell (..), Coordinate)
+import World.World (Cell (..), Coordinate, Level (..), World)
 
 -- | Binary tree with data only in its leaves
 data BinaryTree a
@@ -90,11 +90,11 @@ leaves :: BinaryTree a -> Int
 leaves (Leaf _) = 1
 leaves (left :-: right) = leaves left + leaves right
 
-create :: Int -> Int -> IO (Array Coordinate Cell)
+create :: Int -> Int -> IO World
 create width height = do
     let boundingRectangle = ((0, 0), (height - 1, width - 1))
         initial = Leaf boundingRectangle
-        walledRoom = listArray boundingRectangle (repeat Wall)
+        allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
         tree' <- split tree
         if leaves tree' <= 10
@@ -102,4 +102,4 @@ create width height = do
             else do
                 tree'' <- shrinkWalls tree'
                 let cells = toCells tree''
-                return $ walledRoom // assocs cells
+                return [Level (allWalls // assocs cells) []]
