@@ -86,18 +86,11 @@ shrinkWalls (Leaf ((y0, x0), (y1, x1))) = do
     ratio <- randomRIO (0.1, 0.15) :: IO Double
     let width = fromIntegral (x1 - x0) :: Double
         height = fromIntegral (y1 - y0) :: Double
-    return $ Leaf ((y0 + 1, x0 + 1), (y1 - 1, x1 - 1))
+        dx = round (ratio * width)
+        dy = round (ratio * height)
+    return $ Leaf (((y0 + dy), (x0 + dx)), ((y1 - dy), (x1 - dx)))
 
--- Leaf
---     (
---         ( round (fromIntegral y0 + ratio * height)
---         , round (fromIntegral x0 + ratio * width)
---         )
---     ,
---         ( round (fromIntegral y1 - ratio * height)
---         , round (fromIntegral x1 - ratio * width)
---         )
---     )
+-- Leaf ((y0 + 1, x0 + 1), (y1 - 1, x1 - 1))
 
 leafs :: BinaryTree a -> Int
 leafs (Leaf _) = 1
