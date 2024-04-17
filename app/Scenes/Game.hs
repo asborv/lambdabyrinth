@@ -28,7 +28,7 @@ import Control.Lens
     , (^.)
     )
 import Control.Lens.Combinators (to)
-import Control.Monad (when)
+import Control.Monad (unless, when)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
 import Creatures.Player (health)
@@ -114,7 +114,7 @@ playerAttackEvent :: M.Monster -> GameEvent
 playerAttackEvent monster = do
     me <- use player
     curr <- use currentLevel
-    everyone <- use (world . element curr . monsters)
+    everyone <- use (world . to (!! curr) . monsters)
 
     -- Get target monster, attack it, and grab the remaining monsters
     let others = filter (/= monster) everyone
@@ -128,11 +128,11 @@ playerAttackEvent monster = do
     -- Update the list of all the monsters
     world . element curr . monsters .= remaining
 
-    -- If the monster is alive, attack the player
-    -- Otherwise, move the player to the position of the deceased monster
-    if monsterIsAlive
-        then player %= (monster' `attack`)
-        else player . P.pos .= monster' ^. M.position
+    -- Have the monster attack the player
+    player %= (monster' `attack`)
+
+    -- If the monster is dead, move the player to the position of the deceased monster
+    unless (monsterIsAlive) (player . P.pos .= monster' ^. M.position)
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
@@ -157,7 +157,8 @@ drawStats game =
         . center
         . txt
         . T.pack
-        $ game ^. player . P.pos . to show
+        . show
+        $ game ^. player . P.health
 
 drawEquipment :: GameState -> Widget Name
 drawEquipment game = border $ hLimit 20 $ center $ vBox slots
