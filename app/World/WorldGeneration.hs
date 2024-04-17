@@ -139,5 +139,4 @@ create width height = do
                 tree'' <- shrinkWalls tree'
                 let cells = toCells tree''
                     centers = map ((,Door) . center) $ flatten tree''
-                print centers
                 return $ Level (allWalls // assocs cells // centers) []
