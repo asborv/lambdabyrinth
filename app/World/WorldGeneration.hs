@@ -4,7 +4,7 @@ import Control.Monad.Fix (fix)
 import Data.Function (on)
 import Data.Functor ((<&>))
 import Data.List (minimumBy)
-import GHC.Arr (Array, assocs, bounds, listArray, (//))
+import GHC.Arr (Array, assocs, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.World (Cell (..), Coordinate, Level (..))
 
@@ -64,19 +64,9 @@ split (Leaf (upperLeft, lowerRight)) = do
 
     return $ Leaf left :-: Leaf right
 
-toCells :: BinaryTree Rectangle -> Array Coordinate Cell
-toCells (Leaf rectangle) = listArray rectangle (repeat Floor)
-toCells (left :-: right) =
-    listArray ((y0, x0), (y1, x1)) (repeat Wall)
-        // assocs leftRoom
-        // assocs rightRoom
-  where
-    leftRoom = toCells left
-    rightRoom = toCells right
-    x0 = min (snd $ fst $ bounds leftRoom) (snd $ fst $ bounds rightRoom)
-    y0 = min (fst $ fst $ bounds leftRoom) (fst $ fst $ bounds rightRoom)
-    x1 = max (snd $ snd $ bounds leftRoom) (snd $ snd $ bounds rightRoom)
-    y1 = max (fst $ snd $ bounds leftRoom) (fst $ snd $ bounds rightRoom)
+-- | Create an array representation of each room in the binarytree's leaves
+getRooms :: BinaryTree Rectangle -> [Array Coordinate Cell]
+getRooms = map (\rectangle -> listArray rectangle (repeat Floor)) . flatten
 
 shrinkWalls :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
 shrinkWalls (left :-: right) = do
@@ -142,7 +132,11 @@ create width height = do
             then loop tree'
             else do
                 tree'' <- shrinkWalls tree'
-                let cells = toCells tree''
-                    centers = map center $ flatten tree''
-                    tunnels = concatMap dig $ mst centers
-                return $ Level (allWalls // assocs cells // tunnels) []
+                let rooms = assocs <$> getRooms tree'' --    Get the rooms of the (shrunken) binary tree
+                    centers = map center $ flatten tree'' -- Get the center of each room
+                    tunnels = concatMap dig $ mst centers -- Use the rooms' centers to calculate an MST between them
+
+                -- 1. Take a level filled with walls
+                -- 2. Draw the tunnels between the rooms' centers
+                -- 3. Draw the rooms
+                return $ Level (foldl (//) (allWalls // tunnels) rooms) []

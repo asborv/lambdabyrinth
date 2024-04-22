@@ -29,7 +29,7 @@ instance Show Cell where
     show Door = "λ "
     show Empty = "ε "
     show Floor = ". "
-    show Tunnel = "| "
+    show Tunnel = ". "
     show Wall = "# "
 
 data Level = Level
