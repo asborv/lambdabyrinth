@@ -1,10 +1,12 @@
 module World.WorldGeneration (create) where
 
+import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
-import Data.Function (on)
+import Creatures.Monsters (Monster, position, zombie)
+import Data.Function (on, (&))
 import Data.Functor ((<&>))
 import Data.List (minimumBy)
-import GHC.Arr (Array, assocs, listArray, (//))
+import GHC.Arr (Array, assocs, indices, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.World (Cell (..), Coordinate, Level (..))
 
@@ -121,6 +123,12 @@ dig ((y0, x0), (y1, x1)) = map (,Tunnel) $ vertical <> horizontal
     vertical = [(y, x0) | y <- [min y0 y1 .. max y0 y1]]
     horizontal = [(y1, x) | x <- [min x0 x1 .. max x0 x1]]
 
+addMonsters :: [Coordinate] -> IO [Monster]
+addMonsters cells = do
+    rs <- mapM (const randomIO) cells :: IO [Double]
+    let cellsToPopulate = map fst $ filter ((> 0.95) . snd) (zip cells rs)
+    return $ map (\c -> zombie & position .~ c) $ cellsToPopulate
+
 create :: Int -> Int -> IO Level
 create width height = do
     let boundingRectangle = ((0, 0), (height - 1, width - 1))
@@ -132,11 +140,11 @@ create width height = do
             then loop tree'
             else do
                 tree'' <- shrinkWalls tree'
-                let rooms = assocs <$> getRooms tree'' --    Get the rooms of the (shrunken) binary tree
+                let rooms = getRooms tree'' --    Get the rooms of the (shrunken) binary tree
                     centers = map center $ flatten tree'' -- Get the center of each room
                     tunnels = concatMap dig $ mst centers -- Use the rooms' centers to calculate an MST between them
+                    levelCells = foldl (//) (allWalls // tunnels) (assocs <$> rooms)
 
-                -- 1. Take a level filled with walls
-                -- 2. Draw the tunnels between the rooms' centers
-                -- 3. Draw the rooms
-                return $ Level (foldl (//) (allWalls // tunnels) rooms) []
+                monsters <- addMonsters (concatMap indices rooms)
+
+                return $ Level levelCells monsters
