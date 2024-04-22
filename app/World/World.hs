@@ -3,7 +3,7 @@ Module      : World
 Description : Building blocks for the game world
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module World where
+module World.World where
 
 import Control.Arrow ((>>>))
 import Control.Lens (both, makeLenses, over, to, (&), (.~), (^.))
@@ -29,7 +29,7 @@ instance Show Cell where
     show Door = "λ "
     show Empty = "ε "
     show Floor = ". "
-    show Tunnel = "| "
+    show Tunnel = ". "
     show Wall = "# "
 
 data Level = Level

@@ -18,7 +18,6 @@ import Brick
 import Brick.Main (halt, neverShowCursor)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Control.Arrow ((>>>))
 import Control.Lens
     ( element
     , makeLenses
@@ -29,19 +28,21 @@ import Control.Lens
     , (^.)
     )
 import Control.Lens.Combinators (to)
-import Control.Monad (when)
+import Control.Monad (unless, when)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
 import Creatures.Player (health)
 import qualified Creatures.Player as P
-import Data.List (find, intercalate)
+import Data.List (find)
 import Data.List.Split
 import qualified Data.Text as T
 import Draw
 import GHC.Arr
 import Graphics.Vty
+import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
 import Scenes.Scene
-import World
+import World.World
+import World.WorldGeneration (create)
 
 type GameEvent = EventM Name GameState ()
 
@@ -91,7 +92,7 @@ playerMove direction = do
     level <- use (world . to (!! curr))
     let levelCells = level ^. cells
         cell = levelCells ! target
-        isLegalMove = target `elem` indices levelCells && isTraversible cell
+        isLegalMove = target `elem` indices levelCells -- && isTraversible cell
         target = case direction of
             North -> (y - 1, x)
             East -> (y, x + 1)
@@ -113,7 +114,7 @@ playerAttackEvent :: M.Monster -> GameEvent
 playerAttackEvent monster = do
     me <- use player
     curr <- use currentLevel
-    everyone <- use (world . element curr . monsters)
+    everyone <- use (world . to (!! curr) . monsters)
 
     -- Get target monster, attack it, and grab the remaining monsters
     let others = filter (/= monster) everyone
@@ -127,11 +128,11 @@ playerAttackEvent monster = do
     -- Update the list of all the monsters
     world . element curr . monsters .= remaining
 
-    -- If the monster is alive, attack the player
-    -- Otherwise, move the player to the position of the deceased monster
-    if monsterIsAlive
-        then player %= (monster' `attack`)
-        else player . P.pos .= monster' ^. M.position
+    -- Have the monster attack the player
+    player %= (monster' `attack`)
+
+    -- If the monster is dead, move the player to the position of the deceased monster
+    unless (monsterIsAlive) (player . P.pos .= monster' ^. M.position)
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
@@ -156,12 +157,8 @@ drawStats game =
         . center
         . txt
         . T.pack
-        . intercalate ", "
-        $ game
-            ^. world
-                . element (game ^. currentLevel)
-                . monsters
-                . to (map ((^. M.health) >>> show))
+        . show
+        $ game ^. player . P.health
 
 drawEquipment :: GameState -> Widget Name
 drawEquipment game = border $ hLimit 20 $ center $ vBox slots
@@ -191,6 +188,7 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$>
                 else maybe (draw cell) draw monster
 
 playGame :: P.Player -> IO GameState
-playGame character =
-    let initialState = GameState character 0 [emptyLevel, firstLevel]
-     in defaultMain app initialState
+playGame character = do
+    w <- interleaveSequenceIO $ repeat (create 40 40)
+    let initialState = GameState character 0 w
+    defaultMain app initialState
