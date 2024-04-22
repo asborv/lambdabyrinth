@@ -98,6 +98,7 @@ flatten (left :-: right) = flatten left <> flatten right
 
 {- | Find the edges that produce the minimum spanning tree for a set of points in a plane.
 Candidate edges are all pairs between the nodes that are passed.
+Inspired by: https://stackoverflow.com/questions/65546555/implementing-prims-algorithm-in-haskell
 -}
 mst :: [Coordinate] -> [Edge]
 mst [] = []
