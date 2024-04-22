@@ -3,8 +3,8 @@ module World.WorldGeneration (create) where
 import Control.Monad.Fix (fix)
 import Data.Function (on)
 import Data.Functor ((<&>))
-import Data.List (minimumBy, sortBy)
-import GHC.Arr (Array, assocs, bounds, listArray, range, (//))
+import Data.List (minimumBy)
+import GHC.Arr (Array, assocs, bounds, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.World (Cell (..), Coordinate, Level (..))
 
@@ -84,7 +84,7 @@ shrinkWalls (left :-: right) = do
     right' <- shrinkWalls right
     return $ left' :-: right'
 shrinkWalls (Leaf ((y0, x0), (y1, x1))) = do
-    ratio <- randomRIO (0.1, 0.15) :: IO Double
+    ratio <- randomRIO (0.2, 0.3) :: IO Double
     let width = fromIntegral (x1 - x0) :: Double
         height = fromIntegral (y1 - y0) :: Double
         dx = max 1 (round (ratio * width))
@@ -99,32 +99,37 @@ flatten :: BinaryTree a -> [a]
 flatten (Leaf a) = [a]
 flatten (left :-: right) = flatten left <> flatten right
 
-mst :: [Rectangle] -> [Edge]
-mst nodes = take (n - 1) $ sortBy (compare `on` weight) edges
+{- | Find the edges that produce the minimum spanning tree for a set of points in a plane.
+Candidate edges are all pairs between the nodes that are passed.
+-}
+mst :: [Coordinate] -> [Edge]
+mst [] = []
+mst (n : ns) = mst' ns [n] []
   where
-    n = length nodes
+    mst' :: [Coordinate] -> [Coordinate] -> [Edge] -> [Edge]
+    mst' [] _ edges = edges
+    mst' (x : xs) visited edges
+        | x `elem` visited = mst' xs visited edges
+        | otherwise =
+            let shortest = minimumBy (compare `on` weight) ((x,) <$> visited)
+             in mst' xs (x : visited) (shortest : edges)
 
     -- The weight of an edge is the distance between its nodes
     weight :: Edge -> Double
     weight (a, b) = a `distance` b
 
-    -- The Euclidean distance between two coordinates
     distance :: Coordinate -> Coordinate -> Double
     distance (y0, x0) (y1, x1) = sqrt (fromIntegral (y1 - y0) ^ 2 + fromIntegral (x1 - x0) ^ 2)
 
-    -- Cartesian product of all possible nodes (excluding reflexive edges)
-    edges :: [Edge]
-    edges = do
-        a <- nodes
-        b <- nodes
-        if a == b
-            then []
-            else return $ minimumBy (compare `on` weight) [(x, y) | x <- range a, y <- range b]
-
--- [(a, b) | a <- nodes, b <- nodes, a /= b]
-
 center :: Rectangle -> Coordinate
 center ((y0, x0), (y1, x1)) = ((y0 + y1) `div` 2, (x0 + x1) `div` 2)
+
+-- | Dig an L-shaped tunnel between two nodes
+dig :: Edge -> [(Coordinate, Cell)]
+dig ((y0, x0), (y1, x1)) = map (,Tunnel) $ vertical <> horizontal
+  where
+    vertical = [(y, x0) | y <- [min y0 y1 .. max y0 y1]]
+    horizontal = [(y1, x) | x <- [min x0 x1 .. max x0 x1]]
 
 create :: Int -> Int -> IO Level
 create width height = do
@@ -133,10 +138,11 @@ create width height = do
         allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
         tree' <- split tree
-        if leaves tree' <= 10
+        if leaves tree' <= 6
             then loop tree'
             else do
                 tree'' <- shrinkWalls tree'
                 let cells = toCells tree''
-                    centers = map ((,Door) . center) $ flatten tree''
-                return $ Level (allWalls // assocs cells // centers) []
+                    centers = map center $ flatten tree''
+                    tunnels = concatMap dig $ mst centers
+                return $ Level (allWalls // assocs cells // tunnels) []
