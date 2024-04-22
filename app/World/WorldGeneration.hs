@@ -5,10 +5,15 @@ import Control.Monad.Fix (fix)
 import Creatures.Monsters (Monster, position, zombie)
 import Data.Function (on, (&))
 import Data.Functor ((<&>))
-import Data.List (minimumBy)
+import Data.List (maximumBy, minimumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
-import World.World (Cell (..), Coordinate, Level (..))
+import World.World
+    ( Cell (..)
+    , Coordinate
+    , Level (..)
+    , VerticalDirection (Downwards, Upwards)
+    )
 
 -- | Binary tree with data only in its leaves
 data BinaryTree a
@@ -106,12 +111,12 @@ mst (n : ns) = mst' ns [n] []
             let shortest = minimumBy (compare `on` weight) ((x,) <$> visited)
              in mst' xs (x : visited) (shortest : edges)
 
-    -- The weight of an edge is the distance between its nodes
-    weight :: Edge -> Double
-    weight (a, b) = a `distance` b
+-- The weight of an edge is the distance between its nodes
+weight :: Edge -> Double
+weight (a, b) = a `distance` b
 
-    distance :: Coordinate -> Coordinate -> Double
-    distance (y0, x0) (y1, x1) = sqrt (fromIntegral (y1 - y0) ^ 2 + fromIntegral (x1 - x0) ^ 2)
+distance :: Coordinate -> Coordinate -> Double
+distance (y0, x0) (y1, x1) = sqrt (fromIntegral (y1 - y0) ^ 2 + fromIntegral (x1 - x0) ^ 2)
 
 center :: Rectangle -> Coordinate
 center ((y0, x0), (y1, x1)) = ((y0 + y1) `div` 2, (x0 + x1) `div` 2)
@@ -123,11 +128,31 @@ dig ((y0, x0), (y1, x1)) = map (,Tunnel) $ vertical <> horizontal
     vertical = [(y, x0) | y <- [min y0 y1 .. max y0 y1]]
     horizontal = [(y1, x) | x <- [min x0 x1 .. max x0 x1]]
 
-addMonsters :: [Coordinate] -> IO [Monster]
-addMonsters cells = do
+generateMonsters :: [Coordinate] -> IO [Monster]
+generateMonsters cells = do
     rs <- mapM (const randomIO) cells :: IO [Double]
     let cellsToPopulate = map fst $ filter ((> 0.95) . snd) (zip cells rs)
     return $ map (\c -> zombie & position .~ c) $ cellsToPopulate
+
+{- | Count the number of occurrences of a specific element in a list
+Courtesy of: https://stackoverflow.com/questions/19554984/haskell-count-occurrences-function
+-}
+count :: Eq a => a -> [a] -> Int
+count x = length . filter (== x)
+
+{- | Generate staircases, one up, one down.
+They are placed at dead ends (leaves) of the provided edges, as distant as possible away from each other.
+(Distance is measured in diagonal pixels, not neccesarily the longes path).
+-}
+generateStairs :: [Edge] -> ((Coordinate, Cell), (Coordinate, Cell))
+generateStairs edges = (\(a, b) -> ((a, Stair Upwards), (b, Stair Downwards))) longest
+  where
+    nodes = concatMap (\(a, b) -> [a, b]) edges
+    deadEnds = filter (\node -> count node nodes == 1) nodes
+    longest =
+        maximumBy
+            (compare `on` weight)
+            [(a, b) | a <- deadEnds, b <- deadEnds]
 
 create :: Int -> Int -> IO Level
 create width height = do
@@ -136,15 +161,16 @@ create width height = do
         allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
         tree' <- split tree
-        if leaves tree' <= 6
+        if leaves tree' <= 40
             then loop tree'
             else do
                 tree'' <- shrinkWalls tree'
-                let rooms = getRooms tree'' --    Get the rooms of the (shrunken) binary tree
-                    centers = map center $ flatten tree'' -- Get the center of each room
-                    tunnels = concatMap dig $ mst centers -- Use the rooms' centers to calculate an MST between them
-                    levelCells = foldl (//) (allWalls // tunnels) (assocs <$> rooms)
+                let rooms = getRooms tree'' --                   Get the rooms of the (shrunken) binary tree
+                    centers = map center $ flatten tree'' --     Get the center of each room
+                    tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them
+                    (up, down) = generateStairs $ mst centers -- Place the up- and downwards staircases as long away from each other as possible
+                    levelCells = foldl (//) (allWalls // tunnels) (assocs <$> rooms) // [up] // [down]
 
-                monsters <- addMonsters (concatMap indices rooms)
+                monsters <- generateMonsters (concatMap indices rooms)
 
                 return $ Level levelCells monsters
