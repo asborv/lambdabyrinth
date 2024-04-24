@@ -132,7 +132,7 @@ playerAttackEvent monster = do
     player %= (monster' `attack`)
 
     -- If the monster is dead, move the player to the position of the deceased monster
-    unless (monsterIsAlive) (player . P.pos .= monster' ^. M.position)
+    unless monsterIsAlive (player . P.pos .= monster' ^. M.position)
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases

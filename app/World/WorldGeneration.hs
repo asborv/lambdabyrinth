@@ -133,7 +133,7 @@ generateMonsters :: [Coordinate] -> IO [Monster]
 generateMonsters cells = do
     rs <- mapM (const randomIO) cells :: IO [Double]
     let cellsToPopulate = map fst $ filter ((> 0.95) . snd) (zip cells rs)
-    return $ map (\c -> zombie & position .~ c) $ cellsToPopulate
+    return $ map (\c -> zombie & position .~ c) cellsToPopulate
 
 {- | Count the number of occurrences of a specific element in a list
 Courtesy of: https://stackoverflow.com/questions/19554984/haskell-count-occurrences-function
@@ -162,7 +162,7 @@ create width height = do
         allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
         tree' <- split tree
-        if leaves tree' <= 40
+        if leaves tree' <= 6
             then loop tree'
             else do
                 tree'' <- shrinkWalls tree'
