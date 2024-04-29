@@ -38,6 +38,15 @@ jobs:
           ${{ runner.os }}-build-
           ${{ runner.os }}-
 
+    - name: 'Set up HLint'
+      uses: haskell-actions/hlint-setup@v2
+
+    - name: 'Run HLint'
+      uses: haskell-actions/hlint-run@v2
+      with:
+        path: app/
+        fail-on: warning
+
     - name: Install dependencies
       run: |
         cabal update
