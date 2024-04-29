@@ -132,7 +132,7 @@ playerAttackEvent monster = do
     player %= (monster' `attack`)
 
     -- If the monster is dead, move the player to the position of the deceased monster
-    unless (monsterIsAlive) (player . P.pos .= monster' ^. M.position)
+    unless monsterIsAlive (player . P.pos .= monster' ^. M.position)
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
@@ -148,7 +148,7 @@ drawGame game =
      in [ui]
 
 drawLog :: GameState -> Widget Name
-drawLog _ = border $ hLimit 10 $ center $ txt "Log"
+drawLog _ = border . hLimit 10 . center $ txt "Log"
 
 drawStats :: GameState -> Widget Name
 drawStats game =
@@ -161,7 +161,7 @@ drawStats game =
         $ game ^. player . P.health
 
 drawEquipment :: GameState -> Widget Name
-drawEquipment game = border $ hLimit 20 $ center $ vBox slots
+drawEquipment game = border . hLimit 20 . center $ vBox slots
   where
     slots = [handSlot, helmetSlot, cuirassSlot, glovesSlot, bootsSlot]
     handSlot = itemSlot (game ^. player . P.hand)
@@ -175,7 +175,7 @@ drawEquipment game = border $ hLimit 20 $ center $ vBox slots
     itemSlot (Just item) = border (draw item)
 
 drawLevel :: GameState -> Widget Name
-drawLevel game = borderWithLabel (txt "Lambdabyrinth") $ center $ vBox (hBox <$> rows)
+drawLevel game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox (hBox <$> rows)
   where
     level = (game ^. world) !! (game ^. currentLevel)
     rows = chunksOf (width level) $ do
