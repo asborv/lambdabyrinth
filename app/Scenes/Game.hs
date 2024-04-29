@@ -28,6 +28,7 @@ import Control.Lens
     , (^.)
     )
 import Control.Lens.Combinators (to)
+import Control.Lens.Operators ((.~))
 import Control.Monad (unless, when)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
@@ -35,6 +36,7 @@ import Creatures.Player (health)
 import qualified Creatures.Player as P
 import Data.List (find)
 import Data.List.Split
+import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Draw
 import GHC.Arr
@@ -44,7 +46,7 @@ import Scenes.Scene
 import World.World
 import World.WorldGeneration (create)
 
-type GameEvent = EventM Name GameState ()
+type GameEvent a = EventM Name GameState a
 
 data GameState = GameState
     { _player :: P.Player
@@ -84,7 +86,7 @@ checks to determine if the player can move in that direction.
 If the target cell is a valid cell and is traversable,
 the player's position is updated accordingly. Otherwise, nothing happens.
 -}
-playerMove :: Direction -> GameEvent
+playerMove :: Direction -> GameEvent ()
 playerMove direction = do
     -- Get the player's position and the current level
     (y, x) <- use (player . P.pos)
@@ -110,7 +112,7 @@ playerMove direction = do
     me <- use player
     when (me ^. health <= 0) halt
 
-playerAttackEvent :: M.Monster -> GameEvent
+playerAttackEvent :: M.Monster -> GameEvent ()
 playerAttackEvent monster = do
     me <- use player
     curr <- use currentLevel
@@ -137,10 +139,32 @@ playerAttackEvent monster = do
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
-reactToPlayerMove :: Cell -> GameEvent
-reactToPlayerMove (Stair Downwards) = currentLevel %= (+ 1)
-reactToPlayerMove (Stair Upwards) = currentLevel %= subtract 1
+reactToPlayerMove :: Cell -> GameEvent ()
+reactToPlayerMove (Stair Downwards) = do
+    -- Go to next level
+    currentLevel %= (+ 1)
+
+    -- Find where the upwards stairs are on the next level, place player there
+    stairsUp <- getCellPositionM (Stair Upwards)
+    maybe (return ()) (\coord -> player . P.pos .= coord) stairsUp
+reactToPlayerMove (Stair Upwards) = do
+    curr <- use currentLevel
+    -- Move to previous level only if the player is not on the starting level
+    unless (curr <= 0) $ do
+        currentLevel %= subtract 1
+        stairsDown <- getCellPositionM (Stair Downwards)
+        maybe (return ()) (\coord -> player . P.pos .= coord) stairsDown
 reactToPlayerMove _ = return ()
+
+-- | Given the current level, get the first position (if any) of the specified cell type
+getCellPositionM :: Cell -> GameEvent (Maybe Coordinate)
+getCellPositionM cell = do
+    curr <- use currentLevel
+    level <- use (world . to (!! curr))
+    return $ getCellPosition cell level
+
+getCellPosition :: Cell -> Level -> Maybe Coordinate
+getCellPosition cell level = fst <$> find ((== cell) . snd) (assocs $ level ^. cells)
 
 drawGame :: GameState -> [Widget Name]
 drawGame game =
@@ -189,6 +213,12 @@ drawLevel game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox (hBox <$>
 
 playGame :: P.Player -> IO GameState
 playGame character = do
-    w <- interleaveSequenceIO $ repeat (create 40 40)
-    let initialState = GameState character 0 w
+    (level : ls) <- interleaveSequenceIO $ repeat (create 40 40)
+    -- The up- and downwards stairs are guaranteed to exist on each level
+    let startingPosition =
+            fromMaybe
+                (error $ "Did not find " <> show (Stair Upwards) <> " on the first level.")
+                (getCellPosition (Stair Upwards) level)
+        initialState = GameState (character & P.pos .~ startingPosition) 0 (level : ls)
+
     defaultMain app initialState
