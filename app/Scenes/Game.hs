@@ -138,10 +138,6 @@ moveEvent direction = do
             Nothing -> player . P.pos .= target
         environmentReactEvent cell
 
-    me <- use player
-    -- TODO set game over
-    when (me ^. health <= 0) (return ())
-
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
