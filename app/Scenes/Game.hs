@@ -46,7 +46,7 @@ import Scenes.Scene
 import World.World
 import World.WorldGeneration (create)
 
-type GameEvent a = EventM Name GameState a
+type GameEvent = EventM Name GameState
 
 data GameState = GameState
     { _player :: P.Player
