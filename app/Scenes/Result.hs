@@ -36,9 +36,9 @@ app =
 
 drawScene :: GameState -> [Widget Name]
 drawScene _ =
-    [ borderWithLabel (txt "Results") $
-        vCenter $
-            centerLines ["💀 YOU DIED!", "Press any key to quit"]
+    [ borderWithLabel (txt "Results")
+        . vCenter
+        $ centerLines ["💀 YOU DIED!", "Press any key to quit"]
     ]
 
 -- | Take a list of 'Text's, and center each in a vertical list

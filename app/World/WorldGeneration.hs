@@ -14,6 +14,7 @@ import World.World
     , Level (..)
     , VerticalDirection (Downwards, Upwards)
     )
+import Data.Bifoldable (biList)
 
 -- | Binary tree with data only in its leaves
 data BinaryTree a
@@ -133,7 +134,7 @@ generateMonsters :: [Coordinate] -> IO [Monster]
 generateMonsters cells = do
     rs <- mapM (const randomIO) cells :: IO [Double]
     let cellsToPopulate = map fst $ filter ((> 0.95) . snd) (zip cells rs)
-    return $ map (\c -> zombie & position .~ c) $ cellsToPopulate
+    return $ map (\c -> zombie & position .~ c) cellsToPopulate
 
 {- | Count the number of occurrences of a specific element in a list
 Courtesy of: https://stackoverflow.com/questions/19554984/haskell-count-occurrences-function
@@ -148,7 +149,7 @@ They are placed at dead ends (leaves) of the provided edges, as distant as possi
 generateStairs :: [Edge] -> ((Coordinate, Cell), (Coordinate, Cell))
 generateStairs edges = (\(a, b) -> ((a, Stair Upwards), (b, Stair Downwards))) longest
   where
-    nodes = concatMap (\(a, b) -> [a, b]) edges
+    nodes = concatMap biList edges
     deadEnds = filter (\node -> count node nodes == 1) nodes
     longest =
         maximumBy
