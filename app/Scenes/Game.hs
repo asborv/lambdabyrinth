@@ -39,7 +39,6 @@ import Control.Monad.Reader (Reader, runReader)
 import Control.Monad.State (StateT, execStateT, get)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
-import Creatures.Player (health)
 import qualified Creatures.Player as P
 import Data.List (find)
 import Data.List.Split
