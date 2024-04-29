@@ -163,7 +163,7 @@ create width height = do
         allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
         tree' <- split tree
-        if leaves tree' <= 40
+        if leaves tree' <= 6
             then loop tree'
             else do
                 tree'' <- shrinkWalls tree'

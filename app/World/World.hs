@@ -14,7 +14,7 @@ type Coordinate = (Int, Int)
 type World = [Level]
 
 data Direction = North | East | South | West
-data VerticalDirection = Upwards | Downwards
+data VerticalDirection = Upwards | Downwards deriving (Eq)
 data Cell
     = Door
     | Empty
@@ -22,6 +22,7 @@ data Cell
     | Stair VerticalDirection
     | Tunnel
     | Wall
+    deriving (Eq)
 
 instance Show Cell where
     show (Stair Downwards) = "V "
