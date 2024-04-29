@@ -1,6 +1,6 @@
 module Scenes.Result where
 
-import Scenes.Game (GameState)
+import Scenes.Game (GameState, UI, gameState)
 
 import Brick
     ( App (..)
@@ -15,6 +15,7 @@ import Brick
 import Brick.Main (neverShowCursor)
 import Brick.Widgets.Border (borderWithLabel)
 import Brick.Widgets.Center (hCenter, vCenter)
+import Control.Lens ((^.))
 import Control.Monad (void)
 import Data.Text (Text)
 import Graphics.Vty (Event (..), defAttr)
@@ -45,5 +46,5 @@ drawScene _ =
 centerLines :: [Text] -> Widget Name
 centerLines = vBox . fmap (hCenter . txt)
 
-showResult :: GameState -> IO ()
-showResult = void . defaultMain app
+showResult :: UI -> IO ()
+showResult ui = void $ defaultMain app (ui ^. gameState)
