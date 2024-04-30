@@ -28,7 +28,6 @@ import Control.Lens
     ( element
     , makeLenses
     , use
-    , (%=)
     , (&)
     , (+=)
     , (-=)
@@ -51,8 +50,8 @@ import GHC.Arr
 import Graphics.Vty
 import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
 import Scenes.Scene
-import World.Level
 import World.Cells
+import World.Level
 import World.WorldGeneration (create)
 
 type GameEvent a = ReaderT Config (EventM Name GameState) a
@@ -70,23 +69,27 @@ app config@(Config {asciiOnly}) =
     App
         { appDraw = drawGame asciiOnly
         , appChooseCursor = neverShowCursor
-        , appHandleEvent = \case
-            VtyEvent e -> case e of
-                EvKey (KChar 'q') [] -> halt
-                -- Movement
-                EvKey (KChar 'w') [] -> flip runReaderT config $ playerMove North
-                EvKey (KChar 'a') [] -> flip runReaderT config $ playerMove West
-                EvKey (KChar 's') [] -> flip runReaderT config $ playerMove South
-                EvKey (KChar 'd') [] -> flip runReaderT config $ playerMove East
-                -- Manual level select (DEBUGGING)
-                EvKey (KChar 'b') [] -> currentLevel += 1
-                EvKey (KChar 'B') [] -> currentLevel -= 1
-                EvKey (KChar 'R') [] -> world . element 0 . monsters %= (M.zombie :)
-                _ -> return ()
-            _ -> return ()
+        , appHandleEvent = handleEvent config
         , appStartEvent = return ()
         , appAttrMap = const $ attrMap defAttr []
         }
+
+handleEvent :: Config -> BrickEvent Name () -> EventM Name GameState ()
+handleEvent config = \case
+    VtyEvent e -> case e of
+        EvKey (KChar 'q') [] -> halt
+        EvKey (KChar c) []
+            | (Just direction) <- charToDirection c ->
+                flip runReaderT config $ moveEvent direction
+        _ -> return ()
+    _ -> return ()
+
+charToDirection :: Char -> Maybe Direction
+charToDirection 'w' = Just North
+charToDirection 'a' = Just West
+charToDirection 's' = Just South
+charToDirection 'd' = Just East
+charToDirection _ = Nothing
 
 {- | Move the player in the specified direction.
 Accept a `Direction` and perform the necessary
@@ -94,8 +97,8 @@ checks to determine if the player can move in that direction.
 If the target cell is a valid cell and is traversable,
 the player's position is updated accordingly. Otherwise, nothing happens.
 -}
-playerMove :: Direction -> GameEvent ()
-playerMove direction = do
+moveEvent :: Direction -> GameEvent ()
+moveEvent direction = do
     -- Get the player's position and the current level
     (y, x) <- use (player . P.pos)
     curr <- use currentLevel
