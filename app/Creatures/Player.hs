@@ -14,7 +14,7 @@ import Creatures.Combatant
 import Draw
 import Items.Armour
 import Items.Weapons
-import World.World (Coordinate)
+import World.Level
 
 data Class = Wizard | Warrior | Rogue deriving (Show)
 
@@ -50,10 +50,10 @@ instance Combatant Player where
                 Medium -> 1
                 Hard -> 0.8
 
-        return $ you `acceptDamage` damage
+        return $ you `takeDamage` damage
 
-    acceptDamage :: Player -> Int -> Player
-    acceptDamage me damage = me & health %~ subtract damage
+    takeDamage :: Player -> Int -> Player
+    takeDamage me damage = me & health %~ subtract damage
 
 classPower :: Class -> Int
 classPower = \case

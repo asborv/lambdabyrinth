@@ -53,7 +53,7 @@ instance Combatant Monster where
                 Medium -> 1
                 Hard -> 1.5
             damage = round $ fromIntegral (me ^. power) * modifier
-        return $ you `acceptDamage` damage
+        return $ you `takeDamage` damage
 
-    acceptDamage :: Monster -> Int -> Monster
-    acceptDamage me damage = me & health %~ subtract damage
+    takeDamage :: Monster -> Int -> Monster
+    takeDamage me damage = me & health %~ subtract damage

@@ -74,7 +74,8 @@ executable lambdabyrinth
         Items.Weapons
         Items.Armour
         Draw
-        World.World
+        World.Cells
+        World.Level
         World.WorldGeneration
         Scenes.CreateCharacter
         Scenes.Game

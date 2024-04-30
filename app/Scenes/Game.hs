@@ -1,5 +1,10 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
+{- |
+Module      : Scenes.Game
+Description : Scene for the actual game, this is where the action happens!
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module Scenes.Game where
 
 import Brick
@@ -48,7 +53,8 @@ import GHC.Arr
 import Graphics.Vty
 import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
 import Scenes.Scene
-import World.World
+import World.Level
+import World.Cells
 import World.WorldGeneration (create)
 
 type GameEvent a = ReaderT Config (EventM Name GameState) a
@@ -126,14 +132,14 @@ environmentReactEvent (Stair Downwards) = do
 
     -- Find where the upwards stairs are on the next level, place player there
     stairsUp <- getCellPositionM (Stair Upwards)
-    maybe (return ()) (\coord -> player . P.pos .= coord) stairsUp
+    maybe (return ()) (player . P.pos .=) stairsUp
 environmentReactEvent (Stair Upwards) = do
     curr <- use currentLevel
     -- Move to previous level only if the player is not on the starting level
     unless (curr <= 0) $ do
         currentLevel -= 1
         stairsDown <- getCellPositionM (Stair Downwards)
-        maybe (return ()) (\coord -> player . P.pos .= coord) stairsDown
+        maybe (return ()) (player . P.pos .=) stairsDown
 environmentReactEvent _ = return ()
 
 playerAttackEvent :: M.Monster -> GameEvent ()
@@ -142,6 +148,7 @@ playerAttackEvent monster = do
     curr <- use currentLevel
     everyone <- use (world . to (!! curr) . monsters)
     monster' <- me `attack` monster
+    me' <- monster' `attack` me
 
     -- Get target monster, attack it, and grab the remaining monsters
     let others = filter (/= monster) everyone
@@ -154,19 +161,22 @@ playerAttackEvent monster = do
     -- Update the list of all the monsters
     world . element curr . monsters .= remaining
 
-    -- Have the monster attack the player
-    monster `attack` me >>= (player .=)
+    -- Update the player to after being attacked by the monster
+    player .= me'
 
     -- If the monster is dead, move the player to the position of the deceased monster
     unless monsterIsAlive (player . P.pos .= monster' ^. M.position)
 
--- | Given the current level, get the first position (if any) of the specified cell type
+{- | Given the current level, get the first position (if any) of the specified cell type.
+Uses the current level in the game state.
+-}
 getCellPositionM :: Cell -> GameEvent (Maybe Coordinate)
 getCellPositionM cell = do
     curr <- use currentLevel
     level <- use (world . to (!! curr))
     return $ getCellPosition cell level
 
+-- | Given a cell and a level, get the first position (if any) of the specified cell type
 getCellPosition :: Cell -> Level -> Maybe Coordinate
 getCellPosition cell level = fst <$> find ((== cell) . snd) (assocs $ level ^. cells)
 
@@ -208,7 +218,8 @@ drawEquipment asciiOnly game = border . hLimit 20 . center $ vBox slots
 drawLevel :: Bool -> GameState -> Widget Name
 drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox (hBox <$> rows)
   where
-    level = (game ^. world) !! (game ^. currentLevel)
+    curr = game ^. currentLevel
+    level = game ^. world . to (!! curr)
     rows = chunksOf (width level) $ do
         (coord, cell) <- level ^. cells & assocs
         let monster = find (\m -> m ^. M.position == coord) (level ^. monsters)

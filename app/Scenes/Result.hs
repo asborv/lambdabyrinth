@@ -1,3 +1,8 @@
+{- |
+Module      :  Scenes.Result
+Description :  Scene for displaying the result of the game
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module Scenes.Result where
 
 import Scenes.Game (GameState)
