@@ -12,7 +12,8 @@ import Control.Lens.Combinators (to)
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
 import Draw
-import Items
+import Items.Armour
+import Items.Weapons
 import World.World (Coordinate)
 
 data Class = Wizard | Warrior | Rogue deriving (Show)
@@ -41,13 +42,14 @@ instance Combatant Player where
     me `attack` you = do
         d <- asks difficulty
 
-        let modifier = case d of
+        let classDamage = me ^. characterClass & classPower
+            weaponDamage = me ^. hand . to (maybe 0 power)
+            damage = round $ fromIntegral (classDamage + weaponDamage) * modifier
+            modifier = case d of
                 Easy -> 1.5 :: Double
                 Medium -> 1
                 Hard -> 0.8
-            classDamage = me ^. characterClass & classPower
-            weaponDamage = me ^. hand . to (maybe 0 power)
-            damage = round $ fromIntegral (classDamage + weaponDamage) * modifier
+
         return $ you `acceptDamage` damage
 
     acceptDamage :: Player -> Int -> Player

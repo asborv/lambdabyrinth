@@ -70,7 +70,9 @@ executable lambdabyrinth
         Creatures.Combatant
         Creatures.Monsters
         Creatures.Player
-        Items
+        Items.Materials
+        Items.Weapons
+        Items.Armour
         Draw
         World.World
         World.WorldGeneration
