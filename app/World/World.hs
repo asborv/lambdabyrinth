@@ -5,9 +5,12 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module World.World where
 
+import Brick (txt)
 import Control.Arrow ((>>>))
 import Control.Lens (both, makeLenses, over, to, (&), (.~), (^.))
 import Creatures.Monsters
+import qualified Data.Text as T
+import Draw
 import GHC.Arr
 
 type Coordinate = (Int, Int)
@@ -32,6 +35,9 @@ instance Show Cell where
     show Floor = ". "
     show Tunnel = ". "
     show Wall = "# "
+
+instance Drawable Cell where
+    draw _ = txt . T.pack . show
 
 data Level = Level
     { _cells :: Array Coordinate Cell

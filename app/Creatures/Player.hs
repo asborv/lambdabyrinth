@@ -5,9 +5,11 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Creatures.Player where
 
+import Brick (txt)
 import Control.Lens (makeLenses, (%~), (&), (^.))
 import Control.Lens.Combinators (to)
 import Creatures.Combatant
+import Draw
 import Items
 import World.World (Coordinate)
 
@@ -24,9 +26,13 @@ data Player = Player
     , _health :: Int
     , _characterClass :: Class
     }
-    deriving (Show)
 
 makeLenses ''Player
+
+instance Drawable Player where
+    draw asciiOnly = const $ txt symbol
+      where
+        symbol = if asciiOnly then ":)" else "😎"
 
 instance Combatant Player where
     attack :: Combatant c => Player -> c -> c

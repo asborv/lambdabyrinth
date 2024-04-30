@@ -5,10 +5,13 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Creatures.Monsters where
 
+import Brick (txt)
 import Control.Lens ((%~), (^.))
 import Control.Lens.Lens ((&))
 import Control.Lens.TH (makeLenses)
 import Creatures.Combatant
+import qualified Data.Text as T
+import Draw
 
 data MonsterType = Zombie | Ghost deriving (Show, Eq)
 data Monster = Monster
@@ -25,6 +28,10 @@ instance Show Monster where
     show monster = case monster ^. monsterType of
         Zombie -> "🧟\b "
         Ghost -> "👻\b "
+
+instance Drawable Monster where
+    draw False monster = txt . T.pack $ show monster
+    draw True _ = txt "! "
 
 zombie :: Monster
 zombie =

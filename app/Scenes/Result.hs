@@ -1,6 +1,6 @@
 module Scenes.Result where
 
-import Scenes.Game (GameState, UI, gameState)
+import Scenes.Game (GameState)
 
 import Brick
     ( App (..)
@@ -15,7 +15,6 @@ import Brick
 import Brick.Main (neverShowCursor)
 import Brick.Widgets.Border (borderWithLabel)
 import Brick.Widgets.Center (hCenter, vCenter)
-import Control.Lens ((^.))
 import Control.Monad (void)
 import Data.Text (Text)
 import Graphics.Vty (Event (..), defAttr)
@@ -39,12 +38,12 @@ drawScene :: GameState -> [Widget Name]
 drawScene _ =
     [ borderWithLabel (txt "Results")
         . vCenter
-        $ centerLines ["💀 YOU DIED!", "Press any key to quit"]
+        $ centerLines ["YOU DIED!", "Press any key to quit"]
     ]
 
 -- | Take a list of 'Text's, and center each in a vertical list
 centerLines :: [Text] -> Widget Name
 centerLines = vBox . fmap (hCenter . txt)
 
-showResult :: UI -> IO ()
-showResult ui = void $ defaultMain app (ui ^. gameState)
+showResult :: GameState -> IO ()
+showResult = void . defaultMain app

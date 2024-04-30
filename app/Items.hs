@@ -5,6 +5,10 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Items where
 
+import Brick (txt)
+import Draw
+import Brick.Widgets.Core ((<+>))
+
 data Material = Stone | Wood | Diamond
 
 data Weapon
@@ -17,20 +21,29 @@ data Armour
     | Gloves Material
     | Boots Material
 
-instance Show Weapon where
-    show (Dagger material) = show material <> " dagger"
-    show (Spear material) = show material <> " spear"
+instance Drawable Material where
+    draw True Stone = txt "🪨 \b"
+    draw True Wood = txt "🪵 \b"
+    draw True Diamond = txt "💎 \b"
+    draw False Stone = txt "S "
+    draw False Wood = txt "W "
+    draw False Diamond = txt "D "
 
-instance Show Armour where
-    show (Helmet material) = show material <> " helmet"
-    show (Cuirass material) = show material <> " cuirass"
-    show (Gloves material) = show material <> " gloves"
-    show (Boots material) = show material <> " boots"
+instance Drawable Weapon where
+    draw asciiOnly (Spear material) = draw asciiOnly material <+> txt symbol
+        where symbol = if asciiOnly then "/ " else "🔱 "
+    draw asciiOnly (Dagger material) = draw asciiOnly material <+> txt symbol
+        where symbol = if asciiOnly then "- " else "🗡️ "
 
-instance Show Material where
-    show Stone = "🪨 \b"
-    show Wood = "🪵 \b"
-    show Diamond = "💎 \b"
+instance Drawable Armour where
+    draw asciiOnly (Helmet material) = draw asciiOnly material <+> txt symbol
+        where symbol = if asciiOnly then "^ " else "🪖 "
+    draw asciiOnly (Cuirass material) = draw asciiOnly material <+> txt symbol
+        where symbol = if asciiOnly then "# "  else "🛡️ "
+    draw asciiOnly (Gloves material) = draw asciiOnly material <+> txt symbol
+        where symbol = if asciiOnly then "''"  else "🧤 "
+    draw asciiOnly (Boots material) = draw asciiOnly material <+> txt symbol
+        where symbol = if asciiOnly then ",,"  else "👢 "
 
 power :: Weapon -> Int
 power (Dagger material) = materialBonus material * 5
