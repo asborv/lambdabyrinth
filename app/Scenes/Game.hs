@@ -1,5 +1,4 @@
-{-# LANGUAGE MultiWayIf #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE NamedFieldPuns #-}
 
 module Scenes.Game where
 
@@ -21,6 +20,7 @@ import Brick
 import Brick.Main (halt, neverShowCursor)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
+import Config
 import Control.Lens
     ( element
     , makeLenses
@@ -62,7 +62,7 @@ data GameState = GameState
 makeLenses ''GameState
 
 app :: Config -> Scene GameState
-app config@(Config asciiOnly) =
+app config@(Config {asciiOnly}) =
     App
         { appDraw = drawGame asciiOnly
         , appChooseCursor = neverShowCursor
@@ -141,10 +141,10 @@ playerAttackEvent monster = do
     me <- use player
     curr <- use currentLevel
     everyone <- use (world . to (!! curr) . monsters)
+    monster' <- me `attack` monster
 
     -- Get target monster, attack it, and grab the remaining monsters
     let others = filter (/= monster) everyone
-        monster' = me `attack` monster
         monsterIsAlive = monster' ^. M.health > 0
         remaining =
             if not monsterIsAlive
@@ -155,7 +155,7 @@ playerAttackEvent monster = do
     world . element curr . monsters .= remaining
 
     -- Have the monster attack the player
-    player %= (monster' `attack`)
+    monster `attack` me >>= (player .=)
 
     -- If the monster is dead, move the player to the position of the deceased monster
     unless monsterIsAlive (player . P.pos .= monster' ^. M.position)
@@ -227,6 +227,6 @@ playGame character = do
                 (error $ "Did not find " <> show (Stair Upwards) <> " on the first level.")
                 (getCellPosition (Stair Upwards) level)
         initialState = GameState (character & P.pos .~ startingPosition) 0 (level : ls)
-        config = Config True
+        config = Config {asciiOnly = False, difficulty = Easy}
 
     defaultMain (app config) initialState

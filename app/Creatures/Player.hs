@@ -6,8 +6,10 @@ Maintainer  : asbjorn.orvedal@gmail.com
 module Creatures.Player where
 
 import Brick (txt)
+import Config (Config (difficulty), Difficulty (..))
 import Control.Lens (makeLenses, (%~), (&), (^.))
 import Control.Lens.Combinators (to)
+import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
 import Draw
 import Items
@@ -35,12 +37,18 @@ instance Drawable Player where
         symbol = if asciiOnly then ":)" else "😎"
 
 instance Combatant Player where
-    attack :: Combatant c => Player -> c -> c
-    me `attack` you = you `acceptDamage` damage
-      where
-        classDamage = me ^. characterClass & classPower
-        weaponDamage = me ^. hand . to (maybe 0 power)
-        damage = classDamage + weaponDamage
+    attack :: (Combatant c, Monad m) => Player -> c -> ReaderT Config m c
+    me `attack` you = do
+        d <- asks difficulty
+
+        let modifier = case d of
+                Easy -> 1.5 :: Double
+                Medium -> 1
+                Hard -> 0.8
+            classDamage = me ^. characterClass & classPower
+            weaponDamage = me ^. hand . to (maybe 0 power)
+            damage = round $ fromIntegral (classDamage + weaponDamage) * modifier
+        return $ you `acceptDamage` damage
 
     acceptDamage :: Player -> Int -> Player
     acceptDamage me damage = me & health %~ subtract damage
