@@ -107,6 +107,7 @@ executable lambdabyrinth
         FlexibleContexts,
         TypeApplications,
         TupleSections,
+        NamedFieldPuns,
 
     -- Directories containing source files.
     hs-source-dirs:   app

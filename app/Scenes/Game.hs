@@ -1,5 +1,3 @@
-{-# LANGUAGE NamedFieldPuns #-}
-
 {- |
 Module      : Scenes.Game
 Description : Scene for the actual game, this is where the action happens!
