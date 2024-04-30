@@ -78,9 +78,11 @@ executable lambdabyrinth
         World.Level
         World.WorldGeneration
         Scenes.CreateCharacter
-        Scenes.Game
+        Scenes.Game.Scene
+        Scenes.Game.Events
         Scenes.Result
         Scenes.Scene
+        Types
 
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:

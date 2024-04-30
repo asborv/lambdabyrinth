@@ -5,7 +5,7 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Scenes.Result where
 
-import Scenes.Game (GameState)
+import Types (GameState)
 
 import Brick
     ( App (..)

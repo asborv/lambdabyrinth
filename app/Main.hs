@@ -1,7 +1,7 @@
 module Main where
 
 import Scenes.CreateCharacter (createCharacter)
-import Scenes.Game (playGame)
+import Scenes.Game.Scene (playGame)
 import Scenes.Result (showResult)
 
 main :: IO ()
