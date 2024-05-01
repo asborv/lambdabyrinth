@@ -99,7 +99,8 @@ executable lambdabyrinth
         lens,
         text,
         hw-prim,
-        mtl
+        mtl,
+        optparse-applicative
 
     default-extensions:
         LambdaCase,

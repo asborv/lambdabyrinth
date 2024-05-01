@@ -121,8 +121,8 @@ drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox
                 then draw asciiOnly $ game ^. player
                 else maybe (draw asciiOnly cell) (draw asciiOnly) monster
 
-playGame :: P.Player -> IO GameState
-playGame character = do
+playGame :: P.Player -> Config -> IO GameState
+playGame character config = do
     (level : ls) <- interleaveSequenceIO $ repeat (create 40 40)
     -- The up- and downwards stairs are guaranteed to exist on each level
     let startingPosition =
@@ -130,6 +130,5 @@ playGame character = do
                 (error $ "Did not find " <> show (Stair Upwards) <> " on the first level.")
                 (getCellPosition (Stair Upwards) level)
         initialState = GameState (character & P.pos .~ startingPosition) 0 (level : ls)
-        config = Config {asciiOnly = False, difficulty = Easy}
 
     defaultMain (app config) initialState
