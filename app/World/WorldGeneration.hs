@@ -3,18 +3,14 @@ module World.WorldGeneration (create) where
 import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
 import Creatures.Monsters (Monster, position, zombie)
+import Data.Bifoldable (biList)
 import Data.Function (on, (&))
 import Data.Functor ((<&>))
 import Data.List (maximumBy, minimumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
-import World.World
-    ( Cell (..)
-    , Coordinate
-    , Level (..)
-    , VerticalDirection (Downwards, Upwards)
-    )
-import Data.Bifoldable (biList)
+import World.Cells
+import World.Level (Coordinate, Level (..))
 
 -- | Binary tree with data only in its leaves
 data BinaryTree a

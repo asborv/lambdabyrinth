@@ -1,3 +1,8 @@
+{- |
+Module      :  Scenes.CreateCharacter
+Description :  Scene for character creation
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module Scenes.CreateCharacter (createCharacter) where
 
 import Brick

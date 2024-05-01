@@ -5,11 +5,16 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Creatures.Player where
 
+import Brick (txt)
+import Config (Config (difficulty), Difficulty (..))
 import Control.Lens (makeLenses, (%~), (&), (^.))
 import Control.Lens.Combinators (to)
+import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
-import Items
-import World.World (Coordinate)
+import Draw
+import Items.Armour
+import Items.Weapons
+import World.Level
 
 data Class = Wizard | Warrior | Rogue deriving (Show)
 
@@ -24,20 +29,31 @@ data Player = Player
     , _health :: Int
     , _characterClass :: Class
     }
-    deriving (Show)
 
 makeLenses ''Player
 
-instance Combatant Player where
-    attack :: Combatant c => Player -> c -> c
-    me `attack` you = you `acceptDamage` damage
+instance Drawable Player where
+    draw asciiOnly = const $ txt symbol
       where
-        classDamage = me ^. characterClass & classPower
-        weaponDamage = me ^. hand . to (maybe 0 power)
-        damage = classDamage + weaponDamage
+        symbol = if asciiOnly then ":)" else "😎"
 
-    acceptDamage :: Player -> Int -> Player
-    acceptDamage me damage = me & health %~ subtract damage
+instance Combatant Player where
+    attack :: (Combatant c, Monad m) => Player -> c -> ReaderT Config m c
+    me `attack` you = do
+        d <- asks difficulty
+
+        let classDamage = me ^. characterClass & classPower
+            weaponDamage = me ^. hand . to (maybe 0 power)
+            damage = round $ fromIntegral (classDamage + weaponDamage) * modifier
+            modifier = case d of
+                Easy -> 1.5 :: Double
+                Medium -> 1
+                Hard -> 0.8
+
+        return $ you `takeDamage` damage
+
+    takeDamage :: Player -> Int -> Player
+    takeDamage me damage = me & health %~ subtract damage
 
 classPower :: Class -> Int
 classPower = \case
