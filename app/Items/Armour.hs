@@ -18,13 +18,13 @@ instance Drawable Armour where
     draw asciiOnly armour = draw asciiOnly (material armour) <+> txt symbol
       where
         symbol = case (asciiOnly, piece armour) of
-            (False, Cuirass) -> "🛡️ "
+            (False, Cuirass) -> "🛡️\b "
             (True, Cuirass) -> "# "
-            (False, Helmet) -> "🪖 "
+            (False, Helmet) -> "🪖\b "
             (True, Helmet) -> "^ "
-            (False, Gloves) -> "🧤 "
+            (False, Gloves) -> "🧤\b "
             (True, Gloves) -> "''"
-            (False, Boots) -> "👢 "
+            (False, Boots) -> "👢\b "
             (True, Boots) -> ",,"
 
 defence :: Armour -> Int

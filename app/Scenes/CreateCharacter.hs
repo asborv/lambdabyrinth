@@ -20,6 +20,8 @@ import Brick.Widgets.Border (borderWithLabel)
 import Brick.Widgets.Center (center)
 import Creatures.Player (Class (..), Player (..))
 import Graphics.Vty (Event (..), Key (KChar, KEnter), defAttr)
+import Items.Materials
+import Items.Weapons
 import Scenes.Scene (Name, Scene)
 
 mrBean :: Player
@@ -27,7 +29,7 @@ mrBean =
     Player
         { _name = "Mr. Bean"
         , _pos = (0, 0)
-        , _hand = Nothing
+        , _hand = Just $ Weapon {weaponType = Spear, material = Wood}
         , _helmet = Nothing
         , _cuirass = Nothing
         , _gloves = Nothing

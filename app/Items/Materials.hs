@@ -8,15 +8,15 @@ module Items.Materials (Material (..), materialBonus) where
 import Brick (txt)
 import Draw
 
-data Material = Stone | Wood | Diamond
+data Material = Stone | Wood | Diamond deriving (Show)
 
 instance Drawable Material where
-    draw True Stone = txt "🪨 \b"
-    draw True Wood = txt "🪵 \b"
-    draw True Diamond = txt "💎 \b"
-    draw False Stone = txt "S "
-    draw False Wood = txt "W "
-    draw False Diamond = txt "D "
+    draw False Stone = txt "🪨\b "
+    draw False Wood = txt "🪵\b "
+    draw False Diamond = txt "💎\b "
+    draw True Stone = txt "S "
+    draw True Wood = txt "W "
+    draw True Diamond = txt "D "
 
 materialBonus :: Material -> Int
 materialBonus = \case
