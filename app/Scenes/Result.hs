@@ -1,6 +1,11 @@
+{- |
+Module      :  Scenes.Result
+Description :  Scene for displaying the result of the game
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module Scenes.Result where
 
-import Scenes.Game (GameState)
+import Types (GameState)
 
 import Brick
     ( App (..)
@@ -36,9 +41,9 @@ app =
 
 drawScene :: GameState -> [Widget Name]
 drawScene _ =
-    [ borderWithLabel (txt "Results") $
-        vCenter $
-            centerLines ["💀 YOU DIED!", "Press any key to quit"]
+    [ borderWithLabel (txt "Results")
+        . vCenter
+        $ centerLines ["YOU DIED!", "Press any key to quit"]
     ]
 
 -- | Take a list of 'Text's, and center each in a vertical list

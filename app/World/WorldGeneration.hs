@@ -3,17 +3,14 @@ module World.WorldGeneration (create) where
 import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
 import Creatures.Monsters (Monster, position, zombie)
+import Data.Bifoldable (biList)
 import Data.Function (on, (&))
 import Data.Functor ((<&>))
 import Data.List (maximumBy, minimumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
 import System.Random (Random (random, randomR), randomIO, randomRIO)
-import World.World
-    ( Cell (..)
-    , Coordinate
-    , Level (..)
-    , VerticalDirection (Downwards, Upwards)
-    )
+import World.Cells
+import World.Level (Coordinate, Level (..))
 
 -- | Binary tree with data only in its leaves
 data BinaryTree a
@@ -148,7 +145,7 @@ They are placed at dead ends (leaves) of the provided edges, as distant as possi
 generateStairs :: [Edge] -> ((Coordinate, Cell), (Coordinate, Cell))
 generateStairs edges = (\(a, b) -> ((a, Stair Upwards), (b, Stair Downwards))) longest
   where
-    nodes = concatMap (\(a, b) -> [a, b]) edges
+    nodes = concatMap biList edges
     deadEnds = filter (\node -> count node nodes == 1) nodes
     longest =
         maximumBy

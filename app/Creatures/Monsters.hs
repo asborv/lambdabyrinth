@@ -5,10 +5,15 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Creatures.Monsters where
 
+import Brick (txt)
+import Config (Config (difficulty), Difficulty (..))
 import Control.Lens ((%~), (^.))
 import Control.Lens.Lens ((&))
 import Control.Lens.TH (makeLenses)
+import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
+import qualified Data.Text as T
+import Draw
 
 data MonsterType = Zombie | Ghost deriving (Show, Eq)
 data Monster = Monster
@@ -26,6 +31,10 @@ instance Show Monster where
         Zombie -> "🧟\b "
         Ghost -> "👻\b "
 
+instance Drawable Monster where
+    draw False monster = txt . T.pack $ show monster
+    draw True _ = txt "! "
+
 zombie :: Monster
 zombie =
     Monster
@@ -36,8 +45,15 @@ zombie =
         }
 
 instance Combatant Monster where
-    attack :: Combatant c => Monster -> c -> c
-    me `attack` you = you `acceptDamage` (me ^. power)
+    attack :: (Combatant c, Monad m) => Monster -> c -> ReaderT Config m c
+    me `attack` you = do
+        d <- asks difficulty
+        let modifier = case d of
+                Easy -> 0.8 :: Double
+                Medium -> 1
+                Hard -> 1.5
+            damage = round $ fromIntegral (me ^. power) * modifier
+        return $ you `takeDamage` damage
 
-    acceptDamage :: Monster -> Int -> Monster
-    acceptDamage me damage = me & health %~ subtract damage
+    takeDamage :: Monster -> Int -> Monster
+    takeDamage me damage = me & health %~ subtract damage

@@ -1,3 +1,8 @@
+{- |
+Module      :  Scenes.CreateCharacter
+Description :  Scene for character creation
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module Scenes.CreateCharacter (createCharacter) where
 
 import Brick
@@ -49,7 +54,7 @@ app =
         }
 
 drawScene :: Maybe Player -> [Widget Name]
-drawScene _ = [borderWithLabel (txt "Create character") $ center $ txt "hello"]
+drawScene _ = [borderWithLabel (txt "Create character") . center $ txt "hello"]
 
 {- | Display a scene to allow character creation.
 When the character has been created, the user can press 'Enter' to continue with this character.
