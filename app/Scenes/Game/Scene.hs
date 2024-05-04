@@ -19,7 +19,7 @@ import Brick
     , vBox
     , vLimit
     , (<+>)
-    , (<=>)
+    , (<=>), padLeft, Padding (..)
     )
 import Brick.Main (halt, neverShowCursor)
 import Brick.Widgets.Border
@@ -113,14 +113,14 @@ drawStats game =
         $ game ^. player . P.health
 
 drawEquipment :: Bool -> GameState -> Widget Name
-drawEquipment asciiOnly game = border . hLimit 20 . center $ vBox slots
+drawEquipment asciiOnly game = hLimit 20 . border . vCenter $ vBox slots
   where
     slots = [handSlot, helmetSlot, cuirassSlot, glovesSlot, bootsSlot]
-    handSlot = itemSlot (game ^. player . P.hand)
-    helmetSlot = itemSlot (game ^. player . P.helmet)
-    cuirassSlot = itemSlot (game ^. player . P.cuirass)
-    glovesSlot = itemSlot (game ^. player . P.gloves)
-    bootsSlot = itemSlot (game ^. player . P.boots)
+    handSlot = padLeft Max $  txt "\nWeapon: " <+> itemSlot (game ^. player . P.hand)
+    helmetSlot = padLeft Max $  txt "\nHelmet: " <+> itemSlot (game ^. player . P.helmet)
+    cuirassSlot = padLeft Max $  txt "\nCuirass: " <+> itemSlot (game ^. player . P.cuirass)
+    glovesSlot = padLeft Max $  txt "\nGloves: " <+> itemSlot (game ^. player . P.gloves)
+    bootsSlot = padLeft Max $  txt "\nBoots: " <+> itemSlot (game ^. player . P.boots)
 
     itemSlot :: Drawable a => Maybe a -> Widget Name
     itemSlot Nothing = border $ txt "    "
