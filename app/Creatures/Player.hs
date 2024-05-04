@@ -35,7 +35,7 @@ makeLenses ''Player
 instance Drawable Player where
     draw asciiOnly = const $ txt symbol
       where
-        symbol = if asciiOnly then ":)" else "😎"
+        symbol = if asciiOnly then ":)" else "😎\b "
 
 instance Combatant Player where
     attack :: (Combatant c, Monad m) => Player -> c -> ReaderT Config m c

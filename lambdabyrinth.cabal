@@ -61,6 +61,7 @@ executable lambdabyrinth
         text,
         vty >= 6.0,
         vty-crossplatform,
+        word-wrap,
     default-extensions:
         FlexibleContexts,
         InstanceSigs,

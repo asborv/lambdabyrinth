@@ -15,6 +15,7 @@ import Brick
     , hBox
     , hLimit
     , txt
+    , txtWrapWith
     , vBox
     , vLimit
     , (<+>)
@@ -24,10 +25,11 @@ import Brick.Main (halt, neverShowCursor)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
 import Config
-import Control.Lens ((&), (^.))
+import Control.Lens ((%=), (&), (^.))
 import Control.Lens.Combinators (to)
 import Control.Lens.Operators ((.~))
 import Control.Monad.Reader (ReaderT (runReaderT))
+import Control.Monad.Writer (WriterT (runWriterT))
 import qualified Creatures.Monsters as M
 import qualified Creatures.Player as P
 import Data.List (find)
@@ -40,6 +42,11 @@ import Graphics.Vty
 import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
 import Scenes.Game.Events
 import Scenes.Scene
+import Text.Wrap
+    ( FillScope (FillAfterFirst)
+    , FillStrategy (FillIndent)
+    , WrapSettings (..)
+    )
 import Types
 import World.Cells
 import World.Level
@@ -55,13 +62,19 @@ app config@(Config {asciiOnly}) =
         , appAttrMap = const $ attrMap defAttr []
         }
 
+runEvent :: Config -> GameEvent a -> EventM Name GameState a
+runEvent config event = do
+    (a, s) <- runWriterT $ runReaderT event config
+    history %= (s <>)
+    return a
+
 handleEvent :: Config -> BrickEvent Name () -> EventM Name GameState ()
 handleEvent config = \case
     VtyEvent e -> case e of
         EvKey (KChar 'q') [] -> halt
         EvKey (KChar c) []
             | (Just direction) <- charToDirection c ->
-                flip runReaderT config $ moveEvent direction
+                runEvent config $ moveEvent direction
         _ -> return ()
     _ -> return ()
 
@@ -81,7 +94,13 @@ drawGame asciiOnly game =
      in [ui]
 
 drawLog :: GameState -> Widget Name
-drawLog _ = border . hLimit 10 . center $ txt "Log"
+drawLog game =
+    let wrapSettings =
+            WrapSettings True True (FillIndent 4) FillAfterFirst
+     in border
+            . hLimit 30
+            . vBox
+            $ txtWrapWith wrapSettings <$> game ^. history
 
 drawStats :: GameState -> Widget Name
 drawStats game =
@@ -129,6 +148,11 @@ playGame character config = do
             fromMaybe
                 (error $ "Did not find " <> show (Stair Upwards) <> " on the first level.")
                 (getCellPosition (Stair Upwards) level)
-        initialState = GameState (character & P.pos .~ startingPosition) 0 (level : ls)
+        initialState =
+            GameState
+                (character & P.pos .~ startingPosition)
+                0
+                (level : ls)
+                ["Welcome to the Lambdabyrinth!"]
 
     defaultMain (app config) initialState

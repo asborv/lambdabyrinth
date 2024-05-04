@@ -7,7 +7,7 @@ import GHC.Arr (Array, bounds)
 import World.Cells
 
 type Coordinate = (Int, Int)
-data Direction = North | East | South | West
+data Direction = North | East | South | West deriving (Show)
 type World = [Level]
 data Level = Level
     { _cells :: Array Coordinate Cell

@@ -3,22 +3,22 @@ Module      : Items.Weapons
 Description : All weapons, implementations, and stats in the game
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module Items.Weapons (Weapon (..), power) where
+module Items.Weapons (Weapon (..), WeaponType(..), power) where
 
 import Brick (txt, (<+>))
 import Draw
 import Items.Materials
 
-data WeaponType = Dagger | Spear
-data Weapon = Weapon {weaponType :: WeaponType, material :: Material}
+data WeaponType = Dagger | Spear deriving (Show)
+data Weapon = Weapon {weaponType :: WeaponType, material :: Material} deriving (Show)
 
 instance Drawable Weapon where
     draw asciiOnly weapon = draw asciiOnly (material weapon) <+> txt symbol
       where
         symbol = case (asciiOnly, weaponType weapon) of
-            (False, Spear) -> "🔱 "
+            (False, Spear) -> "🔱\b "
             (True, Spear) -> "/ "
-            (False, Dagger) -> "🗡️ "
+            (False, Dagger) -> "🗡️\b "
             (True, Dagger) -> "- "
 
 power :: Weapon -> Int
