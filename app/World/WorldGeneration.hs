@@ -1,13 +1,20 @@
+{- |
+Module      : World.WorldGeneration
+Description : All about generating levels in the game world
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module World.WorldGeneration (create) where
 
 import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
 import Creatures.Monsters (Monster, position, zombie)
 import Data.Bifoldable (biList)
+import Data.Data (Proxy (..))
 import Data.Function (on, (&))
 import Data.Functor ((<&>))
 import Data.List (maximumBy, minimumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
+import GHC.TypeLits (KnownNat, natVal)
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.Cells
 import World.Level (Coordinate, Level (..))
@@ -152,9 +159,12 @@ generateStairs edges = longest
             (compare `on` weight)
             [(a, b) | a <- deadEnds, b <- deadEnds]
 
-create :: Int -> Int -> IO Level
-create width height = do
-    let boundingRectangle = ((0, 0), (height - 1, width - 1))
+create ::
+    forall cols rows. (KnownNat cols, KnownNat rows) => IO (Level cols rows)
+create = do
+    let width = fromInteger $ natVal (Proxy @cols) - 1
+        height = fromInteger $ natVal (Proxy @rows) - 1
+        boundingRectangle = ((0, 0), (height, width))
         initial = Leaf boundingRectangle
         allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do

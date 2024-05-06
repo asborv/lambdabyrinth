@@ -22,7 +22,7 @@ import Creatures.Player (Class (..), Player (..))
 import Graphics.Vty (Event (..), Key (KChar, KEnter), defAttr)
 import Items.Materials
 import Items.Weapons
-import Scenes.Scene (Name, Scene)
+import Types
 
 mrBean :: Player
 mrBean =

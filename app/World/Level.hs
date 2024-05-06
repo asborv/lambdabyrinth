@@ -1,32 +1,51 @@
+{- |
+Module      : World.Level
+Description : Definition of the game world's levels, and util functions
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module World.Level where
 
-import Control.Lens (both, over, to, (^.))
 import Control.Lens.TH (makeLenses)
 import Creatures.Monsters
-import GHC.Arr (Array, bounds)
+import Data.Data (Proxy (..))
+import GHC.Arr (Array)
+import GHC.TypeLits (KnownNat, Natural, natVal)
 import World.Cells
 
 type Coordinate = (Int, Int)
 data Direction = North | East | South | West deriving (Show)
-type World = [Level]
-data Level = Level
+type World (cols :: Natural) (rows :: Natural) = [Level cols rows]
+data Level (cols :: Natural) (rows :: Natural) = Level
     { _cells :: Array Coordinate Cell
     , _up :: Coordinate
     , _down :: Coordinate
     , _monsters :: [Monster]
     }
-    deriving (Show)
 
 makeLenses ''Level
 
--- | Get the width and height of the level
-dimensions :: Level -> (Int, Int)
-dimensions level = level ^. cells . to (over both (+ 1) . snd . bounds)
+dimensions ::
+    forall cols rows.
+    (KnownNat cols, KnownNat rows) =>
+    Level cols rows
+    -> (Int, Int)
+dimensions _ = (h, w)
+  where
+    w = fromInteger $ natVal (Proxy @cols)
+    h = fromInteger $ natVal (Proxy @rows)
 
 -- | Get only the width of the level
-width :: Level -> Int
+width ::
+    forall cols rows.
+    (KnownNat cols, KnownNat rows) =>
+    Level cols rows
+    -> Int
 width = snd . dimensions
 
 -- | Get only the height of the level
-height :: Level -> Int
+height ::
+    forall cols rows.
+    (KnownNat cols, KnownNat rows) =>
+    Level cols rows
+    -> Int
 height = fst . dimensions
