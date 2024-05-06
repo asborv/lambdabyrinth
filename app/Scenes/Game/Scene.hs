@@ -34,7 +34,6 @@ import qualified Creatures.Monsters as M
 import qualified Creatures.Player as P
 import Data.List (find)
 import Data.List.Split
-import Data.Maybe (fromMaybe)
 import qualified Data.Text as T
 import Draw
 import GHC.Arr
@@ -135,19 +134,18 @@ drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox
         (coord, cell) <- level ^. cells & assocs
         let monster = find (\m -> m ^. M.position == coord) (level ^. monsters)
 
-        return $
-            if game ^. player . P.pos == coord
-                then draw asciiOnly $ game ^. player
-                else maybe (draw asciiOnly cell) (draw asciiOnly) monster
+        return $ if
+            | game ^. player . P.pos == coord -> draw asciiOnly $ game ^. player
+            | (Just m) <- monster -> draw asciiOnly m
+            | coord == level ^. up -> draw asciiOnly (Stair Upwards)
+            | coord == level ^. down -> draw asciiOnly (Stair Downwards)
+            | otherwise -> draw asciiOnly cell
 
 playGame :: P.Player -> Config -> IO GameState
 playGame character config = do
     (level : ls) <- interleaveSequenceIO $ repeat (create 40 40)
     -- The up- and downwards stairs are guaranteed to exist on each level
-    let startingPosition =
-            fromMaybe
-                (error $ "Did not find " <> show (Stair Upwards) <> " on the first level.")
-                (getCellPosition (Stair Upwards) level)
+    let startingPosition = level ^. up
         initialState =
             GameState
                 (character & P.pos .~ startingPosition)

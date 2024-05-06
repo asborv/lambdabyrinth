@@ -142,8 +142,8 @@ count x = length . filter (== x)
 They are placed at dead ends (leaves) of the provided edges, as distant as possible away from each other.
 (Distance is measured in diagonal pixels, not neccesarily the longes path).
 -}
-generateStairs :: [Edge] -> ((Coordinate, Cell), (Coordinate, Cell))
-generateStairs edges = (\(a, b) -> ((a, Stair Upwards), (b, Stair Downwards))) longest
+generateStairs :: [Edge] -> (Coordinate, Coordinate)
+generateStairs edges = longest
   where
     nodes = concatMap biList edges
     deadEnds = filter (\node -> count node nodes == 1) nodes
@@ -167,8 +167,8 @@ create width height = do
                     centers = map center $ flatten tree'' --     Get the center of each room
                     tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them
                     (up, down) = generateStairs $ mst centers -- Place the up- and downwards staircases as long away from each other as possible
-                    levelCells = foldl (//) (allWalls // tunnels) (assocs <$> rooms) // [up] // [down]
+                    levelCells = foldl (//) (allWalls // tunnels) (assocs <$> rooms)
 
                 monsters <- generateMonsters (concatMap indices rooms)
 
-                return $ Level levelCells monsters
+                return $ Level levelCells up down monsters

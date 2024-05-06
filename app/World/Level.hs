@@ -11,6 +11,8 @@ data Direction = North | East | South | West deriving (Show)
 type World = [Level]
 data Level = Level
     { _cells :: Array Coordinate Cell
+    , _up :: Coordinate
+    , _down :: Coordinate
     , _monsters :: [Monster]
     }
     deriving (Show)
