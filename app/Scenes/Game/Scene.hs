@@ -9,17 +9,19 @@ import Brick
     ( App (..)
     , BrickEvent (VtyEvent)
     , EventM
+    , Padding (..)
     , Widget
     , attrMap
     , defaultMain
     , hBox
     , hLimit
+    , padLeft
     , txt
     , txtWrapWith
     , vBox
     , vLimit
     , (<+>)
-    , (<=>), padLeft, Padding (..)
+    , (<=>)
     )
 import Brick.Main (halt, neverShowCursor)
 import Brick.Widgets.Border
@@ -115,11 +117,11 @@ drawEquipment :: Bool -> GameState -> Widget Name
 drawEquipment asciiOnly game = hLimit 20 . border . vCenter $ vBox slots
   where
     slots = [handSlot, helmetSlot, cuirassSlot, glovesSlot, bootsSlot]
-    handSlot = padLeft Max $  txt "\nWeapon: " <+> itemSlot (game ^. player . P.hand)
-    helmetSlot = padLeft Max $  txt "\nHelmet: " <+> itemSlot (game ^. player . P.helmet)
-    cuirassSlot = padLeft Max $  txt "\nCuirass: " <+> itemSlot (game ^. player . P.cuirass)
-    glovesSlot = padLeft Max $  txt "\nGloves: " <+> itemSlot (game ^. player . P.gloves)
-    bootsSlot = padLeft Max $  txt "\nBoots: " <+> itemSlot (game ^. player . P.boots)
+    handSlot = padLeft Max $ txt "\nWeapon: " <+> itemSlot (game ^. player . P.hand)
+    helmetSlot = padLeft Max $ txt "\nHelmet: " <+> itemSlot (game ^. player . P.helmet)
+    cuirassSlot = padLeft Max $ txt "\nCuirass: " <+> itemSlot (game ^. player . P.cuirass)
+    glovesSlot = padLeft Max $ txt "\nGloves: " <+> itemSlot (game ^. player . P.gloves)
+    bootsSlot = padLeft Max $ txt "\nBoots: " <+> itemSlot (game ^. player . P.boots)
 
     itemSlot :: Drawable a => Maybe a -> Widget Name
     itemSlot Nothing = border $ txt "    "
@@ -134,16 +136,17 @@ drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox
         (coord, cell) <- level ^. cells & assocs
         let monster = find (\m -> m ^. M.position == coord) (level ^. monsters)
 
-        return $ if
-            | game ^. player . P.pos == coord -> draw asciiOnly $ game ^. player
-            | (Just m) <- monster -> draw asciiOnly m
-            | coord == level ^. up -> draw asciiOnly (Stair Upwards)
-            | coord == level ^. down -> draw asciiOnly (Stair Downwards)
-            | otherwise -> draw asciiOnly cell
+        return $
+            if
+                | game ^. player . P.pos == coord -> draw asciiOnly $ game ^. player
+                | Just m <- monster -> draw asciiOnly m
+                | coord == level ^. up -> draw asciiOnly (Stair Upwards)
+                | coord == level ^. down -> draw asciiOnly (Stair Downwards)
+                | otherwise -> draw asciiOnly cell
 
 playGame :: P.Player -> Config -> IO GameState
 playGame character config = do
-    (level : ls) <- interleaveSequenceIO $ repeat (create 40 40)
+    (level : ls) <- interleaveSequenceIO $ repeat create
     -- The up- and downwards stairs are guaranteed to exist on each level
     let startingPosition = level ^. up
         initialState =
