@@ -16,7 +16,7 @@ import qualified Creatures.Monsters as M
 import qualified Creatures.Player as P
 import Data.Foldable (find)
 import Data.Text (Text, pack)
-import GHC.Arr (assocs, indices, (!))
+import GHC.Arr (indices, (!))
 import Items.Weapons (Weapon (weaponType))
 import Scenes.Scene
 import Types
@@ -49,9 +49,11 @@ moveEvent direction = do
     -- Update the player's position only when the movement is legal
     when isLegalMove $ do
         let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
-        case monster of
-            (Just m) -> playerAttackEvent m
-            Nothing -> player . P.pos .= target >> environmentReactEvent cell
+        if
+            | Just m <- monster -> playerAttackEvent m
+            | target == level ^. up -> player . P.pos .= target >> environmentReactEvent (Stair Upwards)
+            | target == level ^. down -> player . P.pos .= target >> environmentReactEvent (Stair Downwards)
+            | otherwise -> player . P.pos .= target >> environmentReactEvent cell
 
     me <- use player
     when (me ^. P.health <= 0) (lift $ lift halt)
@@ -67,14 +69,9 @@ environmentReactEvent (Stair Downwards) = do
     -- Go to next level
     currentLevel += 1
     curr <- use currentLevel
+    l <- use (world . to (!! curr))
+    player . P.pos .= l ^. up
     tell ["You descend the stairs... Welcome to level " <> tshow curr <> "!"]
-
-    -- Find where the upwards stairs are on the next level, place player there
-    stairsUp <- getCellPositionM (Stair Upwards)
-    maybe
-        (error $ "No " <> show (Stair Upwards) <> " found on level " <> show curr)
-        (player . P.pos .=)
-        stairsUp
 environmentReactEvent (Stair Upwards) = do
     curr <- use currentLevel
     -- Move to previous level only if the player is not on the starting level
@@ -82,27 +79,11 @@ environmentReactEvent (Stair Upwards) = do
         then do
             currentLevel -= 1
             curr' <- use currentLevel
+            l <- use (world . to (!! curr'))
+            player . P.pos .= l ^. down
             tell ["You cowardly retreat back to level " <> tshow curr' <> "!"]
-            stairsDown <- getCellPositionM (Stair Downwards)
-            maybe
-                (error $ "No " <> show (Stair Downwards) <> " found on level " <> show curr')
-                (player . P.pos .=)
-                stairsDown
         else tell ["Ya gotta venture down the Lambdabyrinth, ya doofus!"]
 environmentReactEvent _ = return ()
-
-{- | Given the current level, get the first position (if any) of the specified cell type.
-Uses the current level in the game state.
--}
-getCellPositionM :: Cell -> GameEvent (Maybe Coordinate)
-getCellPositionM cell = do
-    curr <- use currentLevel
-    level <- use (world . to (!! curr))
-    return $ getCellPosition cell level
-
--- | Given a cell and a level, get the first position (if any) of the specified cell type
-getCellPosition :: Cell -> Level -> Maybe Coordinate
-getCellPosition cell level = fst <$> find ((== cell) . snd) (assocs $ level ^. cells)
 
 playerAttackEvent :: M.Monster -> GameEvent ()
 playerAttackEvent monster = do

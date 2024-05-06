@@ -71,5 +71,6 @@ executable lambdabyrinth
         TemplateHaskell,
         TupleSections,
         TypeApplications,
+        MultiWayIf,
     hs-source-dirs:   app
     default-language: Haskell2010
