@@ -1,3 +1,8 @@
+{- |
+Module      : World.Cells
+Description : All kinds of cells - and their data - that exist in the game
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module World.Cells (Cell (..), isTraversible, VerticalDirection (..)) where
 
 import Brick (txt)

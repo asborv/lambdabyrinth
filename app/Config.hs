@@ -1,3 +1,8 @@
+{- |
+Module      : Config
+Description : Command line options for the game
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module Config (Config (..), Difficulty (..), configOptions) where
 
 import Options.Applicative

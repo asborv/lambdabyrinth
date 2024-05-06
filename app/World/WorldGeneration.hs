@@ -1,3 +1,8 @@
+{- |
+Module      : World.WorldGeneration
+Description : All about generating levels in the game world
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module World.WorldGeneration (create) where
 
 import Control.Lens ((.~))
@@ -154,8 +159,8 @@ generateStairs edges = longest
             (compare `on` weight)
             [(a, b) | a <- deadEnds, b <- deadEnds]
 
-create
-    :: forall cols rows. (KnownNat cols, KnownNat rows) => IO (Level cols rows)
+create ::
+    forall cols rows. (KnownNat cols, KnownNat rows) => IO (Level cols rows)
 create = do
     let width = fromInteger $ natVal (Proxy @cols) - 1
         height = fromInteger $ natVal (Proxy @rows) - 1

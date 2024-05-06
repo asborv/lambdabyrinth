@@ -1,3 +1,8 @@
+{- |
+Module      : World.Level
+Description : Definition of the game world's levels, and util functions
+Maintainer  : asbjorn.orvedal@gmail.com
+-}
 module World.Level where
 
 import Control.Lens.TH (makeLenses)
