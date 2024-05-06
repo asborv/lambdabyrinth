@@ -42,7 +42,6 @@ import GHC.Arr
 import Graphics.Vty
 import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
 import Scenes.Game.Events
-import Scenes.Scene
 import Text.Wrap
     ( FillScope (FillAfterFirst)
     , FillStrategy (FillIndent)

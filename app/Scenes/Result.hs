@@ -5,8 +5,6 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Scenes.Result where
 
-import Types (GameState)
-
 import Brick
     ( App (..)
     , BrickEvent (VtyEvent)
@@ -23,7 +21,7 @@ import Brick.Widgets.Center (hCenter, vCenter)
 import Control.Monad (void)
 import Data.Text (Text)
 import Graphics.Vty (Event (..), defAttr)
-import Scenes.Scene (Name, Scene)
+import Types
 
 app :: Scene GameState
 app =

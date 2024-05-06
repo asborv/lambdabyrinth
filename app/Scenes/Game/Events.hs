@@ -18,7 +18,6 @@ import Data.Foldable (find)
 import Data.Text (Text, pack)
 import GHC.Arr (indices, (!))
 import Items.Weapons (Weapon (weaponType))
-import Scenes.Scene
 import Types
 import World.Cells
 import World.Level

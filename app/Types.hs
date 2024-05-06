@@ -5,6 +5,7 @@ maintainer : asbjorn.orvedal@gmail.com
 -}
 module Types where
 
+import Brick (App)
 import Control.Lens.TH (makeLenses)
 import qualified Creatures.Player as P
 import Data.Text (Text)
@@ -18,3 +19,6 @@ data GameState = GameState
     }
 
 makeLenses ''GameState
+
+type Name = ()
+type Scene a = App a () Name

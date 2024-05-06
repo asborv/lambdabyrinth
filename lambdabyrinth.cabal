@@ -43,7 +43,6 @@ executable lambdabyrinth
         Scenes.Game.Events
         Scenes.Game.Scene
         Scenes.Result
-        Scenes.Scene
         Types
         World.Cells
         World.Level
