@@ -50,6 +50,7 @@ executable lambdabyrinth
     build-depends:
         base <5,
         brick,
+        MonadRandom,
         containers >= 0.6.7,
         hw-prim,
         lens,

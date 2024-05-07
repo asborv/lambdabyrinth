@@ -7,10 +7,10 @@ module World.WorldGeneration (create) where
 
 import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
-import Creatures.Monsters (Monster, position, zombie)
+import Creatures.Monsters (Monster, position)
 import Data.Bifoldable (biList)
 import Data.Data (Proxy (..))
-import Data.Function (on, (&))
+import Data.Function (on)
 import Data.Functor ((<&>))
 import Data.List (maximumBy, minimumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
@@ -133,11 +133,12 @@ dig ((y0, x0), (y1, x1)) = map (,Tunnel) $ vertical <> horizontal
     vertical = [(y, x0) | y <- [min y0 y1 .. max y0 y1]]
     horizontal = [(y1, x) | x <- [min x0 x1 .. max x0 x1]]
 
-generateMonsters :: [Coordinate] -> IO [Monster]
-generateMonsters cells = do
+generateMonsters :: Double -> [Coordinate] -> IO [Monster]
+generateMonsters ratio cells = do
     rs <- mapM (const randomIO) cells :: IO [Double]
-    let cellsToPopulate = map fst $ filter ((> 0.95) . snd) (zip cells rs)
-    return $ map (\c -> zombie & position .~ c) cellsToPopulate
+    let cellsToPopulate = map fst $ filter ((< ratio) . snd) (zip cells rs)
+    monsters <- mapM (const randomIO) cellsToPopulate :: IO [Monster]
+    return $ zipWith (position .~) cellsToPopulate monsters
 
 {- | Count the number of occurrences of a specific element in a list
 Courtesy of: https://stackoverflow.com/questions/19554984/haskell-count-occurrences-function
@@ -169,7 +170,7 @@ create = do
         allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
         tree' <- split tree
-        if leaves tree' <= 6
+        if leaves tree' <= 9
             then loop tree'
             else do
                 tree'' <- shrinkWalls tree'
@@ -179,6 +180,6 @@ create = do
                     (up, down) = generateStairs $ mst centers -- Place the up- and downwards staircases as long away from each other as possible
                     levelCells = foldl (//) (allWalls // tunnels) (assocs <$> rooms)
 
-                monsters <- generateMonsters (concatMap indices rooms)
+                monsters <- generateMonsters 0.05 (concatMap indices rooms)
 
                 return $ Level levelCells up down monsters
