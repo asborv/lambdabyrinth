@@ -51,7 +51,9 @@ instance Show Monster where
 
 instance Drawable Monster where
     draw False monster = txt . T.pack $ show monster
-    draw True _ = txt "! "
+    draw True (Monster {_monsterType}) = case _monsterType of
+        Zombie -> txt "Z "
+        Ghost -> txt "G "
 
 instance Combatant Monster where
     attack :: (Combatant c, Monad m) => Monster -> c -> ReaderT Config m c
