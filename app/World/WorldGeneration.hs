@@ -43,7 +43,7 @@ split (left :-: right) = do
     shouldSplitLeft <- randomIO :: IO Bool
     if shouldSplitLeft
         then split left <&> (:-: right)
-        else split right <&> (:-: left)
+        else split right <&> (left :-:)
 split (Leaf (upperLeft, lowerRight)) = do
     splitRatio <- randomRIO (0.4, 0.6) :: IO Double
     direction <- randomIO :: IO Direction
