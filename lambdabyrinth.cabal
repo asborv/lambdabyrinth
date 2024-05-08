@@ -46,10 +46,12 @@ executable lambdabyrinth
         Types
         World.Cells
         World.Level
-        World.WorldGeneration
+        World.Tree
+        World.Generation
     build-depends:
         base <5,
         brick,
+        MonadRandom,
         containers >= 0.6.7,
         hw-prim,
         lens,

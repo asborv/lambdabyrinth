@@ -1,29 +1,25 @@
 {- |
-Module      : World.WorldGeneration
+Module      : World.Generation
 Description : All about generating levels in the game world
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module World.WorldGeneration (create) where
+module World.Generation (generateLevel) where
 
 import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
-import Creatures.Monsters (Monster, position, zombie)
+import Creatures.Monsters (Monster, position)
 import Data.Bifoldable (biList)
+import Data.Bool (bool)
 import Data.Data (Proxy (..))
-import Data.Function (on, (&))
+import Data.Function (on)
 import Data.Functor ((<&>))
-import Data.List (maximumBy, minimumBy)
+import Data.List (maximumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
 import GHC.TypeLits (KnownNat, natVal)
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.Cells
 import World.Level (Coordinate, Level (..))
-
--- | Binary tree with data only in its leaves
-data BinaryTree a
-    = Leaf a
-    | (BinaryTree a) :-: (BinaryTree a)
-    deriving (Show)
+import World.Tree
 
 data Direction = Vertical | Horizontal deriving (Show)
 
@@ -36,14 +32,11 @@ instance Random Direction where
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
 
-type Edge = (Coordinate, Coordinate)
-
+{- | Split two random leaves in a binary tree into two new leaves
+The bisection is done by a random direction and a random point (within a ratio range) along that direction
+-}
 split :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
-split (left :-: right) = do
-    shouldSplitLeft <- randomIO :: IO Bool
-    if shouldSplitLeft
-        then split left <&> (:-: right)
-        else split right <&> (:-: left)
+split (left :-: right) = randomIO >>= bool (split left <&> (:-: right)) (split right <&> (:-: left))
 split (Leaf (upperLeft, lowerRight)) = do
     splitRatio <- randomRIO (0.4, 0.6) :: IO Double
     direction <- randomIO :: IO Direction
@@ -79,50 +72,20 @@ split (Leaf (upperLeft, lowerRight)) = do
 getRooms :: BinaryTree Rectangle -> [Array Coordinate Cell]
 getRooms = map (\rectangle -> listArray rectangle (repeat Floor)) . flatten
 
-shrinkWalls :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
-shrinkWalls (left :-: right) = do
-    left' <- shrinkWalls left
-    right' <- shrinkWalls right
-    return $ left' :-: right'
-shrinkWalls (Leaf ((y0, x0), (y1, x1))) = do
+{- |  Take a room, and push its walls inwards by a random ratio.
+ The shrinking is symmetric on the horizontal and vertical axis, respecitvely.
+ (The walls will be pushed in by _at least_ 1 cell)
+-}
+shrinkWalls :: Rectangle -> IO Rectangle
+shrinkWalls ((y0, x0), (y1, x1)) = do
     ratio <- randomRIO (0.2, 0.3) :: IO Double
     let width = fromIntegral (x1 - x0) :: Double
         height = fromIntegral (y1 - y0) :: Double
         dx = max 1 (round (ratio * width))
         dy = max 1 (round (ratio * height))
-    return $ Leaf ((y0 + dy, x0 + dx), (y1 - dy, x1 - dx))
+    return ((y0 + dy, x0 + dx), (y1 - dy, x1 - dx))
 
-leaves :: BinaryTree a -> Int
-leaves (Leaf _) = 1
-leaves (left :-: right) = leaves left + leaves right
-
-flatten :: BinaryTree a -> [a]
-flatten (Leaf a) = [a]
-flatten (left :-: right) = flatten left <> flatten right
-
-{- | Find the edges that produce the minimum spanning tree for a set of points in a plane.
-Candidate edges are all pairs between the nodes that are passed.
-Inspired by: https://stackoverflow.com/questions/65546555/implementing-prims-algorithm-in-haskell
--}
-mst :: [Coordinate] -> [Edge]
-mst [] = []
-mst (n : ns) = mst' ns [n] []
-  where
-    mst' :: [Coordinate] -> [Coordinate] -> [Edge] -> [Edge]
-    mst' [] _ edges = edges
-    mst' (x : xs) visited edges
-        | x `elem` visited = mst' xs visited edges
-        | otherwise =
-            let shortest = minimumBy (compare `on` weight) ((x,) <$> visited)
-             in mst' xs (x : visited) (shortest : edges)
-
--- The weight of an edge is the distance between its nodes
-weight :: Edge -> Double
-weight (a, b) = a `distance` b
-
-distance :: Coordinate -> Coordinate -> Double
-distance (y0, x0) (y1, x1) = sqrt (fromIntegral (y1 - y0) ^ 2 + fromIntegral (x1 - x0) ^ 2)
-
+-- | Calculate the center of a rectangle
 center :: Rectangle -> Coordinate
 center ((y0, x0), (y1, x1)) = ((y0 + y1) `div` 2, (x0 + x1) `div` 2)
 
@@ -133,11 +96,13 @@ dig ((y0, x0), (y1, x1)) = map (,Tunnel) $ vertical <> horizontal
     vertical = [(y, x0) | y <- [min y0 y1 .. max y0 y1]]
     horizontal = [(y1, x) | x <- [min x0 x1 .. max x0 x1]]
 
-generateMonsters :: [Coordinate] -> IO [Monster]
-generateMonsters cells = do
+-- | Given a ratio, and a list of coordinates, generate random monsters at some of the coordinates
+generateMonsters :: Double -> [Coordinate] -> IO [Monster]
+generateMonsters ratio cells = do
     rs <- mapM (const randomIO) cells :: IO [Double]
-    let cellsToPopulate = map fst $ filter ((> 0.95) . snd) (zip cells rs)
-    return $ map (\c -> zombie & position .~ c) cellsToPopulate
+    let cellsToPopulate = map fst $ filter ((< ratio) . snd) (zip cells rs)
+    monsters <- mapM (const randomIO) cellsToPopulate :: IO [Monster]
+    return $ zipWith (position .~) cellsToPopulate monsters
 
 {- | Count the number of occurrences of a specific element in a list
 Courtesy of: https://stackoverflow.com/questions/19554984/haskell-count-occurrences-function
@@ -147,7 +112,6 @@ count x = length . filter (== x)
 
 {- | Generate staircases, one up, one down.
 They are placed at dead ends (leaves) of the provided edges, as distant as possible away from each other.
-(Distance is measured in diagonal pixels, not neccesarily the longes path).
 -}
 generateStairs :: [Edge] -> (Coordinate, Coordinate)
 generateStairs edges = longest
@@ -159,9 +123,11 @@ generateStairs edges = longest
             (compare `on` weight)
             [(a, b) | a <- deadEnds, b <- deadEnds]
 
-create ::
-    forall cols rows. (KnownNat cols, KnownNat rows) => IO (Level cols rows)
-create = do
+generateLevel ::
+    forall cols rows.
+    (KnownNat cols, KnownNat rows) =>
+    IO (Level cols rows)
+generateLevel = do
     let width = fromInteger $ natVal (Proxy @cols) - 1
         height = fromInteger $ natVal (Proxy @rows) - 1
         boundingRectangle = ((0, 0), (height, width))
@@ -169,16 +135,15 @@ create = do
         allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
         tree' <- split tree
-        if leaves tree' <= 6
+        if leaves tree' <= 9
             then loop tree'
             else do
-                tree'' <- shrinkWalls tree'
-                let rooms = getRooms tree'' --                   Get the rooms of the (shrunken) binary tree
-                    centers = map center $ flatten tree'' --     Get the center of each room
-                    tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them
-                    (up, down) = generateStairs $ mst centers -- Place the up- and downwards staircases as long away from each other as possible
-                    levelCells = foldl (//) (allWalls // tunnels) (assocs <$> rooms)
-
-                monsters <- generateMonsters (concatMap indices rooms)
+                tree'' <- traverse shrinkWalls tree'
+                let rooms = getRooms tree'' --                                          Get the rooms of the (shrunken) binary tree
+                    centers = map center $ flatten tree'' --                            Get the center of each room
+                    tunnels = concatMap dig $ mst centers --                            Use the rooms' centers to calculate an MST between them
+                    (up, down) = generateStairs $ mst centers --                        Place the up- and downwards staircases as long away from each other as possible
+                    levelCells = allWalls // (concatMap assocs rooms <> tunnels) --     Take a level full of walls, draw rooms, then tunnels
+                monsters <- generateMonsters 0.05 (concatMap indices rooms)
 
                 return $ Level levelCells up down monsters

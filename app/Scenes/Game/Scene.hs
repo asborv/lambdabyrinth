@@ -50,7 +50,7 @@ import Text.Wrap
 import Types
 import World.Cells
 import World.Level
-import World.WorldGeneration (create)
+import World.Generation (generateLevel)
 
 app :: Config -> Scene GameState
 app config@(Config {asciiOnly}) =
@@ -145,7 +145,7 @@ drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox
 
 playGame :: P.Player -> Config -> IO GameState
 playGame character config = do
-    (level : ls) <- interleaveSequenceIO $ repeat create
+    (level : ls) <- interleaveSequenceIO $ repeat generateLevel
     -- The up- and downwards stairs are guaranteed to exist on each level
     let startingPosition = level ^. up
         initialState =
