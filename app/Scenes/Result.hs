@@ -13,14 +13,17 @@ import Brick
     , defaultMain
     , halt
     , txt
-    , vBox
+    , vBox, vLimit, hLimit, padAll
     )
 import Brick.Main (neverShowCursor)
 import Brick.Widgets.Border (borderWithLabel)
-import Brick.Widgets.Center (hCenter, vCenter)
+import Brick.Widgets.Center (hCenter, center)
+import Control.Lens ((^.))
 import Control.Monad (void)
-import Data.Text (Text)
+import Creatures.Player
+import qualified Data.Text as T
 import Graphics.Vty (Event (..), defAttr)
+import Scenes.Game.Events (tshow)
 import Types
 
 app :: Scene GameState
@@ -38,14 +41,21 @@ app =
         }
 
 drawScene :: GameState -> [Widget Name]
-drawScene _ =
-    [ borderWithLabel (txt "Results")
-        . vCenter
-        $ centerLines ["YOU DIED!", "Press any key to quit"]
+drawScene game =
+    [ center
+        . vLimit 10
+        . hLimit 30
+        . borderWithLabel (txt "Results")
+        . padAll 1
+        $ centerLines
+            [ "YOU DIED!"
+            , game ^. player . name <> " got to level " <> tshow (game ^. currentLevel)
+            , "Press any key to quit"
+            ]
     ]
 
 -- | Take a list of 'Text's, and center each in a vertical list
-centerLines :: [Text] -> Widget Name
+centerLines :: [T.Text] -> Widget Name
 centerLines = vBox . fmap (hCenter . txt)
 
 showResult :: GameState -> IO ()
