@@ -3,6 +3,7 @@ module World.Tree where
 import Data.Foldable (minimumBy)
 import Data.Function (on)
 import World.Level (Coordinate)
+import Control.Applicative (liftA2)
 
 type Edge = (Coordinate, Coordinate)
 
