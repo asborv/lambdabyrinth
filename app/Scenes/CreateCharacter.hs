@@ -61,7 +61,13 @@ handleEvent (VtyEvent (EvKey KEnter [])) = halt
 handleEvent e = handleFormEvent e
 
 drawScene :: Form Player e Name -> [Widget Name]
-drawScene f = [center . borderWithLabel (txt "Create character") $ renderForm f]
+drawScene f =
+    [ center
+        . vLimit 10
+        . hLimit 50
+        . borderWithLabel (txt "Create character")
+        $ renderForm f
+    ]
 
 app :: App (Form Player e Name) e Name
 app =
