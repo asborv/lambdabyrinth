@@ -9,21 +9,17 @@ import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
 import Creatures.Monsters (Monster, position)
 import Data.Bifoldable (biList)
+import Data.Bool (bool)
 import Data.Data (Proxy (..))
 import Data.Function (on)
 import Data.Functor ((<&>))
-import Data.List (maximumBy, minimumBy)
+import Data.List (maximumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
 import GHC.TypeLits (KnownNat, natVal)
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.Cells
 import World.Level (Coordinate, Level (..))
-
--- | Binary tree with data only in its leaves
-data BinaryTree a
-    = Leaf a
-    | (BinaryTree a) :-: (BinaryTree a)
-    deriving (Show)
+import World.Tree
 
 data Direction = Vertical | Horizontal deriving (Show)
 
@@ -36,14 +32,8 @@ instance Random Direction where
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
 
-type Edge = (Coordinate, Coordinate)
-
 split :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
-split (left :-: right) = do
-    shouldSplitLeft <- randomIO :: IO Bool
-    if shouldSplitLeft
-        then split left <&> (:-: right)
-        else split right <&> (left :-:)
+split (left :-: right) = randomIO >>= bool (split left <&> (:-: right)) (split right <&> (:-: left))
 split (Leaf (upperLeft, lowerRight)) = do
     splitRatio <- randomRIO (0.4, 0.6) :: IO Double
     direction <- randomIO :: IO Direction
@@ -79,49 +69,14 @@ split (Leaf (upperLeft, lowerRight)) = do
 getRooms :: BinaryTree Rectangle -> [Array Coordinate Cell]
 getRooms = map (\rectangle -> listArray rectangle (repeat Floor)) . flatten
 
-shrinkWalls :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
-shrinkWalls (left :-: right) = do
-    left' <- shrinkWalls left
-    right' <- shrinkWalls right
-    return $ left' :-: right'
-shrinkWalls (Leaf ((y0, x0), (y1, x1))) = do
+shrinkWalls :: Rectangle -> IO Rectangle
+shrinkWalls ((y0, x0), (y1, x1)) = do
     ratio <- randomRIO (0.2, 0.3) :: IO Double
     let width = fromIntegral (x1 - x0) :: Double
         height = fromIntegral (y1 - y0) :: Double
         dx = max 1 (round (ratio * width))
         dy = max 1 (round (ratio * height))
-    return $ Leaf ((y0 + dy, x0 + dx), (y1 - dy, x1 - dx))
-
-leaves :: BinaryTree a -> Int
-leaves (Leaf _) = 1
-leaves (left :-: right) = leaves left + leaves right
-
-flatten :: BinaryTree a -> [a]
-flatten (Leaf a) = [a]
-flatten (left :-: right) = flatten left <> flatten right
-
-{- | Find the edges that produce the minimum spanning tree for a set of points in a plane.
-Candidate edges are all pairs between the nodes that are passed.
-Inspired by: https://stackoverflow.com/questions/65546555/implementing-prims-algorithm-in-haskell
--}
-mst :: [Coordinate] -> [Edge]
-mst [] = []
-mst (n : ns) = mst' ns [n] []
-  where
-    mst' :: [Coordinate] -> [Coordinate] -> [Edge] -> [Edge]
-    mst' [] _ edges = edges
-    mst' (x : xs) visited edges
-        | x `elem` visited = mst' xs visited edges
-        | otherwise =
-            let shortest = minimumBy (compare `on` weight) ((x,) <$> visited)
-             in mst' xs (x : visited) (shortest : edges)
-
--- The weight of an edge is the distance between its nodes
-weight :: Edge -> Double
-weight (a, b) = a `distance` b
-
-distance :: Coordinate -> Coordinate -> Double
-distance (y0, x0) (y1, x1) = sqrt (fromIntegral (y1 - y0) ^ 2 + fromIntegral (x1 - x0) ^ 2)
+    return ((y0 + dy, x0 + dx), (y1 - dy, x1 - dx))
 
 center :: Rectangle -> Coordinate
 center ((y0, x0), (y1, x1)) = ((y0 + y1) `div` 2, (x0 + x1) `div` 2)
@@ -173,7 +128,7 @@ create = do
         if leaves tree' <= 9
             then loop tree'
             else do
-                tree'' <- shrinkWalls tree'
+                tree'' <- traverse shrinkWalls tree'
                 let rooms = getRooms tree'' --                   Get the rooms of the (shrunken) binary tree
                     centers = map center $ flatten tree'' --     Get the center of each room
                     tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them
