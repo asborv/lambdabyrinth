@@ -15,11 +15,12 @@ import Draw
 import Items.Armour
 import Items.Weapons
 import World.Level
+import qualified Data.Text as T
 
-data Class = Wizard | Warrior | Rogue deriving (Show)
+data Class = Wizard | Warrior | Rogue deriving (Show, Eq)
 
 data Player = Player
-    { _name :: String
+    { _name :: T.Text
     , _pos :: Coordinate
     , _hand :: Maybe Weapon
     , _helmet :: Maybe Armour
@@ -33,9 +34,12 @@ data Player = Player
 makeLenses ''Player
 
 instance Drawable Player where
-    draw asciiOnly _ = txt symbol
+    draw asciiOnly player = txt symbol
       where
-        symbol = if asciiOnly then "P " else "😎\b "
+        symbol = if asciiOnly then "P " else case player ^. characterClass of
+            Warrior -> "⚔️\b "
+            Rogue -> "🦹\b "
+            Wizard -> "🧙\b "
 
 instance Combatant Player where
     attack :: (Combatant c, Monad m) => Player -> c -> ReaderT Config m c
