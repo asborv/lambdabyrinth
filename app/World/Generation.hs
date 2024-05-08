@@ -1,9 +1,9 @@
 {- |
-Module      : World.WorldGeneration
+Module      : World.Generation
 Description : All about generating levels in the game world
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module World.WorldGeneration (create) where
+module World.Generation (generateLevel) where
 
 import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
@@ -115,9 +115,11 @@ generateStairs edges = longest
             (compare `on` weight)
             [(a, b) | a <- deadEnds, b <- deadEnds]
 
-create ::
-    forall cols rows. (KnownNat cols, KnownNat rows) => IO (Level cols rows)
-create = do
+generateLevel ::
+    forall cols rows.
+    (KnownNat cols, KnownNat rows) =>
+    IO (Level cols rows)
+generateLevel = do
     let width = fromInteger $ natVal (Proxy @cols) - 1
         height = fromInteger $ natVal (Proxy @rows) - 1
         boundingRectangle = ((0, 0), (height, width))

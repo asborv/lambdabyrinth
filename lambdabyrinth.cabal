@@ -47,7 +47,7 @@ executable lambdabyrinth
         World.Cells
         World.Level
         World.Tree
-        World.WorldGeneration
+        World.Generation
     build-depends:
         base <5,
         brick,
