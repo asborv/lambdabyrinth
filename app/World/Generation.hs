@@ -32,6 +32,9 @@ instance Random Direction where
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
 
+{- | Split two random leaves in a binary tree into two new leaves
+The bisection is done by a random direction and a random point (within a ratio range) along that direction
+-}
 split :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
 split (left :-: right) = randomIO >>= bool (split left <&> (:-: right)) (split right <&> (:-: left))
 split (Leaf (upperLeft, lowerRight)) = do
@@ -69,6 +72,10 @@ split (Leaf (upperLeft, lowerRight)) = do
 getRooms :: BinaryTree Rectangle -> [Array Coordinate Cell]
 getRooms = map (\rectangle -> listArray rectangle (repeat Floor)) . flatten
 
+{- |  Take a room, and push its walls inwards by a random ratio.
+ The shrinking is symmetric on the horizontal and vertical axis, respecitvely.
+ (The walls will be pushed in by _at least_ 1 cell)
+-}
 shrinkWalls :: Rectangle -> IO Rectangle
 shrinkWalls ((y0, x0), (y1, x1)) = do
     ratio <- randomRIO (0.2, 0.3) :: IO Double
@@ -78,6 +85,7 @@ shrinkWalls ((y0, x0), (y1, x1)) = do
         dy = max 1 (round (ratio * height))
     return ((y0 + dy, x0 + dx), (y1 - dy, x1 - dx))
 
+-- | Calculate the center of a rectangle
 center :: Rectangle -> Coordinate
 center ((y0, x0), (y1, x1)) = ((y0 + y1) `div` 2, (x0 + x1) `div` 2)
 
@@ -88,6 +96,7 @@ dig ((y0, x0), (y1, x1)) = map (,Tunnel) $ vertical <> horizontal
     vertical = [(y, x0) | y <- [min y0 y1 .. max y0 y1]]
     horizontal = [(y1, x) | x <- [min x0 x1 .. max x0 x1]]
 
+-- | Given a ratio, and a list of coordinates, generate random monsters at some of the coordinates
 generateMonsters :: Double -> [Coordinate] -> IO [Monster]
 generateMonsters ratio cells = do
     rs <- mapM (const randomIO) cells :: IO [Double]
@@ -103,7 +112,6 @@ count x = length . filter (== x)
 
 {- | Generate staircases, one up, one down.
 They are placed at dead ends (leaves) of the provided edges, as distant as possible away from each other.
-(Distance is measured in diagonal pixels, not neccesarily the longes path).
 -}
 generateStairs :: [Edge] -> (Coordinate, Coordinate)
 generateStairs edges = longest
@@ -131,12 +139,11 @@ generateLevel = do
             then loop tree'
             else do
                 tree'' <- traverse shrinkWalls tree'
-                let rooms = getRooms tree'' --                   Get the rooms of the (shrunken) binary tree
-                    centers = map center $ flatten tree'' --     Get the center of each room
-                    tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them
-                    (up, down) = generateStairs $ mst centers -- Place the up- and downwards staircases as long away from each other as possible
-                    levelCells = foldl (//) (allWalls // tunnels) (assocs <$> rooms)
-
+                let rooms = getRooms tree'' --                                          Get the rooms of the (shrunken) binary tree
+                    centers = map center $ flatten tree'' --                            Get the center of each room
+                    tunnels = concatMap dig $ mst centers --                            Use the rooms' centers to calculate an MST between them
+                    (up, down) = generateStairs $ mst centers --                        Place the up- and downwards staircases as long away from each other as possible
+                    levelCells = allWalls // (concatMap assocs rooms <> tunnels) --     Take a level full of walls, draw rooms, then tunnels
                 monsters <- generateMonsters 0.05 (concatMap indices rooms)
 
                 return $ Level levelCells up down monsters
