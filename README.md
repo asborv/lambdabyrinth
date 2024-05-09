@@ -92,3 +92,4 @@ To run tests, you can either:
 - Run `cabal configure --enable-tests` in order to permanently enable tests.
   This creates a `cabal.project.local` file (which is ignored by Git)
 
+Thanks to [James](https://github.com/yobson/QuickCheck-Example/blob/main/) for the demo!
