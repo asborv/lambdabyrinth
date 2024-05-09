@@ -23,10 +23,10 @@ data Player = Player
     { _name :: T.Text
     , _pos :: Coordinate
     , _hand :: Maybe Weapon
-    , _helmet :: Maybe Armour
-    , _cuirass :: Maybe Armour
-    , _gloves :: Maybe Armour
-    , _boots :: Maybe Armour
+    , _helmet :: Maybe (Armour 'Head)
+    , _cuirass :: Maybe (Armour 'Body)
+    , _gloves :: Maybe (Armour 'Hands)
+    , _boots :: Maybe (Armour 'Feet)
     , _health :: Int
     , _characterClass :: Class
     }
@@ -37,7 +37,7 @@ instance Drawable Player where
     draw asciiOnly player = txt symbol
       where
         symbol = if asciiOnly then "P " else case player ^. characterClass of
-            Warrior -> "⚔️\b "
+            Warrior -> "⚔ "
             Rogue -> "🦹\b "
             Wizard -> "🧙\b "
 
