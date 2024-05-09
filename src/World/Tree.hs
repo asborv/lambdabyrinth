@@ -11,7 +11,7 @@ type Edge = (Coordinate, Coordinate)
 data BinaryTree a
     = Leaf a
     | (BinaryTree a) :-: (BinaryTree a)
-    deriving (Show)
+    deriving (Eq, Show)
 
 instance Functor BinaryTree where
     fmap f (Leaf a) = Leaf (f a)
