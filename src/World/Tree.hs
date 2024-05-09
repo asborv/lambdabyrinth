@@ -3,6 +3,7 @@ module World.Tree where
 import Data.Foldable (minimumBy)
 import Data.Function (on)
 import World.Level (Coordinate)
+import Control.Applicative (liftA2)
 
 type Edge = (Coordinate, Coordinate)
 
@@ -10,7 +11,7 @@ type Edge = (Coordinate, Coordinate)
 data BinaryTree a
     = Leaf a
     | (BinaryTree a) :-: (BinaryTree a)
-    deriving (Show)
+    deriving (Eq, Show)
 
 instance Functor BinaryTree where
     fmap f (Leaf a) = Leaf (f a)
