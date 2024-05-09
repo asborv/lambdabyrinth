@@ -80,3 +80,15 @@ There is, however, one limitation that I were not able to work around.
 Aything _outside_ of the game events cannot access the `Reader` environment.
 One such function is `appDraw`, which naturally needs to know whether the `ASCII-only` flag is enabled.
 We work around this by explicitly passing the flag into the function.
+
+## Running tests
+
+In this project, we use `QuickCheck` for property based testing.
+The test suite is quite limited, but demonstrates a setup and testing the properties of a binary tree.
+
+To run tests, you can either:
+
+- Run `cabal test --enable-tests`, which will run tests _once_
+- Run `cabal configure --enable-tests` in order to permanently enable tests.
+  This creates a `cabal.project.local` file (which is ignored by Git)
+
