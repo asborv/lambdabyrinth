@@ -5,17 +5,18 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Creatures.Player where
 
-import Brick (txt)
 import Config (Config (difficulty), Difficulty (..))
-import Control.Lens (makeLenses, (%~), (&), (^.))
+import Control.Lens (makeLenses, (%~), (&), (?~), (^.))
 import Control.Lens.Combinators (to)
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
+import qualified Data.Text as T
 import Draw
 import Items.Armour
 import Items.Weapons
 import World.Level
-import qualified Data.Text as T
+import Brick (txt)
+import Items.Chests (SomeArmour (SomeArmour))
 
 data Class = Wizard | Warrior | Rogue deriving (Show, Eq)
 
@@ -64,3 +65,11 @@ classPower = \case
     Wizard -> 15
     Warrior -> 85
     Rogue -> 45
+
+equip :: Either Weapon SomeArmour -> Player -> Player
+equip (Left weapon) me = me & hand ?~ weapon
+equip (Right (SomeArmour armour)) me = case armour of
+    (Helmet _) -> me & helmet ?~ armour
+    (Cuirass _) -> me & cuirass ?~ armour
+    (Gloves _) -> me & gloves ?~ armour
+    (Boots _) -> me & boots ?~ armour

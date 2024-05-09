@@ -7,7 +7,7 @@ module Scenes.Game.Events where
 
 import Brick (EventM, halt)
 import Config
-import Control.Lens (element, to, use, (+=), (-=), (.=), (^.))
+import Control.Lens (element, to, use, (%=), (+=), (-=), (.=), (^.))
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT)
 import Control.Monad.Writer (WriterT, tell)
@@ -17,6 +17,7 @@ import qualified Creatures.Player as P
 import Data.Foldable (find)
 import Data.Text (Text, pack)
 import GHC.Arr (indices, (!))
+import Items.Chests
 import Items.Weapons (Weapon (weaponType))
 import Types
 import World.Cells
@@ -82,6 +83,13 @@ environmentReactEvent (Stair Upwards) = do
             player . P.pos .= l ^. down
             tell ["You cowardly retreat back to level " <> tshow curr' <> "!"]
         else tell ["Ya gotta venture down the Lambdabyrinth, ya doofus!"]
+environmentReactEvent (Chest (Closed contents)) = case contents of
+    Nothing -> tell ["The chest is empty..."]
+    Just item -> do
+        player %= P.equip item
+        case item of
+            Left weapon -> tell ["You found a " <> tshow weapon <> " in the chest!"]
+            Right (SomeArmour armour) -> tell ["You found a " <> tshow armour <> " in the chest!"]
 environmentReactEvent _ = return ()
 
 playerAttackEvent :: M.Monster -> GameEvent ()

@@ -12,7 +12,7 @@ import Draw
 import Items.Materials
 
 -- |  The slot an armour piece can be equipped in
-data Slot = Head | Body | Hands | Feet
+data Slot = Head | Body | Hands | Feet deriving (Show)
 
 {- | Armour for head, body, hands, and feet
 The GADT ensures that the type of the armour corresponds to the slot it can be equipped in
@@ -22,6 +22,12 @@ data Armour :: Slot -> Type where
     Cuirass :: Material -> Armour 'Body
     Gloves :: Material -> Armour 'Hands
     Boots :: Material -> Armour 'Feet
+
+instance Show (Armour a) where
+    show (Helmet material) = show material <> " Helmet"
+    show (Cuirass material) = show material <> " Cuirass"
+    show (Gloves material) = show material <> " Gloves"
+    show (Boots material) = show material <> " Boots"
 
 instance Drawable (Armour a) where
     draw :: Bool -> Armour a -> Widget n

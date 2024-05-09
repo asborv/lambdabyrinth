@@ -140,7 +140,6 @@ generateLevel = do
             else do
                 tree'' <- traverse shrinkWalls tree'
                 let rooms = getRooms tree'' --                                          Get the rooms of the (shrunken) binary tree
-                    c = Open
                     centers = map center $ flatten tree'' --                            Get the center of each room
                     tunnels = concatMap dig $ mst centers --                            Use the rooms' centers to calculate an MST between them
                     (up, down) = generateStairs $ mst centers --                        Place the up- and downwards staircases as long away from each other as possible

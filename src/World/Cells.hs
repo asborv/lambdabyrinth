@@ -7,7 +7,7 @@ module World.Cells (Cell (..), isTraversible, VerticalDirection (..)) where
 
 import Brick (txt)
 import Draw
-import Items.Chests (Chest')
+import Items.Chests (Chest (..))
 
 data VerticalDirection = Upwards | Downwards deriving (Eq)
 data Cell
@@ -17,7 +17,7 @@ data Cell
     | Stair VerticalDirection
     | Tunnel
     | Wall
-    | Chest Chest'
+    | Chest Chest
 
 isTraversible :: Cell -> Bool
 isTraversible Door = True
@@ -36,5 +36,7 @@ instance Drawable Cell where
     draw _ Floor = txt ". "
     draw _ Tunnel = txt ". "
     draw _ Wall = txt "# "
-    draw False (Chest _) = txt "📦 "
-    draw True (Chest _) = txt "[]"
+    draw False (Chest Open) = txt "📭\b "
+    draw False (Chest (Closed _)) = txt "📫\b "
+    draw True (Chest Open) = txt "()"
+    draw True (Chest (Closed _)) = txt "[]"
