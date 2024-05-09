@@ -7,9 +7,11 @@ module Items.Armour (Armour (..), defence, Slot (..)) where
 
 import Brick (Widget, (<+>))
 import Brick.Widgets.Core (txt)
+import Control.Arrow (Arrow (first))
 import Data.Kind (Type)
 import Draw
 import Items.Materials
+import System.Random
 
 -- |  The slot an armour piece can be equipped in
 data Slot = Head | Body | Hands | Feet deriving (Show)
@@ -40,6 +42,22 @@ instance Drawable (Armour a) where
         (True, Gloves m) -> draw asciiOnly m <+> txt "''"
         (False, Boots m) -> draw asciiOnly m <+> txt "👢\b "
         (True, Boots m) -> draw asciiOnly m <+> txt ",,"
+
+instance Random (Armour 'Head) where
+    random g = first Helmet (random g)
+    randomR _ = random
+
+instance Random (Armour 'Body) where
+    random g = first Cuirass (random g)
+    randomR _ = random
+
+instance Random (Armour 'Hands) where
+    random g = first Gloves (random g)
+    randomR _ = random
+
+instance Random (Armour 'Feet) where
+    random g = first Boots (random g)
+    randomR _ = random
 
 -- | Calculate the defence power of an armour piece
 defence :: Armour a -> Int

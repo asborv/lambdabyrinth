@@ -8,6 +8,7 @@ module Items.Weapons (Weapon (..), WeaponType (..), power) where
 import Brick (txt, (<+>))
 import Draw
 import Items.Materials
+import System.Random
 
 data WeaponType = Dagger | Spear deriving (Show)
 data Weapon = Weapon {weaponType :: WeaponType, material :: Material}
@@ -23,6 +24,13 @@ instance Drawable Weapon where
             (True, Spear) -> "/ "
             (False, Dagger) -> "🗡️\b "
             (True, Dagger) -> "- "
+
+instance Random Weapon where
+    random g =
+        let (isDagger, g') = random g
+            (material, g'') = random g'
+         in (Weapon (if isDagger then Dagger else Spear) material, g'')
+    randomR _ = random
 
 power :: Weapon -> Int
 power weapon = materialBonus (material weapon) * weaponBonus
