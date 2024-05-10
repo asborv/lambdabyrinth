@@ -140,17 +140,20 @@ generateLevel = do
             then loop tree'
             else do
                 tree'' <- traverse shrinkWalls tree'
-                let rooms = getRooms tree'' --                                      Get the rooms of the (shrunken) binary tree
-                    centers = map center $ flatten tree'' --                        Get the center of each room
-                    tunnels = concatMap dig $ mst centers --                        Use the rooms' centers to calculate an MST between them
-                    (up, down) = generateStairs $ mst centers --                    Place the up- and downwards staircases as long away from each other as possible
-                    levelCells = allWalls // (concatMap assocs rooms <> tunnels) -- Take a level full of walls, draw rooms, then tunnels
-                    floorCells = concatMap indices rooms --                         Positions where items and monsters can be placed
-                
+                let rooms = getRooms tree'' --                   Get the rooms of the (shrunken) binary tree
+                    centers = map center $ flatten tree'' --     Get the center of each room
+                    tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them
+                    (up, down) = generateStairs $ mst centers -- Place the up- and downwards staircases as long away from each other as possible
+                    floorCells = concatMap indices rooms --      Positions where items and monsters can be placed
+
                 -- Placing chests and monsters
                 monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 floorCells
                 chests <- generateByRatioFromPositions @Chest 0.005 floorCells
                 let chests' = map (Chest <$>) chests
                     monsters = map (uncurry (position .~)) monstersAndPositions
 
-                return $ Level (levelCells // chests') up down monsters
+                    -- Determine whcih cells to paint over
+                    -- (As suggested by the name, order matters here, as we use painter's algorithm)
+                    cellsToPaint = concatMap assocs rooms <> chests' <> tunnels <> [(up, Stair Upwards), (down, Stair Downwards)]
+
+                return $ Level (allWalls // cellsToPaint) up down monsters
