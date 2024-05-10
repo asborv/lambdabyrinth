@@ -76,8 +76,8 @@ This allows us to get, for example, difficulty setting and ASCII-only mode from 
 
 ##### Limitations
 
-There is, however, one limitation that I were not able to work around.
-Aything _outside_ of the game events cannot access the `Reader` environment.
+There is, however, one limitation that I was not able to work around.
+Anything _outside_ of the game events cannot access the `Reader` environment.
 One such function is `appDraw`, which naturally needs to know whether the `ASCII-only` flag is enabled.
 We work around this by explicitly passing the flag into the function.
 
