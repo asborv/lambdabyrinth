@@ -3,7 +3,7 @@ Module      : Items.Armour
 Description : Armour, implementations, and their stats
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module Items.Armour (Armour (..), defence, Slot (..)) where
+module Items.Armour (Armour (..), defence, Slot (..), SomeArmour(..)) where
 
 import Brick (Widget, (<+>))
 import Brick.Widgets.Core (txt)
@@ -14,7 +14,11 @@ import Items.Materials
 import System.Random
 
 -- |  The slot an armour piece can be equipped in
-data Slot = Head | Body | Hands | Feet deriving (Show)
+data Slot = Head | Body | Hands | Feet deriving (Show, Bounded, Enum)
+
+instance Random Slot where
+    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
+    random = randomR (minBound, maxBound)
 
 {- | Armour for head, body, hands, and feet
 The GADT ensures that the type of the armour corresponds to the slot it can be equipped in
@@ -72,3 +76,19 @@ slotBonus Head = 10
 slotBonus Body = 8
 slotBonus Hands = 6
 slotBonus Feet = 4
+
+data SomeArmour where
+    SomeArmour :: Armour s -> SomeArmour
+
+instance Random SomeArmour where
+    random g =
+        let (material, g') = random g
+         in case random g' of
+                (Head, g'') -> (SomeArmour $ Helmet material, g'')
+                (Body, g'') -> (SomeArmour $ Cuirass material, g'')
+                (Hands, g'') -> (SomeArmour $ Gloves material, g'')
+                (Feet, g'') -> (SomeArmour $ Boots material, g'')
+    randomR _ = random
+
+instance Show SomeArmour where
+    show (SomeArmour armour) = show armour

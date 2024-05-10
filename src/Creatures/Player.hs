@@ -12,7 +12,6 @@ import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
 import qualified Data.Text as T
 import Items.Armour
-import Items.Chests (SomeArmour (SomeArmour))
 import Items.Weapons
 import World.Level
 import Draw

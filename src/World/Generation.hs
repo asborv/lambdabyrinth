@@ -21,14 +21,13 @@ import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.Cells
 import World.Level (Coordinate, Level (..))
 import World.Tree
+import Data.Bifunctor (first)
 
-data Direction = Vertical | Horizontal deriving (Show)
+data Direction = Vertical | Horizontal deriving (Show, Bounded, Enum)
 
 instance Random Direction where
-    random g = case randomR (True, False) g of
-        (False, g') -> (Vertical, g')
-        (True, g') -> (Horizontal, g')
-    randomR _ = random
+    random = randomR (minBound, maxBound)
+    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
 
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)

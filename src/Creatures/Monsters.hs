@@ -15,8 +15,10 @@ import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
 import qualified Data.Text as T
 import Draw
+import Data.Bifunctor (first)
 
-data MonsterType = Zombie | Ghost deriving (Show, Eq)
+data MonsterType = Zombie | Ghost deriving (Show, Eq, Bounded, Enum)
+
 data Monster = Monster
     { _health :: Int
     , _monsterType :: MonsterType
@@ -32,16 +34,14 @@ power monster = case monster ^. monsterType of
     Ghost -> 25
 
 instance Random MonsterType where
-    random g = case randomR (True, False) g of
-        (True, g') -> (Zombie, g')
-        (False, g') -> (Ghost, g')
-    randomR _ = random
+    random = randomR (minBound, maxBound)
+    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
 
 instance Random Monster where
     random g =
-        let (mt, g') = random g
-            (h, g'') = randomR (40, 100) g'
-         in (Monster h mt (0, 0), g'')
+        let (monsterType', g') = random g
+            (health', g'') = randomR (40, 100) g'
+         in (Monster health' monsterType' (0, 0), g'')
     randomR _ = random
 
 instance Show Monster where

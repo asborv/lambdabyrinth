@@ -3,25 +3,9 @@
 
 module Items.Chests where
 
-import Control.Arrow (first)
 import Control.Monad.Random
 import Items.Armour
 import Items.Weapons
-
-data SomeArmour where
-    SomeArmour :: Armour s -> SomeArmour
-
-instance Random SomeArmour where
-    random g = case randomR @Int (0, 3) g of
-        (0, g') -> first (SomeArmour . Helmet) (random g')
-        (1, g') -> first (SomeArmour . Cuirass) (random g')
-        (2, g') -> first (SomeArmour . Gloves) (random g')
-        (3, g') -> first (SomeArmour . Boots) (random g')
-        _ -> error "Impossible"
-    randomR _ = random
-
-instance Show SomeArmour where
-    show (SomeArmour armour) = show armour
 
 data Chest where
     Open :: Chest
@@ -29,8 +13,12 @@ data Chest where
 
 instance Random Chest where
     random g =
-        let (isWeapon, g') = random @Bool g
+        let (isWeapon, g') = random g
             (weapon, g'') = random g'
             (armour, g''') = random g''
-         in (Closed . Just $ if isWeapon then Left weapon else Right armour, g''')
+            (hasContent, g'''') = random g'''
+         in case (hasContent, isWeapon) of
+                (True, True) -> (Closed . Just $ Left weapon, g'''')
+                (True, False) -> (Closed . Just $ Right armour, g'''')
+                (False, _) -> (Closed Nothing, g'''')
     randomR _ = random

@@ -8,8 +8,9 @@ module Items.Materials (Material (..), materialBonus) where
 import Brick (txt)
 import Draw
 import System.Random
+import Data.Bifunctor (first)
 
-data Material = Stone | Wood | Diamond deriving (Show)
+data Material = Stone | Wood | Diamond deriving (Show, Enum, Bounded)
 
 instance Drawable Material where
     draw False Stone = txt "🪨\b "
@@ -20,14 +21,8 @@ instance Drawable Material where
     draw True Diamond = txt "D "
 
 instance Random Material where
-    random g =
-        let (material, g') = randomR @Int (0, 2) g
-         in case material of
-                0 -> (Stone, g')
-                1 -> (Wood, g')
-                2 -> (Diamond, g')
-                _ -> error "Impossible"
-    randomR _ = random
+    random = randomR (minBound, maxBound)
+    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
 
 materialBonus :: Material -> Int
 materialBonus = \case

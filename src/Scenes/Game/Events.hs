@@ -23,6 +23,7 @@ import Items.Weapons (Weapon (weaponType))
 import Types
 import World.Cells
 import World.Level
+import Items.Armour (SomeArmour)
 
 type GameEvent a = ReaderT Config (WriterT [Text] (EventM Name GameState)) a
 
