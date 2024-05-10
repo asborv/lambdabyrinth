@@ -11,12 +11,12 @@ import Control.Lens.Combinators (to)
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
 import qualified Data.Text as T
-import Draw
 import Items.Armour
+import Items.Chests (SomeArmour (SomeArmour))
 import Items.Weapons
 import World.Level
+import Draw
 import Brick (txt)
-import Items.Chests (SomeArmour (SomeArmour))
 
 data Class = Wizard | Warrior | Rogue deriving (Show, Eq)
 
@@ -73,3 +73,10 @@ equip (Right (SomeArmour armour)) me = case armour of
     (Cuirass _) -> me & cuirass ?~ armour
     (Gloves _) -> me & gloves ?~ armour
     (Boots _) -> me & boots ?~ armour
+
+shouldEquip :: Either Weapon SomeArmour -> Player -> Bool
+shouldEquip (Left weapon) me = all (\w -> power weapon > power w) (me ^. hand)
+shouldEquip (Right (SomeArmour armour@(Helmet _))) me = all (\a -> defence armour > defence a) (me ^. helmet)
+shouldEquip (Right (SomeArmour armour@(Cuirass _))) me = all (\a -> defence armour > defence a) (me ^. cuirass)
+shouldEquip (Right (SomeArmour armour@(Gloves _))) me = all (\a -> defence armour > defence a) (me ^. gloves)
+shouldEquip (Right (SomeArmour armour@(Boots _))) me = all (\a -> defence armour > defence a) (me ^. boots)

@@ -13,6 +13,7 @@ import Control.Monad.Reader (MonadTrans (lift), ReaderT)
 import Control.Monad.Writer (WriterT, tell)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
+import Creatures.Player (shouldEquip)
 import qualified Creatures.Player as P
 import Data.Foldable (find)
 import Data.Text (Text, pack)
@@ -85,12 +86,21 @@ environmentReactEvent (Stair Upwards) = do
         else tell ["Ya gotta venture down the Lambdabyrinth, ya doofus!"]
 environmentReactEvent (Chest (Closed contents)) = case contents of
     Nothing -> tell ["The chest is empty..."]
-    Just item -> do
-        player %= P.equip item
-        case item of
-            Left weapon -> tell ["You found a " <> tshow weapon <> " in the chest!"]
-            Right (SomeArmour armour) -> tell ["You found a " <> tshow armour <> " in the chest!"]
+    Just item -> equipEvent item
 environmentReactEvent _ = return ()
+
+{- | Represents an event of a player considering equipping an item.
+Item is equipped if it is better than the current gear.
+-}
+equipEvent :: Either Weapon SomeArmour -> GameEvent ()
+equipEvent gear = do
+    me <- use player
+    let name = either tshow tshow gear
+    if shouldEquip gear me
+        then do
+            player %= P.equip gear
+            tell ["You equipped a " <> name <> "!"]
+        else tell ["It ain't worth equipping a" <> name <> ", you've got better gear!"]
 
 playerAttackEvent :: M.Monster -> GameEvent ()
 playerAttackEvent monster = do
