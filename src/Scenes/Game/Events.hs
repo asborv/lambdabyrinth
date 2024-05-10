@@ -7,20 +7,23 @@ module Scenes.Game.Events where
 
 import Brick (EventM, halt)
 import Config
-import Control.Lens (element, to, use, (+=), (-=), (.=), (^.))
+import Control.Lens (element, to, use, (%=), (+=), (-=), (.=), (^.), Ixed (ix))
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT)
 import Control.Monad.Writer (WriterT, tell)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
+import Creatures.Player (shouldEquip)
 import qualified Creatures.Player as P
 import Data.Foldable (find)
 import Data.Text (Text, pack)
 import GHC.Arr (indices, (!))
+import Items.Chests
 import Items.Weapons (Weapon (weaponType))
 import Types
 import World.Cells
 import World.Level
+import Items.Armour (SomeArmour)
 
 type GameEvent a = ReaderT Config (WriterT [Text] (EventM Name GameState)) a
 
@@ -50,12 +53,14 @@ moveEvent direction = do
         let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
         if
             | Just m <- monster -> playerAttackEvent m
-            | target == level ^. up -> player . P.pos .= target >> environmentReactEvent (Stair Upwards)
-            | target == level ^. down -> player . P.pos .= target >> environmentReactEvent (Stair Downwards)
-            | otherwise -> player . P.pos .= target >> environmentReactEvent cell
+            | target == level ^. up -> player . P.pos .= target
+            | target == level ^. down -> player . P.pos .= target
+            | otherwise -> player . P.pos .= target
 
     me <- use player
-    when (me ^. P.health <= 0) (lift $ lift halt)
+    if me ^. P.health <= 0
+        then lift $ lift halt
+        else environmentReactEvent $ me ^. P.pos
 
 tshow :: Show a => a -> Text
 tshow = pack . show
@@ -63,26 +68,48 @@ tshow = pack . show
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
-environmentReactEvent :: Cell -> GameEvent ()
-environmentReactEvent (Stair Downwards) = do
-    -- Go to next level
-    currentLevel += 1
+environmentReactEvent :: Coordinate -> GameEvent ()
+environmentReactEvent position = do
     curr <- use currentLevel
-    l <- use (world . to (!! curr))
-    player . P.pos .= l ^. up
-    tell ["You descend the stairs... Welcome to level " <> tshow curr <> "!"]
-environmentReactEvent (Stair Upwards) = do
-    curr <- use currentLevel
-    -- Move to previous level only if the player is not on the starting level
-    if curr > 0
-        then do
-            currentLevel -= 1
+    cell <- use (world . to (!! curr) . cells . to (! position))
+    case cell of
+        (Stair Downwards) -> do
+            -- Go to next level
+            currentLevel += 1
             curr' <- use currentLevel
             l <- use (world . to (!! curr'))
-            player . P.pos .= l ^. down
-            tell ["You cowardly retreat back to level " <> tshow curr' <> "!"]
-        else tell ["Ya gotta venture down the Lambdabyrinth, ya doofus!"]
-environmentReactEvent _ = return ()
+            player . P.pos .= l ^. up
+            tell ["You descend the stairs... Welcome to level " <> tshow curr' <> "!"]
+        (Stair Upwards) -> do
+            -- Move to previous level only if the player is not on the starting level
+            if curr > 0
+                then do
+                    currentLevel -= 1
+                    curr' <- use currentLevel
+                    l <- use (world . to (!! curr'))
+                    player . P.pos .= l ^. down
+                    tell ["You cowardly retreat back to level " <> tshow curr' <> "!"]
+                else tell ["Ya gotta venture down the Lambdabyrinth, ya doofus!"]
+        (Chest (Closed contents)) -> do
+            case contents of
+                Nothing -> tell ["The chest is empty..."]
+                Just item -> equipEvent item
+            world . element curr . cells . ix position .= Chest Open
+        (Chest Open) -> tell ["The chest has already been opened..."]
+        _ -> return ()
+
+{- | Represents an event of a player considering equipping an item.
+Item is equipped if it is better than the current gear.
+-}
+equipEvent :: Either Weapon SomeArmour -> GameEvent ()
+equipEvent gear = do
+    me <- use player
+    let name = either tshow tshow gear
+    if shouldEquip gear me
+        then do
+            player %= P.equip gear
+            tell ["You equipped a " <> name <> "!"]
+        else tell ["It ain't worth equipping a " <> name <> ", you've got better gear!"]
 
 playerAttackEvent :: M.Monster -> GameEvent ()
 playerAttackEvent monster = do

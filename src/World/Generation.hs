@@ -16,18 +16,18 @@ import Data.Functor ((<&>))
 import Data.List (maximumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
 import GHC.TypeLits (KnownNat, natVal)
+import Items.Chests
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import World.Cells
 import World.Level (Coordinate, Level (..))
 import World.Tree
+import Data.Bifunctor (first)
 
-data Direction = Vertical | Horizontal deriving (Show)
+data Direction = Vertical | Horizontal deriving (Show, Bounded, Enum)
 
 instance Random Direction where
-    random g = case randomR (True, False) g of
-        (False, g') -> (Vertical, g')
-        (True, g') -> (Horizontal, g')
-    randomR _ = random
+    random = randomR (minBound, maxBound)
+    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
 
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
@@ -96,13 +96,13 @@ dig ((y0, x0), (y1, x1)) = map (,Tunnel) $ vertical <> horizontal
     vertical = [(y, x0) | y <- [min y0 y1 .. max y0 y1]]
     horizontal = [(y1, x) | x <- [min x0 x1 .. max x0 x1]]
 
--- | Given a ratio, and a list of coordinates, generate random monsters at some of the coordinates
-generateMonsters :: Double -> [Coordinate] -> IO [Monster]
-generateMonsters ratio cells = do
+-- | Given a ratio, and a list of coordinates, generate random items at some of the coordinates
+generateByRatioFromPositions :: Random a => Double -> [Coordinate] -> IO [(Coordinate, a)]
+generateByRatioFromPositions ratio cells = do
     rs <- mapM (const randomIO) cells :: IO [Double]
     let cellsToPopulate = map fst $ filter ((< ratio) . snd) (zip cells rs)
-    monsters <- mapM (const randomIO) cellsToPopulate :: IO [Monster]
-    return $ zipWith (position .~) cellsToPopulate monsters
+    items <- mapM (const randomIO) cellsToPopulate
+    return $ zip cellsToPopulate items
 
 {- | Count the number of occurrences of a specific element in a list
 Courtesy of: https://stackoverflow.com/questions/19554984/haskell-count-occurrences-function
@@ -139,11 +139,20 @@ generateLevel = do
             then loop tree'
             else do
                 tree'' <- traverse shrinkWalls tree'
-                let rooms = getRooms tree'' --                                          Get the rooms of the (shrunken) binary tree
-                    centers = map center $ flatten tree'' --                            Get the center of each room
-                    tunnels = concatMap dig $ mst centers --                            Use the rooms' centers to calculate an MST between them
-                    (up, down) = generateStairs $ mst centers --                        Place the up- and downwards staircases as long away from each other as possible
-                    levelCells = allWalls // (concatMap assocs rooms <> tunnels) --     Take a level full of walls, draw rooms, then tunnels
-                monsters <- generateMonsters 0.05 (concatMap indices rooms)
+                let rooms = getRooms tree'' --                   Get the rooms of the (shrunken) binary tree
+                    centers = map center $ flatten tree'' --     Get the center of each room
+                    tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them
+                    (up, down) = generateStairs $ mst centers -- Place the up- and downwards staircases as long away from each other as possible
+                    floorCells = concatMap indices rooms --      Positions where items and monsters can be placed
 
-                return $ Level levelCells up down monsters
+                -- Placing chests and monsters
+                monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 floorCells
+                chests <- generateByRatioFromPositions @Chest 0.005 floorCells
+                let chests' = map (Chest <$>) chests
+                    monsters = map (uncurry (position .~)) monstersAndPositions
+
+                    -- Determine whcih cells to paint over
+                    -- (As suggested by the name, order matters here, as we use painter's algorithm)
+                    cellsToPaint = concatMap assocs rooms <> chests' <> tunnels <> [(up, Stair Upwards), (down, Stair Downwards)]
+
+                return $ Level (allWalls // cellsToPaint) up down monsters
