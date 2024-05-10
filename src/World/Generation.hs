@@ -97,21 +97,13 @@ dig ((y0, x0), (y1, x1)) = map (,Tunnel) $ vertical <> horizontal
     vertical = [(y, x0) | y <- [min y0 y1 .. max y0 y1]]
     horizontal = [(y1, x) | x <- [min x0 x1 .. max x0 x1]]
 
--- | Given a ratio, and a list of coordinates, generate random monsters at some of the coordinates
-generateMonsters :: Double -> [Coordinate] -> IO [Monster]
-generateMonsters ratio cells = do
+-- | Given a ratio, and a list of coordinates, generate random items at some of the coordinates
+generateByRatioFromPositions :: Random a => Double -> [Coordinate] -> IO [(Coordinate, a)]
+generateByRatioFromPositions ratio cells = do
     rs <- mapM (const randomIO) cells :: IO [Double]
     let cellsToPopulate = map fst $ filter ((< ratio) . snd) (zip cells rs)
-    monsters <- mapM (const randomIO) cellsToPopulate :: IO [Monster]
-    return $ zipWith (position .~) cellsToPopulate monsters
-
--- | Given a ratio, and a list of coordinates, generate random monsters at some of the coordinates
-generateChests :: Double -> [Coordinate] -> IO [(Coordinate, Chest)]
-generateChests ratio cells = do
-    rs <- mapM (const randomIO) cells :: IO [Double]
-    let cellsToPopulate = map fst $ filter ((< ratio) . snd) (zip cells rs)
-    chests <- mapM (const randomIO) cellsToPopulate :: IO [Chest]
-    return $ zip cellsToPopulate chests 
+    items <- mapM (const randomIO) cellsToPopulate
+    return $ zip cellsToPopulate items
 
 {- | Count the number of occurrences of a specific element in a list
 Courtesy of: https://stackoverflow.com/questions/19554984/haskell-count-occurrences-function
@@ -148,13 +140,17 @@ generateLevel = do
             then loop tree'
             else do
                 tree'' <- traverse shrinkWalls tree'
-                let rooms = getRooms tree'' --                                          Get the rooms of the (shrunken) binary tree
-                    centers = map center $ flatten tree'' --                            Get the center of each room
-                    tunnels = concatMap dig $ mst centers --                            Use the rooms' centers to calculate an MST between them
-                    (up, down) = generateStairs $ mst centers --                        Place the up- and downwards staircases as long away from each other as possible
-                    levelCells = allWalls // (concatMap assocs rooms <> tunnels) --     Take a level full of walls, draw rooms, then tunnels
-                monsters <- generateMonsters 0.05 (concatMap indices rooms)
-                chests <- generateChests 0.005 (concatMap indices rooms)
-                let chests' = map (fmap Chest) chests
+                let rooms = getRooms tree'' --                                      Get the rooms of the (shrunken) binary tree
+                    centers = map center $ flatten tree'' --                        Get the center of each room
+                    tunnels = concatMap dig $ mst centers --                        Use the rooms' centers to calculate an MST between them
+                    (up, down) = generateStairs $ mst centers --                    Place the up- and downwards staircases as long away from each other as possible
+                    levelCells = allWalls // (concatMap assocs rooms <> tunnels) -- Take a level full of walls, draw rooms, then tunnels
+                    floorCells = concatMap indices rooms --                         Positions where items and monsters can be placed
+                
+                -- Placing chests and monsters
+                monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 floorCells
+                chests <- generateByRatioFromPositions @Chest 0.005 floorCells
+                let chests' = map (Chest <$>) chests
+                    monsters = map (uncurry (position .~)) monstersAndPositions
 
                 return $ Level (levelCells // chests') up down monsters
