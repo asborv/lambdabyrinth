@@ -28,8 +28,8 @@ isTraversible (Chest _) = True
 instance Drawable Cell where
     draw _ (Stair Downwards) = txt "V "
     draw _ (Stair Upwards) = txt "Λ "
-    draw _ Floor = withSymbolAttr CellAttr $ txt ". "
-    draw _ Tunnel = withSymbolAttr CellAttr $ txt ". "
+    draw _ Floor = withSymbolAttr CellAttr $ txt "  "
+    draw _ Tunnel = withSymbolAttr CellAttr $ txt "  "
     draw _ Wall = withSymbolAttr CellAttr $ txt "# "
     draw False (Chest Open) = txt "📭\b "
     draw False (Chest (Closed _)) = txt "📫\b "
