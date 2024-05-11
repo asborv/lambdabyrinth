@@ -24,7 +24,7 @@ import Brick
     , (<+>)
     , (<=>)
     )
-import Brick.AttrMap (AttrMap, attrName)
+import Brick.AttrMap (AttrMap)
 import Brick.Main (halt, neverShowCursor)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
@@ -43,6 +43,7 @@ import Draw
 import GHC.Arr
 import qualified Graphics.Vty as V
 import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
+import Scenes.Game.Attributes
 import Scenes.Game.Events
 import Text.Wrap
     ( FillScope (FillAfterFirst)
@@ -67,9 +68,9 @@ gameAttributes :: AttrMap
 gameAttributes =
     attrMap
         V.defAttr
-        [ (attrName "monster", fg V.red)
-        , (attrName "chest", fg V.green)
-        , (attrName "cell", fg $ V.rgbColor 150 150 150)
+        [ (attrNameSymbol MonsterAttr, fg V.red)
+        , (attrNameSymbol ChestAttr, fg V.green)
+        , (attrNameSymbol CellAttr, fg $ V.rgbColor 150 150 150)
         ]
 
 runEvent :: Config -> GameEvent a -> EventM Name GameState a
@@ -149,8 +150,8 @@ drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox
             if
                 | game ^. player . P.pos == coord -> draw asciiOnly $ game ^. player
                 | Just m <- monster -> draw asciiOnly m
-                -- | coord == level ^. up -> draw asciiOnly (Stair Upwards)
-                -- | coord == level ^. down -> draw asciiOnly (Stair Downwards)
+                -- \| coord == level ^. up -> draw asciiOnly (Stair Upwards)
+                -- \| coord == level ^. down -> draw asciiOnly (Stair Downwards)
                 | otherwise -> draw asciiOnly cell
 
 playGame :: P.Player -> Config -> IO GameState

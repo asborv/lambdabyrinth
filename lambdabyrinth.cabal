@@ -63,6 +63,7 @@ library lambdabyrinth-lib
         Items.Materials
         Items.Weapons
         Scenes.CreateCharacter
+        Scenes.Game.Attributes
         Scenes.Game.Events
         Scenes.Game.Scene
         Scenes.Result
