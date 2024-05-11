@@ -77,7 +77,7 @@ gameAttributes =
 runEvent :: Config -> GameEvent a -> EventM Name GameState a
 runEvent config event = do
     (a, s) <- runWriterT $ runReaderT event config
-    history %= (s <>)
+    history %= (s :)
     return a
 
 handleEvent :: Config -> BrickEvent Name () -> EventM Name GameState ()
