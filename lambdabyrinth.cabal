@@ -59,18 +59,19 @@ library lambdabyrinth-lib
         Creatures.Player
         Draw
         Items.Armour
+        Items.Chests
         Items.Materials
         Items.Weapons
-        Items.Chests
         Scenes.CreateCharacter
         Scenes.Game.Events
         Scenes.Game.Scene
         Scenes.Result
         Types
+        Utils
         World.Cells
+        World.Generation
         World.Level
         World.Tree
-        World.Generation
     build-depends:
         base <5,
         brick,

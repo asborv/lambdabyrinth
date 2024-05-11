@@ -6,6 +6,8 @@ Maintainer  : asbjorn.orvedal@gmail.com
 module Creatures.Monsters where
 
 import Brick (txt)
+import Brick.AttrMap (attrName)
+import Brick.Widgets.Core (withAttr)
 import Config (Config (difficulty), Difficulty (..))
 import Control.Lens ((%~), (^.))
 import Control.Lens.Lens ((&))
@@ -13,9 +15,9 @@ import Control.Lens.TH (makeLenses)
 import Control.Monad.Random
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
+import Data.Bifunctor (first)
 import qualified Data.Text as T
 import Draw
-import Data.Bifunctor (first)
 
 data MonsterType = Zombie | Ghost deriving (Show, Eq, Bounded, Enum)
 
@@ -51,9 +53,10 @@ instance Show Monster where
 
 instance Drawable Monster where
     draw False monster = txt . T.pack $ show monster
-    draw True (Monster {_monsterType}) = case _monsterType of
-        Zombie -> txt "Z "
-        Ghost -> txt "G "
+    draw True (Monster {_monsterType}) =
+        withAttr (attrName "monster") $ case _monsterType of
+            Zombie -> txt "Z "
+            Ghost -> txt "G "
 
 instance Combatant Monster where
     attack :: (Combatant c, Monad m) => Monster -> c -> ReaderT Config m c

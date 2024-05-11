@@ -7,7 +7,7 @@ module Scenes.Game.Events where
 
 import Brick (EventM, halt)
 import Config
-import Control.Lens (element, to, use, (%=), (+=), (-=), (.=), (^.), Ixed (ix))
+import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (^.))
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT)
 import Control.Monad.Writer (WriterT, tell)
@@ -16,14 +16,15 @@ import qualified Creatures.Monsters as M
 import Creatures.Player (shouldEquip)
 import qualified Creatures.Player as P
 import Data.Foldable (find)
-import Data.Text (Text, pack)
+import Data.Text (Text)
 import GHC.Arr (indices, (!))
+import Items.Armour (SomeArmour)
 import Items.Chests
 import Items.Weapons (Weapon (weaponType))
 import Types
+import Utils
 import World.Cells
 import World.Level
-import Items.Armour (SomeArmour)
 
 type GameEvent a = ReaderT Config (WriterT [Text] (EventM Name GameState)) a
 
@@ -61,9 +62,6 @@ moveEvent direction = do
     if me ^. P.health <= 0
         then lift $ lift halt
         else environmentReactEvent $ me ^. P.pos
-
-tshow :: Show a => a -> Text
-tshow = pack . show
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases

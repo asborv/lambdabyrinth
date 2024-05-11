@@ -13,6 +13,7 @@ import Brick
     , Widget
     , attrMap
     , defaultMain
+    , fg
     , hBox
     , hLimit
     , padLeft
@@ -23,6 +24,7 @@ import Brick
     , (<+>)
     , (<=>)
     )
+import Brick.AttrMap (AttrMap, attrName)
 import Brick.Main (halt, neverShowCursor)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
@@ -39,7 +41,7 @@ import Data.List.Split
 import qualified Data.Text as T
 import Draw
 import GHC.Arr
-import Graphics.Vty
+import qualified Graphics.Vty as V
 import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
 import Scenes.Game.Events
 import Text.Wrap
@@ -48,9 +50,8 @@ import Text.Wrap
     , WrapSettings (..)
     )
 import Types
-import World.Cells
-import World.Level
 import World.Generation (generateLevel)
+import World.Level
 
 app :: Config -> Scene GameState
 app config@(Config {asciiOnly}) =
@@ -59,8 +60,17 @@ app config@(Config {asciiOnly}) =
         , appChooseCursor = neverShowCursor
         , appHandleEvent = handleEvent config
         , appStartEvent = return ()
-        , appAttrMap = const $ attrMap defAttr []
+        , appAttrMap = const gameAttributes
         }
+
+gameAttributes :: AttrMap
+gameAttributes =
+    attrMap
+        V.defAttr
+        [ (attrName "monster", fg V.red)
+        , (attrName "chest", fg V.green)
+        , (attrName "cell", fg $ V.rgbColor 150 150 150)
+        ]
 
 runEvent :: Config -> GameEvent a -> EventM Name GameState a
 runEvent config event = do
@@ -71,8 +81,8 @@ runEvent config event = do
 handleEvent :: Config -> BrickEvent Name () -> EventM Name GameState ()
 handleEvent config = \case
     VtyEvent e -> case e of
-        EvKey (KChar 'q') [] -> halt
-        EvKey (KChar c) []
+        V.EvKey (V.KChar 'q') [] -> halt
+        V.EvKey (V.KChar c) []
             | (Just direction) <- charToDirection c ->
                 runEvent config $ moveEvent direction
         _ -> return ()
@@ -139,8 +149,8 @@ drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox
             if
                 | game ^. player . P.pos == coord -> draw asciiOnly $ game ^. player
                 | Just m <- monster -> draw asciiOnly m
-                | coord == level ^. up -> draw asciiOnly (Stair Upwards)
-                | coord == level ^. down -> draw asciiOnly (Stair Downwards)
+                -- | coord == level ^. up -> draw asciiOnly (Stair Upwards)
+                -- | coord == level ^. down -> draw asciiOnly (Stair Downwards)
                 | otherwise -> draw asciiOnly cell
 
 playGame :: P.Player -> Config -> IO GameState
