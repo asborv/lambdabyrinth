@@ -11,7 +11,7 @@ This allows us to have type safe attributes (as long as we don't use 'withAttr' 
 data AttrNameSymbol (s :: Symbol) where
     MonsterAttr :: AttrNameSymbol "monster"
     ChestAttr :: AttrNameSymbol "chest"
-    CellAttr :: AttrNameSymbol "cell"
+    WallAttr :: AttrNameSymbol "wall"
 
 -- | Convert an attribute symbol to an attribute name
 attrNameSymbol :: KnownSymbol s => AttrNameSymbol s -> AttrName

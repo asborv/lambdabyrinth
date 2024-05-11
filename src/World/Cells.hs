@@ -8,7 +8,7 @@ module World.Cells (Cell (..), isTraversible, VerticalDirection (..)) where
 import Brick (txt)
 import Draw
 import Items.Chests (Chest (..))
-import Scenes.Game.Attributes (AttrNameSymbol (CellAttr, ChestAttr), withSymbolAttr)
+import Scenes.Game.Attributes (AttrNameSymbol (..), withSymbolAttr)
 
 data VerticalDirection = Upwards | Downwards deriving (Eq)
 data Cell
@@ -28,9 +28,9 @@ isTraversible (Chest _) = True
 instance Drawable Cell where
     draw _ (Stair Downwards) = txt "V "
     draw _ (Stair Upwards) = txt "Λ "
-    draw _ Floor = withSymbolAttr CellAttr $ txt "  "
-    draw _ Tunnel = withSymbolAttr CellAttr $ txt "  "
-    draw _ Wall = withSymbolAttr CellAttr $ txt "# "
+    draw _ Floor = txt "  "
+    draw _ Tunnel = txt "  "
+    draw _ Wall = withSymbolAttr WallAttr $ txt "  "
     draw False (Chest Open) = txt "📭\b "
     draw False (Chest (Closed _)) = txt "📫\b "
     draw True (Chest Open) = withSymbolAttr ChestAttr $ txt "()"

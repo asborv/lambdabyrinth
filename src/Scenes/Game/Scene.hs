@@ -12,6 +12,7 @@ import Brick
     , Padding (..)
     , Widget
     , attrMap
+    , bg
     , defaultMain
     , fg
     , hBox
@@ -70,7 +71,7 @@ gameAttributes =
         V.defAttr
         [ (attrNameSymbol MonsterAttr, fg V.red)
         , (attrNameSymbol ChestAttr, fg V.green)
-        , (attrNameSymbol CellAttr, fg $ V.rgbColor 150 150 150)
+        , (attrNameSymbol WallAttr, bg $ V.rgbColor 100 100 100)
         ]
 
 runEvent :: Config -> GameEvent a -> EventM Name GameState a
