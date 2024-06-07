@@ -12,6 +12,9 @@ data AttrNameSymbol (s :: Symbol) where
     MonsterAttr :: AttrNameSymbol "monster"
     ChestAttr :: AttrNameSymbol "chest"
     WallAttr :: AttrNameSymbol "wall"
+    HighHealthAttr :: AttrNameSymbol "highHealth"
+    MediumHealthAttr :: AttrNameSymbol "mediumHealth"
+    LowHealthAttr :: AttrNameSymbol "lowHealth"
 
 -- | Convert an attribute symbol to an attribute name
 attrNameSymbol :: KnownSymbol s => AttrNameSymbol s -> AttrName
