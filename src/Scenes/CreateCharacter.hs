@@ -95,5 +95,6 @@ createCharacter = formState <$> defaultMain app (mkForm initialPlayer)
             , _gloves = Nothing
             , _boots = Nothing
             , _health = 200
+            , _maxHealth = 200
             , _characterClass = Wizard
             }

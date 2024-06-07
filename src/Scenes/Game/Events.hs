@@ -7,7 +7,7 @@ module Scenes.Game.Events where
 
 import Brick (EventM, halt)
 import Config
-import Control.Lens (element, to, use, (%=), (+=), (-=), (.=), (^.), Ixed (ix))
+import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (^.))
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT)
 import Control.Monad.Writer (WriterT, tell)
@@ -16,16 +16,17 @@ import qualified Creatures.Monsters as M
 import Creatures.Player (shouldEquip)
 import qualified Creatures.Player as P
 import Data.Foldable (find)
-import Data.Text (Text, pack)
+import Data.Text (Text)
 import GHC.Arr (indices, (!))
+import Items.Armour (SomeArmour)
 import Items.Chests
 import Items.Weapons (Weapon (weaponType))
 import Types
+import Utils
 import World.Cells
 import World.Level
-import Items.Armour (SomeArmour)
 
-type GameEvent a = ReaderT Config (WriterT [Text] (EventM Name GameState)) a
+type GameEvent a = ReaderT Config (WriterT Text (EventM Name GameState)) a
 
 {- | Move the player in the specified direction.
 Accept a `Direction` and perform the necessary
@@ -62,9 +63,6 @@ moveEvent direction = do
         then lift $ lift halt
         else environmentReactEvent $ me ^. P.pos
 
-tshow :: Show a => a -> Text
-tshow = pack . show
-
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
@@ -79,7 +77,7 @@ environmentReactEvent position = do
             curr' <- use currentLevel
             l <- use (world . to (!! curr'))
             player . P.pos .= l ^. up
-            tell ["You descend the stairs... Welcome to level " <> tshow curr' <> "!"]
+            tell $ "You descend the stairs... Welcome to level " <> tshow curr' <> "!"
         (Stair Upwards) -> do
             -- Move to previous level only if the player is not on the starting level
             if curr > 0
@@ -88,14 +86,14 @@ environmentReactEvent position = do
                     curr' <- use currentLevel
                     l <- use (world . to (!! curr'))
                     player . P.pos .= l ^. down
-                    tell ["You cowardly retreat back to level " <> tshow curr' <> "!"]
-                else tell ["Ya gotta venture down the Lambdabyrinth, ya doofus!"]
+                    tell $ "You cowardly retreat back to level " <> tshow curr' <> "!"
+                else tell "Ya gotta venture down the Lambdabyrinth, ya doofus!"
         (Chest (Closed contents)) -> do
             case contents of
-                Nothing -> tell ["The chest is empty..."]
+                Nothing -> tell "The chest is empty..."
                 Just item -> equipEvent item
             world . element curr . cells . ix position .= Chest Open
-        (Chest Open) -> tell ["The chest has already been opened..."]
+        (Chest Open) -> tell "The chest has already been opened..."
         _ -> return ()
 
 {- | Represents an event of a player considering equipping an item.
@@ -108,8 +106,8 @@ equipEvent gear = do
     if shouldEquip gear me
         then do
             player %= P.equip gear
-            tell ["You equipped a " <> name <> "!"]
-        else tell ["It ain't worth equipping a " <> name <> ", you've got better gear!"]
+            tell $ "You equipped a " <> name <> "!"
+        else tell $ "It ain't worth equipping a " <> name <> ", you've got better gear!"
 
 playerAttackEvent :: M.Monster -> GameEvent ()
 playerAttackEvent monster = do
@@ -138,15 +136,14 @@ playerAttackEvent monster = do
         then
             let damage = monster ^. M.health - monster' ^. M.health
                 weapon = maybe "hands" (tshow . weaponType) (me ^. P.hand)
-             in tell
-                    [ "You swung your "
+             in tell $
+                    "You swung your "
                         <> weapon
                         <> " towards the "
                         <> tshow (monster ^. M.monsterType)
                         <> " and dealt "
                         <> tshow damage
                         <> " damage!"
-                    ]
         else do
-            tell ["You slew the " <> tshow (monster ^. M.monsterType) <> "!"]
+            tell $ "You slew the " <> tshow (monster ^. M.monsterType) <> "!"
             player . P.pos .= monster' ^. M.position

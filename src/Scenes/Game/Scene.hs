@@ -12,20 +12,25 @@ import Brick
     , Padding (..)
     , Widget
     , attrMap
+    , bg
     , defaultMain
+    , fg
     , hBox
     , hLimit
     , padLeft
     , txt
     , txtWrapWith
+    , updateAttrMap
     , vBox
     , vLimit
     , (<+>)
     , (<=>)
     )
+import Brick.AttrMap (AttrMap, mapAttrName)
 import Brick.Main (halt, neverShowCursor)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
+import Brick.Widgets.ProgressBar (progressBar, progressCompleteAttr, progressIncompleteAttr)
 import Config
 import Control.Lens ((%=), (&), (^.))
 import Control.Lens.Combinators (to)
@@ -36,11 +41,11 @@ import qualified Creatures.Monsters as M
 import qualified Creatures.Player as P
 import Data.List (find)
 import Data.List.Split
-import qualified Data.Text as T
 import Draw
 import GHC.Arr
-import Graphics.Vty
+import qualified Graphics.Vty as V
 import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
+import Scenes.Game.Attributes
 import Scenes.Game.Events
 import Text.Wrap
     ( FillScope (FillAfterFirst)
@@ -48,9 +53,8 @@ import Text.Wrap
     , WrapSettings (..)
     )
 import Types
-import World.Cells
-import World.Level
 import World.Generation (generateLevel)
+import World.Level
 
 app :: Config -> Scene GameState
 app config@(Config {asciiOnly}) =
@@ -59,20 +63,33 @@ app config@(Config {asciiOnly}) =
         , appChooseCursor = neverShowCursor
         , appHandleEvent = handleEvent config
         , appStartEvent = return ()
-        , appAttrMap = const $ attrMap defAttr []
+        , appAttrMap = const gameAttributes
         }
+
+gameAttributes :: AttrMap
+gameAttributes =
+    attrMap
+        V.defAttr
+        [ (attrNameSymbol MonsterAttr, fg V.red)
+        , (attrNameSymbol ChestAttr, fg V.green)
+        , (attrNameSymbol WallAttr, bg $ V.rgbColor 100 100 100)
+        , (attrNameSymbol LowHealthAttr, bg V.red)
+        , (attrNameSymbol MediumHealthAttr, bg V.yellow)
+        , (attrNameSymbol HighHealthAttr, bg V.green)
+        , (progressIncompleteAttr, bg $ V.RGBColor 50 50 50)
+        ]
 
 runEvent :: Config -> GameEvent a -> EventM Name GameState a
 runEvent config event = do
     (a, s) <- runWriterT $ runReaderT event config
-    history %= (s <>)
+    history %= (s :)
     return a
 
 handleEvent :: Config -> BrickEvent Name () -> EventM Name GameState ()
 handleEvent config = \case
     VtyEvent e -> case e of
-        EvKey (KChar 'q') [] -> halt
-        EvKey (KChar c) []
+        V.EvKey (V.KChar 'q') [] -> halt
+        V.EvKey (V.KChar c) []
             | (Just direction) <- charToDirection c ->
                 runEvent config $ moveEvent direction
         _ -> return ()
@@ -89,7 +106,7 @@ drawGame :: Bool -> GameState -> [Widget Name]
 drawGame asciiOnly game =
     let ui =
             drawLog game
-                <+> (drawLevel asciiOnly game <=> drawStats game)
+                <+> (drawLevel asciiOnly game <=> drawHealth game)
                 <+> drawEquipment asciiOnly game
      in [ui]
 
@@ -102,15 +119,23 @@ drawLog game =
             . vBox
             $ txtWrapWith wrapSettings <$> game ^. history
 
-drawStats :: GameState -> Widget Name
-drawStats game =
-    border
-        . vLimit 3
-        . center
-        . txt
-        . T.pack
-        . show
-        $ game ^. player . P.health
+drawHealth :: GameState -> Widget Name
+drawHealth game =
+    let health = game ^. player . P.health
+        maxHealth = game ^. player . P.maxHealth
+        healthPercent = fromIntegral health / fromIntegral maxHealth
+        healthBar = progressBar (Just . show $ game ^. player . P.health) healthPercent
+        healthAttr =
+            if
+                | healthPercent <= 0.25 -> attrNameSymbol LowHealthAttr
+                | healthPercent <= 0.5 -> attrNameSymbol MediumHealthAttr
+                | otherwise -> attrNameSymbol HighHealthAttr
+     in border
+            . vLimit 3
+            . center
+            . hLimit 40
+            . updateAttrMap (mapAttrName healthAttr progressCompleteAttr)
+            $ healthBar
 
 drawEquipment :: Bool -> GameState -> Widget Name
 drawEquipment asciiOnly game = hLimit 20 . border . vCenter $ vBox slots
@@ -139,8 +164,8 @@ drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox
             if
                 | game ^. player . P.pos == coord -> draw asciiOnly $ game ^. player
                 | Just m <- monster -> draw asciiOnly m
-                | coord == level ^. up -> draw asciiOnly (Stair Upwards)
-                | coord == level ^. down -> draw asciiOnly (Stair Downwards)
+                -- \| coord == level ^. up -> draw asciiOnly (Stair Upwards)
+                -- \| coord == level ^. down -> draw asciiOnly (Stair Downwards)
                 | otherwise -> draw asciiOnly cell
 
 playGame :: P.Player -> Config -> IO GameState

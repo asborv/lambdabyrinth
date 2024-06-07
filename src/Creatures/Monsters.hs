@@ -13,9 +13,10 @@ import Control.Lens.TH (makeLenses)
 import Control.Monad.Random
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
+import Data.Bifunctor (first)
 import qualified Data.Text as T
 import Draw
-import Data.Bifunctor (first)
+import Scenes.Game.Attributes
 
 data MonsterType = Zombie | Ghost deriving (Show, Eq, Bounded, Enum)
 
@@ -51,9 +52,10 @@ instance Show Monster where
 
 instance Drawable Monster where
     draw False monster = txt . T.pack $ show monster
-    draw True (Monster {_monsterType}) = case _monsterType of
-        Zombie -> txt "Z "
-        Ghost -> txt "G "
+    draw True (Monster {_monsterType}) =
+        withSymbolAttr MonsterAttr $ case _monsterType of
+            Zombie -> txt "Z "
+            Ghost -> txt "G "
 
 instance Combatant Monster where
     attack :: (Combatant c, Monad m) => Monster -> c -> ReaderT Config m c

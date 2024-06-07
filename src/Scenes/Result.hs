@@ -11,20 +11,23 @@ import Brick
     , Widget
     , attrMap
     , defaultMain
+    , hLimit
     , halt
+    , padAll
     , txt
-    , vBox, vLimit, hLimit, padAll
+    , vBox
+    , vLimit
     )
 import Brick.Main (neverShowCursor)
 import Brick.Widgets.Border (borderWithLabel)
-import Brick.Widgets.Center (hCenter, center)
+import Brick.Widgets.Center (center, hCenter)
 import Control.Lens ((^.))
 import Control.Monad (void)
 import Creatures.Player
 import qualified Data.Text as T
 import Graphics.Vty (Event (..), defAttr)
-import Scenes.Game.Events (tshow)
 import Types
+import Utils
 
 app :: Scene GameState
 app =

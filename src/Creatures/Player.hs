@@ -28,6 +28,7 @@ data Player = Player
     , _gloves :: Maybe (Armour 'Hands)
     , _boots :: Maybe (Armour 'Feet)
     , _health :: Int
+    , _maxHealth :: Int
     , _characterClass :: Class
     }
 
