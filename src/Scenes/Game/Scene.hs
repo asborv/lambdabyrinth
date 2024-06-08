@@ -196,8 +196,6 @@ drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox
             if
                 | game ^. player . P.pos == coord -> draw asciiOnly $ game ^. player
                 | Just m <- monster -> draw asciiOnly m
-                -- \| coord == level ^. up -> draw asciiOnly (Stair Upwards)
-                -- \| coord == level ^. down -> draw asciiOnly (Stair Downwards)
                 | otherwise -> draw asciiOnly cell
 
 confirmationDialog :: Dialog Bool Bool
