@@ -26,7 +26,7 @@ import Utils
 import World.Cells
 import World.Level
 
-type GameEvent a = ReaderT Config (WriterT Text (EventM Name GameState)) a
+type GameEvent a name = ReaderT Config (WriterT Text (EventM name GameState)) a
 
 {- | Move the player in the specified direction.
 Accept a `Direction` and perform the necessary
@@ -34,7 +34,7 @@ checks to determine if the player can move in that direction.
 If the target cell is a valid cell and is traversable,
 the player's position is updated accordingly. Otherwise, nothing happens.
 -}
-moveEvent :: Direction -> GameEvent ()
+moveEvent :: Direction -> GameEvent () name
 moveEvent direction = do
     -- Get the player's position and the current level
     (y, x) <- use (player . P.pos)
@@ -66,7 +66,7 @@ moveEvent direction = do
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
-environmentReactEvent :: Coordinate -> GameEvent ()
+environmentReactEvent :: Coordinate -> GameEvent () name
 environmentReactEvent position = do
     curr <- use currentLevel
     cell <- use (world . to (!! curr) . cells . to (! position))
@@ -99,7 +99,7 @@ environmentReactEvent position = do
 {- | Represents an event of a player considering equipping an item.
 Item is equipped if it is better than the current gear.
 -}
-equipEvent :: Either Weapon SomeArmour -> GameEvent ()
+equipEvent :: Either Weapon SomeArmour -> GameEvent () name
 equipEvent gear = do
     me <- use player
     let name = either tshow tshow gear
@@ -109,7 +109,7 @@ equipEvent gear = do
             tell $ "You equipped a " <> name <> "!"
         else tell $ "It ain't worth equipping a " <> name <> ", you've got better gear!"
 
-playerAttackEvent :: M.Monster -> GameEvent ()
+playerAttackEvent :: M.Monster -> GameEvent () name
 playerAttackEvent monster = do
     me <- use player
     curr <- use currentLevel

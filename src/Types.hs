@@ -10,15 +10,16 @@ import Control.Lens.TH (makeLenses)
 import qualified Creatures.Player as P
 import Data.Text (Text)
 import World.Level
+import Brick.Widgets.Dialog (Dialog)
 
 data GameState = GameState
     { _player :: P.Player
     , _currentLevel :: Int
     , _world :: World 40 40
     , _history :: [Text]
+    , _stairConfirmation :: Maybe (Dialog Bool Bool)
     }
 
 makeLenses ''GameState
 
-type Name = ()
-type Scene a = App a () Name
+type Scene a name = App a () name

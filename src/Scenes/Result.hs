@@ -29,7 +29,9 @@ import Graphics.Vty (Event (..), defAttr)
 import Types
 import Utils
 
-app :: Scene GameState
+type Name = ()
+
+app :: Scene GameState Name
 app =
     App
         { appDraw = drawScene
