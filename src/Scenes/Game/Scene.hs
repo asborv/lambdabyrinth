@@ -42,11 +42,12 @@ import Brick.Widgets.Dialog
     , dialogAttr
     , handleDialogEvent
     , renderDialog
+    , dialogSelection
     )
 import Brick.Widgets.Edit (handleEditorEvent)
 import Brick.Widgets.ProgressBar (progressBar, progressCompleteAttr, progressIncompleteAttr)
 import Config
-import Control.Lens ((%=), (&), (^.), _Just, (?=), (.=))
+import Control.Lens ((%=), (&), (^.), _Just, (?=), (.=), use)
 import Control.Lens.Combinators (to)
 import Control.Lens.Operators ((.~))
 import Control.Monad.Reader (MonadIO (liftIO), ReaderT (runReaderT))
@@ -69,6 +70,7 @@ import Text.Wrap
 import Types
 import World.Generation (generateLevel)
 import World.Level
+import World.Cells (VerticalDirection(..))
 
 type Name = Bool
 
@@ -82,15 +84,6 @@ app config@(Config {asciiOnly}) =
         , appAttrMap = const gameAttributes
         }
 
-drawConfirmation :: GameState -> Widget Name
-drawConfirmation _ = renderDialog confirmation emptyWidget
-  where
-    confirmation = dialog (Just $ txt "Are you sure?") (Just (True, options)) 100
-    options =
-        [ ("Yes", True, True)
-        , ("No", False, False)
-        ]
-
 gameAttributes :: AttrMap
 gameAttributes =
     attrMap
@@ -102,7 +95,6 @@ gameAttributes =
         , (attrNameSymbol MediumHealthAttr, bg V.yellow)
         , (attrNameSymbol HighHealthAttr, bg V.green)
         , (progressIncompleteAttr, bg $ V.RGBColor 50 50 50)
-        , (dialogAttr, V.white `on` V.blue)
         , (buttonAttr, V.black `on` V.white)
         , (buttonSelectedAttr, bg V.yellow)
         ]
@@ -117,8 +109,13 @@ handleEvent :: Config -> BrickEvent Name () -> EventM Name GameState ()
 handleEvent config = \case
     VtyEvent e -> case e of
         V.EvKey (V.KChar 'q') [] -> halt
-        V.EvKey (V.KChar 'h') [] -> stairConfirmation ?= confirmationDialog
+        V.EvKey (V.KChar 'h') [] -> stairConfirmation ?= confirmationDialog Downwards
         V.EvKey (V.KChar 'H') [] -> stairConfirmation .= Nothing
+        V.EvKey V.KEnter [] -> do
+            use stairConfirmation >>= \case
+                Just d -> runEvent config $ decideStairsEvent d
+                Nothing -> return ()
+            return ()
         V.EvKey (V.KChar c) []
             | (Just direction) <- charToDirection c ->
                 runEvent config $ moveEvent direction
@@ -197,13 +194,6 @@ drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox
                 | game ^. player . P.pos == coord -> draw asciiOnly $ game ^. player
                 | Just m <- monster -> draw asciiOnly m
                 | otherwise -> draw asciiOnly cell
-
-confirmationDialog :: Dialog Bool Bool
-confirmationDialog =
-    dialog
-        (Just $ txt "Are you sure?")
-        (Just (True, [("Yes", True, True), ("No", False, False)]))
-        100
 
 playGame :: P.Player -> Config -> IO GameState
 playGame character config = do

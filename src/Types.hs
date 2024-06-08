@@ -10,6 +10,7 @@ import Control.Lens.TH (makeLenses)
 import qualified Creatures.Player as P
 import Data.Text (Text)
 import World.Level
+import World.Cells (VerticalDirection(..))
 import Brick.Widgets.Dialog (Dialog)
 
 data GameState = GameState
@@ -17,7 +18,7 @@ data GameState = GameState
     , _currentLevel :: Int
     , _world :: World 40 40
     , _history :: [Text]
-    , _stairConfirmation :: Maybe (Dialog Bool Bool)
+    , _stairConfirmation :: Maybe (Dialog VerticalDirection Bool)
     }
 
 makeLenses ''GameState

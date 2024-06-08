@@ -5,9 +5,9 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Scenes.Game.Events where
 
-import Brick (EventM, halt)
+import Brick (EventM, halt, txt, str)
 import Config
-import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (^.))
+import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (^.), (?=))
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT)
 import Control.Monad.Writer (WriterT, tell)
@@ -25,6 +25,16 @@ import Types
 import Utils
 import World.Cells
 import World.Level
+import Brick.Widgets.Dialog
+    ( Dialog
+    , buttonAttr
+    , buttonSelectedAttr
+    , dialog
+    , dialogAttr
+    , handleDialogEvent
+    , renderDialog
+    , dialogSelection
+    )
 
 type GameEvent a name = ReaderT Config (WriterT Text (EventM name GameState)) a
 
@@ -63,6 +73,40 @@ moveEvent direction = do
         then lift $ lift halt
         else environmentReactEvent $ me ^. P.pos
 
+confirmationDialog :: VerticalDirection -> Dialog VerticalDirection Bool
+confirmationDialog dir =
+    dialog
+        (Just . str $ "Do you really want to " <> action <> " the stairs?")
+        (Just (True, options))
+        maxWidth
+    where
+        action = if dir == Upwards then "ascend" else "descend"
+        options = [("Yes", True, dir), ("No", False, dir)]
+        maxWidth = 50
+
+decideStairsEvent :: Dialog VerticalDirection Bool -> GameEvent () name
+decideStairsEvent d = do
+    stairConfirmation .= Nothing
+    case dialogSelection d of
+        Just (True, direction) -> traverseStairsEvent direction
+        _ -> return ()
+
+
+traverseStairsEvent :: VerticalDirection -> GameEvent () name
+traverseStairsEvent Upwards = do
+    -- Move to previous level only if the player is not on the starting level
+    currentLevel -= 1
+    curr' <- use currentLevel
+    l <- use (world . to (!! curr'))
+    player . P.pos .= l ^. down
+    tell $ "You cowardly retreat back to level " <> tshow curr' <> "!"
+traverseStairsEvent Downwards = do
+    currentLevel += 1
+    curr' <- use currentLevel
+    l <- use (world . to (!! curr'))
+    player . P.pos .= l ^. up
+    tell $ "You descend the stairs... Welcome to level " <> tshow curr' <> "!"
+
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
@@ -71,23 +115,10 @@ environmentReactEvent position = do
     curr <- use currentLevel
     cell <- use (world . to (!! curr) . cells . to (! position))
     case cell of
-        (Stair Downwards) -> do
-            -- Go to next level
-            currentLevel += 1
-            curr' <- use currentLevel
-            l <- use (world . to (!! curr'))
-            player . P.pos .= l ^. up
-            tell $ "You descend the stairs... Welcome to level " <> tshow curr' <> "!"
-        (Stair Upwards) -> do
-            -- Move to previous level only if the player is not on the starting level
-            if curr > 0
-                then do
-                    currentLevel -= 1
-                    curr' <- use currentLevel
-                    l <- use (world . to (!! curr'))
-                    player . P.pos .= l ^. down
-                    tell $ "You cowardly retreat back to level " <> tshow curr' <> "!"
-                else tell "Ya gotta venture down the Lambdabyrinth, ya doofus!"
+        (Stair Downwards) -> stairConfirmation ?= confirmationDialog Downwards
+        (Stair Upwards) -> if curr > 0
+            then stairConfirmation ?= confirmationDialog Upwards
+            else tell "Ya gotta venture down the Lambdabyrinth, ya doofus!"
         (Chest (Closed contents)) -> do
             case contents of
                 Nothing -> tell "The chest is empty..."
