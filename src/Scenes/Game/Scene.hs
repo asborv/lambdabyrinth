@@ -34,23 +34,13 @@ import Brick.AttrMap (AttrMap, mapAttrName)
 import Brick.Main (halt)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Brick.Widgets.Dialog
-    ( Dialog
-    , buttonAttr
-    , buttonSelectedAttr
-    , dialog
-    , dialogAttr
-    , handleDialogEvent
-    , renderDialog
-    , dialogSelection
-    )
-import Brick.Widgets.Edit (handleEditorEvent)
+import Brick.Widgets.Dialog (buttonAttr, buttonSelectedAttr, handleDialogEvent, renderDialog)
 import Brick.Widgets.ProgressBar (progressBar, progressCompleteAttr, progressIncompleteAttr)
 import Config
-import Control.Lens ((%=), (&), (^.), _Just, (?=), (.=), use)
+import Control.Lens (use, (%=), (&), (.=), (?=), (^.), _Just)
 import Control.Lens.Combinators (to)
 import Control.Lens.Operators ((.~))
-import Control.Monad.Reader (MonadIO (liftIO), ReaderT (runReaderT))
+import Control.Monad.Reader (ReaderT (runReaderT))
 import Control.Monad.Writer (WriterT (runWriterT))
 import qualified Creatures.Monsters as M
 import qualified Creatures.Player as P
@@ -68,9 +58,9 @@ import Text.Wrap
     , WrapSettings (..)
     )
 import Types
+import World.Cells (VerticalDirection (..))
 import World.Generation (generateLevel)
 import World.Level
-import World.Cells (VerticalDirection(..))
 
 type Name = Bool
 

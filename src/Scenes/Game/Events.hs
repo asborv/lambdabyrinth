@@ -5,9 +5,14 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Scenes.Game.Events where
 
-import Brick (EventM, halt, txt, str)
+import Brick (EventM, halt, str)
+import Brick.Widgets.Dialog
+    ( Dialog
+    , dialog
+    , dialogSelection
+    )
 import Config
-import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (^.), (?=))
+import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (?=), (^.))
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT)
 import Control.Monad.Writer (WriterT, tell)
@@ -25,16 +30,6 @@ import Types
 import Utils
 import World.Cells
 import World.Level
-import Brick.Widgets.Dialog
-    ( Dialog
-    , buttonAttr
-    , buttonSelectedAttr
-    , dialog
-    , dialogAttr
-    , handleDialogEvent
-    , renderDialog
-    , dialogSelection
-    )
 
 type GameEvent a name = ReaderT Config (WriterT Text (EventM name GameState)) a
 
@@ -79,10 +74,10 @@ confirmationDialog dir =
         (Just . str $ "Do you really want to " <> action <> " the stairs?")
         (Just (True, options))
         maxWidth
-    where
-        action = if dir == Upwards then "ascend" else "descend"
-        options = [("Yes", True, dir), ("No", False, dir)]
-        maxWidth = 50
+  where
+    action = if dir == Upwards then "ascend" else "descend"
+    options = [("Yes", True, dir), ("No", False, dir)]
+    maxWidth = 50
 
 decideStairsEvent :: Dialog VerticalDirection Bool -> GameEvent () name
 decideStairsEvent d = do
@@ -90,7 +85,6 @@ decideStairsEvent d = do
     case dialogSelection d of
         Just (True, direction) -> traverseStairsEvent direction
         _ -> return ()
-
 
 traverseStairsEvent :: VerticalDirection -> GameEvent () name
 traverseStairsEvent Upwards = do
@@ -116,9 +110,10 @@ environmentReactEvent position = do
     cell <- use (world . to (!! curr) . cells . to (! position))
     case cell of
         (Stair Downwards) -> stairConfirmation ?= confirmationDialog Downwards
-        (Stair Upwards) -> if curr > 0
-            then stairConfirmation ?= confirmationDialog Upwards
-            else tell "Ya gotta venture down the Lambdabyrinth, ya doofus!"
+        (Stair Upwards) ->
+            if curr > 0
+                then stairConfirmation ?= confirmationDialog Upwards
+                else tell "Ya gotta venture down the Lambdabyrinth, ya doofus!"
         (Chest (Closed contents)) -> do
             case contents of
                 Nothing -> tell "The chest is empty..."
