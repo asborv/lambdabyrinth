@@ -26,11 +26,11 @@ import GHC.Arr (indices, (!))
 import Items.Armour (SomeArmour)
 import Items.Chests
 import Items.Weapons (Weapon (weaponType))
+import Scenes.Game.Widgets (confirmationDialog)
 import Types
 import Utils
 import World.Cells
 import World.Level
-import Scenes.Game.Widgets (confirmationDialog)
 
 type GameEvent a name = ReaderT Config (WriterT Text (EventM name GameState)) a
 
@@ -63,9 +63,10 @@ moveEvent direction = do
             Nothing -> player . P.pos .= target
 
     me <- use player
+    let playerHasMoved = me ^. P.pos == target
     if me ^. P.health <= 0
         then lift $ lift halt
-        else environmentReactEvent $ me ^. P.pos
+        else when playerHasMoved (environmentReactEvent (me ^. P.pos))
 
 {- | Check if the game is currently paused
 (i.e., a dialog is open, or any other state that would block the game loop)
