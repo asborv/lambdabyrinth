@@ -14,7 +14,6 @@ import Brick
     , attrMap
     , bg
     , defaultMain
-    , emptyWidget
     , fg
     , hBox
     , hLimit
@@ -129,9 +128,10 @@ drawGame asciiOnly game =
             drawLog game
                 <+> (drawLevel asciiOnly game <=> drawHealth game)
                 <+> drawEquipment asciiOnly game
+        helper = vLimit 3 . center $ txt "Enter to confirm, Tab / ← / → to select options"
      in case game ^. stairConfirmation of
             Nothing -> [ui]
-            Just d -> [renderDialog d emptyWidget, ui]
+            Just d -> [renderDialog d helper, ui]
 
 drawLog :: GameState -> Widget Name
 drawLog game =
