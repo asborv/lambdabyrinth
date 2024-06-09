@@ -40,6 +40,7 @@ import Config
 import Control.Lens (use, (%=), (&), (.=), (?=), (^.), _Just)
 import Control.Lens.Combinators (to)
 import Control.Lens.Operators ((.~))
+import Control.Monad (when)
 import Control.Monad.Reader (ReaderT (runReaderT))
 import Control.Monad.Writer (WriterT (runWriterT))
 import qualified Creatures.Monsters as M
@@ -107,10 +108,13 @@ handleEvent config = \case
                 Nothing -> return ()
             return ()
         V.EvKey (V.KChar c) []
-            | (Just direction) <- charToDirection c ->
-                runEvent config $ moveEvent direction
+            | (Just direction) <- charToDirection c -> do
+                guarded (runEvent config isPaused) . runEvent config $ moveEvent direction
         _ -> zoom (stairConfirmation . _Just) $ handleDialogEvent e
     _ -> return ()
+
+guarded :: Monad m => m Bool -> m () -> m ()
+guarded condition action = condition >>= flip when action
 
 charToDirection :: Char -> Maybe Direction
 charToDirection 'w' = Just North

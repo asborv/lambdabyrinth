@@ -21,6 +21,7 @@ import qualified Creatures.Monsters as M
 import Creatures.Player (shouldEquip)
 import qualified Creatures.Player as P
 import Data.Foldable (find)
+import Data.Maybe (isNothing)
 import Data.Text (Text)
 import GHC.Arr (indices, (!))
 import Items.Armour (SomeArmour)
@@ -67,6 +68,12 @@ moveEvent direction = do
     if me ^. P.health <= 0
         then lift $ lift halt
         else environmentReactEvent $ me ^. P.pos
+
+isPaused :: GameEvent Bool name
+isPaused = do
+    maybeDialog <- use stairConfirmation
+    let paused = isNothing maybeDialog
+    return paused
 
 confirmationDialog :: VerticalDirection -> Dialog VerticalDirection Bool
 confirmationDialog dir =
