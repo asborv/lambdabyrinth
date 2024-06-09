@@ -33,7 +33,7 @@ import Brick.AttrMap (AttrMap, mapAttrName)
 import Brick.Main (halt)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Brick.Widgets.Dialog (buttonAttr, buttonSelectedAttr, handleDialogEvent, renderDialog)
+import Brick.Widgets.Dialog (buttonAttr, buttonSelectedAttr, handleDialogEvent, renderDialog, Dialog)
 import Brick.Widgets.ProgressBar (progressBar, progressCompleteAttr, progressIncompleteAttr)
 import Config
 import Control.Lens (use, (%=), (&), (.=), (?=), (^.), _Just)
@@ -128,10 +128,14 @@ drawGame asciiOnly game =
             drawLog game
                 <+> (drawLevel asciiOnly game <=> drawHealth game)
                 <+> drawEquipment asciiOnly game
-        helper = vLimit 3 . center $ txt "Enter to confirm, Tab / ← / → to select options"
      in case game ^. stairConfirmation of
             Nothing -> [ui]
-            Just d -> [renderDialog d helper, ui]
+            Just d -> [drawConfirmationDialog d, ui]
+
+drawConfirmationDialog :: Dialog VerticalDirection Bool -> Widget Name
+drawConfirmationDialog d = renderDialog d helper
+  where
+    helper = vLimit 3 . center $ txt "Enter to confirm, Tab / ← / → to select options"
 
 drawLog :: GameState -> Widget Name
 drawLog game =

@@ -78,7 +78,7 @@ isPaused = do
 confirmationDialog :: VerticalDirection -> Dialog VerticalDirection Bool
 confirmationDialog dir =
     dialog
-        (Just . str $ "Do you really want to " <> action <> " the stairs?")
+        (Just . str $ "Do you want to " <> action <> " the stairs?")
         (Just (True, options))
         maxWidth
   where
