@@ -66,6 +66,7 @@ library lambdabyrinth-lib
         Scenes.Game.Attributes
         Scenes.Game.Events
         Scenes.Game.Scene
+        Scenes.Game.Widgets
         Scenes.Result
         Types
         Utils

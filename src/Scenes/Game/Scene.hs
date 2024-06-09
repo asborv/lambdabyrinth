@@ -33,7 +33,7 @@ import Brick.AttrMap (AttrMap, mapAttrName)
 import Brick.Main (halt)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
-import Brick.Widgets.Dialog (buttonAttr, buttonSelectedAttr, handleDialogEvent, renderDialog, Dialog)
+import Brick.Widgets.Dialog (Dialog, buttonAttr, buttonSelectedAttr, handleDialogEvent, renderDialog)
 import Brick.Widgets.ProgressBar (progressBar, progressCompleteAttr, progressIncompleteAttr)
 import Config
 import Control.Lens (use, (%=), (&), (.=), (?=), (^.), _Just)
@@ -52,6 +52,7 @@ import qualified Graphics.Vty as V
 import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
 import Scenes.Game.Attributes
 import Scenes.Game.Events
+import Scenes.Game.Widgets (confirmationDialog)
 import Text.Wrap
     ( FillScope (FillAfterFirst)
     , FillStrategy (FillIndent)

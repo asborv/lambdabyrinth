@@ -5,10 +5,9 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Scenes.Game.Events where
 
-import Brick (EventM, halt, str)
+import Brick (EventM, halt)
 import Brick.Widgets.Dialog
     ( Dialog
-    , dialog
     , dialogSelection
     )
 import Config
@@ -31,6 +30,7 @@ import Types
 import Utils
 import World.Cells
 import World.Level
+import Scenes.Game.Widgets (confirmationDialog)
 
 type GameEvent a name = ReaderT Config (WriterT Text (EventM name GameState)) a
 
@@ -58,33 +58,23 @@ moveEvent direction = do
     -- Update the player's position only when the movement is legal
     when isLegalMove $ do
         let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
-        if
-            | Just m <- monster -> playerAttackEvent m
-            | target == level ^. up -> player . P.pos .= target
-            | target == level ^. down -> player . P.pos .= target
-            | otherwise -> player . P.pos .= target
+        case monster of
+            Just m -> playerAttackEvent m
+            Nothing -> player . P.pos .= target
 
     me <- use player
     if me ^. P.health <= 0
         then lift $ lift halt
         else environmentReactEvent $ me ^. P.pos
 
+{- | Check if the game is currently paused
+(i.e., a dialog is open, or any other state that would block the game loop)
+-}
 isPaused :: GameEvent Bool name
 isPaused = do
     maybeDialog <- use stairConfirmation
     let paused = isNothing maybeDialog
     return paused
-
-confirmationDialog :: VerticalDirection -> Dialog VerticalDirection Bool
-confirmationDialog dir =
-    dialog
-        (Just . str $ "Do you want to " <> action <> " the stairs?")
-        (Just (True, options))
-        maxWidth
-  where
-    action = if dir == Upwards then "ascend" else "descend"
-    options = [("Yes", True, dir), ("No", False, dir)]
-    maxWidth = 50
 
 decideStairsEvent :: Dialog VerticalDirection Bool -> GameEvent () name
 decideStairsEvent d = do
