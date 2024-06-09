@@ -13,8 +13,8 @@ import Brick.Widgets.Dialog
 import Config
 import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (?=), (^.))
 import Control.Monad (when)
-import Control.Monad.Reader (MonadTrans (lift), ReaderT)
-import Control.Monad.Writer (WriterT, tell)
+import Control.Monad.Reader (MonadTrans (lift), ReaderT (runReaderT))
+import Control.Monad.Writer (WriterT (runWriterT), tell)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
 import Creatures.Player (shouldEquip)
@@ -33,6 +33,12 @@ import World.Cells
 import World.Level
 
 type GameEvent a name = ReaderT Config (WriterT Text (EventM name GameState)) a
+
+runEvent :: Config -> GameEvent a name -> EventM name GameState a
+runEvent config event = do
+    (a, s) <- runWriterT $ runReaderT event config
+    history %= (s :)
+    return a
 
 {- | Move the player in the specified direction.
 Accept a `Direction` and perform the necessary
@@ -77,8 +83,8 @@ isPaused = do
     let paused = isNothing maybeDialog
     return paused
 
-decideStairsEvent :: Dialog VerticalDirection Bool -> GameEvent () name
-decideStairsEvent d = do
+confirmStairEvent :: Dialog VerticalDirection Bool -> GameEvent () name
+confirmStairEvent d = do
     stairConfirmation .= Nothing
     case dialogSelection d of
         Just (True, direction) -> traverseStairsEvent direction
