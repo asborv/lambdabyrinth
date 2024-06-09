@@ -64,8 +64,10 @@ library lambdabyrinth-lib
         Items.Weapons
         Scenes.CreateCharacter
         Scenes.Game.Attributes
+        Scenes.Game.Draw
         Scenes.Game.Events
         Scenes.Game.Scene
+        Scenes.Game.Widgets
         Scenes.Result
         Types
         Utils

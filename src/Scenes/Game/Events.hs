@@ -6,27 +6,39 @@ Maintainer  : asbjorn.orvedal@gmail.com
 module Scenes.Game.Events where
 
 import Brick (EventM, halt)
+import Brick.Widgets.Dialog
+    ( Dialog
+    , dialogSelection
+    )
 import Config
-import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (^.))
+import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (?=), (^.))
 import Control.Monad (when)
-import Control.Monad.Reader (MonadTrans (lift), ReaderT)
-import Control.Monad.Writer (WriterT, tell)
+import Control.Monad.Reader (MonadTrans (lift), ReaderT (runReaderT))
+import Control.Monad.Writer (WriterT (runWriterT), tell)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
 import Creatures.Player (shouldEquip)
 import qualified Creatures.Player as P
 import Data.Foldable (find)
+import Data.Maybe (isNothing)
 import Data.Text (Text)
 import GHC.Arr (indices, (!))
 import Items.Armour (SomeArmour)
 import Items.Chests
 import Items.Weapons (Weapon (weaponType))
+import Scenes.Game.Widgets (confirmationDialog)
 import Types
 import Utils
 import World.Cells
 import World.Level
 
-type GameEvent a = ReaderT Config (WriterT Text (EventM Name GameState)) a
+type GameEvent a name = ReaderT Config (WriterT Text (EventM name GameState)) a
+
+runEvent :: Config -> GameEvent a name -> EventM name GameState a
+runEvent config event = do
+    (a, s) <- runWriterT $ runReaderT event config
+    history %= (s :)
+    return a
 
 {- | Move the player in the specified direction.
 Accept a `Direction` and perform the necessary
@@ -34,7 +46,7 @@ checks to determine if the player can move in that direction.
 If the target cell is a valid cell and is traversable,
 the player's position is updated accordingly. Otherwise, nothing happens.
 -}
-moveEvent :: Direction -> GameEvent ()
+moveEvent :: Direction -> GameEvent () name
 moveEvent direction = do
     -- Get the player's position and the current level
     (y, x) <- use (player . P.pos)
@@ -52,41 +64,59 @@ moveEvent direction = do
     -- Update the player's position only when the movement is legal
     when isLegalMove $ do
         let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
-        if
-            | Just m <- monster -> playerAttackEvent m
-            | target == level ^. up -> player . P.pos .= target
-            | target == level ^. down -> player . P.pos .= target
-            | otherwise -> player . P.pos .= target
+        case monster of
+            Just m -> playerAttackEvent m
+            Nothing -> player . P.pos .= target
 
     me <- use player
+    let playerHasMoved = me ^. P.pos == target
     if me ^. P.health <= 0
         then lift $ lift halt
-        else environmentReactEvent $ me ^. P.pos
+        else when playerHasMoved (environmentReactEvent (me ^. P.pos))
+
+{- | Check if the game is currently paused
+(i.e., a dialog is open, or any other state that would block the game loop)
+-}
+isPaused :: GameEvent Bool name
+isPaused = do
+    maybeDialog <- use stairConfirmation
+    let paused = isNothing maybeDialog
+    return paused
+
+confirmStairEvent :: Dialog VerticalDirection Bool -> GameEvent () name
+confirmStairEvent d = do
+    stairConfirmation .= Nothing
+    case dialogSelection d of
+        Just (True, direction) -> traverseStairsEvent direction
+        _ -> return ()
+
+traverseStairsEvent :: VerticalDirection -> GameEvent () name
+traverseStairsEvent Upwards = do
+    -- Move to previous level only if the player is not on the starting level
+    currentLevel -= 1
+    curr' <- use currentLevel
+    l <- use (world . to (!! curr'))
+    player . P.pos .= l ^. down
+    tell $ "You cowardly retreat back to level " <> tshow curr' <> "!"
+traverseStairsEvent Downwards = do
+    currentLevel += 1
+    curr' <- use currentLevel
+    l <- use (world . to (!! curr'))
+    player . P.pos .= l ^. up
+    tell $ "You descend the stairs... Welcome to level " <> tshow curr' <> "!"
 
 {- | Modify the game state as a reaction to a player entering a cell
 (1) Increment/decrement level for staircases
 -}
-environmentReactEvent :: Coordinate -> GameEvent ()
+environmentReactEvent :: Coordinate -> GameEvent () name
 environmentReactEvent position = do
     curr <- use currentLevel
     cell <- use (world . to (!! curr) . cells . to (! position))
     case cell of
-        (Stair Downwards) -> do
-            -- Go to next level
-            currentLevel += 1
-            curr' <- use currentLevel
-            l <- use (world . to (!! curr'))
-            player . P.pos .= l ^. up
-            tell $ "You descend the stairs... Welcome to level " <> tshow curr' <> "!"
-        (Stair Upwards) -> do
-            -- Move to previous level only if the player is not on the starting level
+        (Stair Downwards) -> stairConfirmation ?= confirmationDialog Downwards
+        (Stair Upwards) ->
             if curr > 0
-                then do
-                    currentLevel -= 1
-                    curr' <- use currentLevel
-                    l <- use (world . to (!! curr'))
-                    player . P.pos .= l ^. down
-                    tell $ "You cowardly retreat back to level " <> tshow curr' <> "!"
+                then stairConfirmation ?= confirmationDialog Upwards
                 else tell "Ya gotta venture down the Lambdabyrinth, ya doofus!"
         (Chest (Closed contents)) -> do
             case contents of
@@ -99,7 +129,7 @@ environmentReactEvent position = do
 {- | Represents an event of a player considering equipping an item.
 Item is equipped if it is better than the current gear.
 -}
-equipEvent :: Either Weapon SomeArmour -> GameEvent ()
+equipEvent :: Either Weapon SomeArmour -> GameEvent () name
 equipEvent gear = do
     me <- use player
     let name = either tshow tshow gear
@@ -109,7 +139,7 @@ equipEvent gear = do
             tell $ "You equipped a " <> name <> "!"
         else tell $ "It ain't worth equipping a " <> name <> ", you've got better gear!"
 
-playerAttackEvent :: M.Monster -> GameEvent ()
+playerAttackEvent :: M.Monster -> GameEvent () name
 playerAttackEvent monster = do
     me <- use player
     curr <- use currentLevel

@@ -9,6 +9,7 @@ import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
 import Creatures.Monsters (Monster, position)
 import Data.Bifoldable (biList)
+import Data.Bifunctor (first)
 import Data.Bool (bool)
 import Data.Data (Proxy (..))
 import Data.Function (on)
@@ -18,10 +19,10 @@ import GHC.Arr (Array, assocs, indices, listArray, (//))
 import GHC.TypeLits (KnownNat, natVal)
 import Items.Chests
 import System.Random (Random (random, randomR), randomIO, randomRIO)
+import Utils (count)
 import World.Cells
 import World.Level (Coordinate, Level (..))
 import World.Tree
-import Data.Bifunctor (first)
 
 data Direction = Vertical | Horizontal deriving (Show, Bounded, Enum)
 
@@ -104,12 +105,6 @@ generateByRatioFromPositions ratio cells = do
     items <- mapM (const randomIO) cellsToPopulate
     return $ zip cellsToPopulate items
 
-{- | Count the number of occurrences of a specific element in a list
-Courtesy of: https://stackoverflow.com/questions/19554984/haskell-count-occurrences-function
--}
-count :: Eq a => a -> [a] -> Int
-count x = length . filter (== x)
-
 {- | Generate staircases, one up, one down.
 They are placed at dead ends (leaves) of the provided edges, as distant as possible away from each other.
 -}
@@ -149,7 +144,10 @@ generateLevel = do
                 monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 floorCells
                 chests <- generateByRatioFromPositions @Chest 0.005 floorCells
                 let chests' = map (Chest <$>) chests
-                    monsters = map (uncurry (position .~)) monstersAndPositions
+                    monsters =
+                        map (uncurry (position .~)) --                    Assign each monster a position
+                            . filter (\(c, _) -> c /= up && c /= down) -- Don't place monsters on the stairs
+                            $ monstersAndPositions
 
                     -- Determine whcih cells to paint over
                     -- (As suggested by the name, order matters here, as we use painter's algorithm)
