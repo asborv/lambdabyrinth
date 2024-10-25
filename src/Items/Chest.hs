@@ -1,4 +1,4 @@
-module Items.Chests where
+module Items.Chest where
 
 import Control.Monad.Random
 import Data.Bifunctor (first)

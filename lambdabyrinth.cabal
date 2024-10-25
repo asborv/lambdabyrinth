@@ -59,11 +59,11 @@ library lambdabyrinth-lib
         Creatures.Player
         Draw
         Items.Armour
-        Items.Chests
+        Items.Chest
         Items.Food
         Items.Item
-        Items.Materials
-        Items.Weapons
+        Items.Material
+        Items.Weapon
         Scenes.CreateCharacter
         Scenes.Game.Attributes
         Scenes.Game.Draw

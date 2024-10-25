@@ -19,9 +19,9 @@ import Data.Foldable (find)
 import Data.Maybe (isNothing)
 import Data.Text (Text)
 import GHC.Arr (indices, (!))
-import Items.Chests
+import Items.Chest
 import Items.Item
-import Items.Weapons (Weapon (weaponType))
+import Items.Weapon (Weapon (weaponType))
 import Scenes.Game.Widgets (confirmationDialog)
 import Types
 import Utils

@@ -7,7 +7,7 @@ import Data.Bifunctor (first)
 import Data.Kind (Type)
 import Items.Armour qualified as A
 import Items.Food qualified as F
-import Items.Weapons qualified as W
+import Items.Weapon qualified as W
 
 data ItemKind = ArmourK | WeaponK | FoodK deriving (Bounded, Enum)
 

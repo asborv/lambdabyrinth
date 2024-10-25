@@ -10,7 +10,7 @@ import Brick.Widgets.Core (txt)
 import Control.Arrow (Arrow (first))
 import Data.Kind (Type)
 import Draw
-import Items.Materials
+import Items.Material
 import System.Random
 
 -- |  The slot an armour piece can be equipped in

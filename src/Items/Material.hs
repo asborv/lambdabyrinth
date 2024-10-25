@@ -1,9 +1,9 @@
 {- |
-Module      : Items.Materials
+Module      : Items.Material
 Description : All materials and their stats that items can be made of
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module Items.Materials (Material (..), materialBonus) where
+module Items.Material (Material (..), materialBonus) where
 
 import Brick (txt)
 import Draw

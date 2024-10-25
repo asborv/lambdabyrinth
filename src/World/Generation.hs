@@ -17,7 +17,7 @@ import Data.Functor ((<&>))
 import Data.List (maximumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
 import GHC.TypeLits (KnownNat, natVal)
-import Items.Chests
+import Items.Chest
 import System.Random (Random (random, randomR), randomIO, randomRIO)
 import Utils (count)
 import World.Cells

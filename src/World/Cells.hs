@@ -7,7 +7,7 @@ module World.Cells (Cell (..), isTraversible, VerticalDirection (..)) where
 
 import Brick (txt)
 import Draw
-import Items.Chests (Chest (..))
+import Items.Chest (Chest (..))
 import Scenes.Game.Attributes (AttrNameSymbol (..), withSymbolAttr)
 
 data VerticalDirection = Upwards | Downwards deriving (Eq)

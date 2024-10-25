@@ -12,7 +12,7 @@ import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
 import qualified Data.Text as T
 import qualified Items.Armour as A
-import qualified Items.Weapons as W
+import qualified Items.Weapon as W
 import World.Level
 import Draw
 import Brick (txt)

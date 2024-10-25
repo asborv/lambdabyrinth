@@ -1,14 +1,14 @@
 {- |
-Module      : Items.Weapons
+Module      : Items.Weapon
 Description : All weapons, implementations, and stats in the game
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module Items.Weapons (Weapon (..), WeaponType (..), power) where
+module Items.Weapon (Weapon (..), WeaponType (..), power) where
 
 import Brick (txt, (<+>))
 import Data.Bifunctor (Bifunctor (..))
 import Draw
-import Items.Materials
+import Items.Material
 import System.Random
 
 data WeaponType = Dagger | Spear deriving (Show, Enum, Bounded)
