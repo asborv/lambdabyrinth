@@ -26,7 +26,7 @@ import Control.Lens (use, (&), (.=), (?=), (^.), _Just)
 import Control.Lens.Operators ((.~))
 import qualified Creatures.Player as P
 import qualified Graphics.Vty as V
-import HaskellWorks.Control.Monad.Lazy (interleaveSequenceIO)
+import HaskellWorks.Control.Monad.Lazy (interleaveSequenceM)
 import Scenes.Game.Attributes
 import Scenes.Game.Draw
 import Scenes.Game.Events
@@ -86,7 +86,7 @@ charToDirection _ = Nothing
 
 playGame :: Config -> P.Player -> IO GameState
 playGame config character = do
-    (level : ls) <- interleaveSequenceIO $ repeat generateLevel
+    (level : ls) <- interleaveSequenceM $ repeat generateLevel
 
     let startingPosition = level ^. up
         initialState =

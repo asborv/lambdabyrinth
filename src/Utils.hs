@@ -14,3 +14,7 @@ Courtesy of: https://stackoverflow.com/questions/19554984/haskell-count-occurren
 -}
 count :: Eq a => a -> [a] -> Int
 count x = length . filter (== x)
+
+-- |  Replaces all occurrences of a with b in a list
+replace :: Eq a => a -> a -> [a] -> [a]
+replace a b = map (\x -> if x == a then b else x)
