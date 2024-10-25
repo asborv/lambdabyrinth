@@ -60,6 +60,8 @@ library lambdabyrinth-lib
         Draw
         Items.Armour
         Items.Chests
+        Items.Food
+        Items.ItemKind
         Items.Materials
         Items.Weapons
         Scenes.CreateCharacter

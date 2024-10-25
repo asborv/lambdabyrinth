@@ -17,13 +17,11 @@ import Control.Monad.Reader (MonadTrans (lift), ReaderT (runReaderT))
 import Control.Monad.Writer (WriterT (runWriterT), tell)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
-import Creatures.Player (shouldEquip)
 import qualified Creatures.Player as P
 import Data.Foldable (find)
 import Data.Maybe (isNothing)
 import Data.Text (Text)
 import GHC.Arr (indices, (!))
-import Items.Armour (SomeArmour)
 import Items.Chests
 import Items.Weapons (Weapon (weaponType))
 import Scenes.Game.Widgets (confirmationDialog)
@@ -129,15 +127,10 @@ environmentReactEvent position = do
 {- | Represents an event of a player considering equipping an item.
 Item is equipped if it is better than the current gear.
 -}
-equipEvent :: Either Weapon SomeArmour -> GameEvent () name
+equipEvent :: BoxedChestItem -> GameEvent () name
 equipEvent gear = do
-    me <- use player
-    let name = either tshow tshow gear
-    if shouldEquip gear me
-        then do
-            player %= P.equip gear
-            tell $ "You equipped a " <> name <> "!"
-        else tell $ "It ain't worth equipping a " <> name <> ", you've got better gear!"
+    player %= P.pickup gear
+    tell $ "You picked up a " <> tshow gear <> "!"
 
 playerAttackEvent :: M.Monster -> GameEvent () name
 playerAttackEvent monster = do

@@ -1,24 +1,43 @@
-{-# LANGUAGE AllowAmbiguousTypes #-}
-{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ImportQualifiedPost #-}
 
 module Items.Chests where
 
 import Control.Monad.Random
-import Items.Armour
-import Items.Weapons
+import Data.Bifunctor (first)
+import Data.Kind
+import Items.Armour qualified as A
+import Items.Food qualified as F
+import Items.Weapons qualified as W
+import Items.ItemKind
+
+data ChestItem :: ItemKind -> Type where
+    Armour :: A.SomeArmour -> ChestItem 'ArmourK
+    Weapon :: W.Weapon -> ChestItem 'WeaponK
+    Food :: F.Food -> ChestItem 'FoodK
+
+data BoxedChestItem where
+    Boxed :: ChestItem a -> BoxedChestItem
 
 data Chest where
     Open :: Chest
-    Closed :: Maybe (Either Weapon SomeArmour) -> Chest
+    Closed :: Maybe BoxedChestItem -> Chest
+
+instance Show BoxedChestItem where
+    show (Boxed (Armour a)) = "Armour: " <> show a
+    show (Boxed (Weapon w)) = "Weapon: " <> show w
+    show (Boxed (Food f)) = "Food: " <> show f
+
+instance Random BoxedChestItem where
+    random g = case random g of
+        (ArmourK, g') -> first (Boxed . Weapon) $ random g'
+        (WeaponK, g') -> first (Boxed . Armour) $ random g'
+        (FoodK, g') -> first (Boxed . Food) $ random g'
+    randomR _ = random
 
 instance Random Chest where
     random g =
-        let (isWeapon, g') = random g
-            (weapon, g'') = random g'
-            (armour, g''') = random g''
-            (hasContent, g'''') = random g'''
-         in case (hasContent, isWeapon) of
-                (True, True) -> (Closed . Just $ Left weapon, g'''')
-                (True, False) -> (Closed . Just $ Right armour, g'''')
-                (False, _) -> (Closed Nothing, g'''')
+        let (hasContent, g') = random g
+         in if hasContent
+                then first (Closed . Just) (random g')
+                else (Closed Nothing, g')
     randomR _ = random
