@@ -11,7 +11,7 @@ import Control.Lens.Combinators (to)
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
 import qualified Data.Text as T
-import Items.Armour
+import qualified Items.Armour as A
 import qualified Items.Weapons as W
 import World.Level
 import Draw
@@ -24,10 +24,10 @@ data Player = Player
     { _name :: T.Text
     , _pos :: Coordinate
     , _hand :: Maybe W.Weapon
-    , _helmet :: Maybe (Armour 'Head)
-    , _cuirass :: Maybe (Armour 'Body)
-    , _gloves :: Maybe (Armour 'Hands)
-    , _boots :: Maybe (Armour 'Feet)
+    , _helmet :: Maybe (A.Armour 'A.Head)
+    , _cuirass :: Maybe (A.Armour 'A.Body)
+    , _gloves :: Maybe (A.Armour 'A.Hands)
+    , _boots :: Maybe (A.Armour 'A.Feet)
     , _health :: Int
     , _maxHealth :: Int
     , _characterClass :: Class
@@ -73,17 +73,17 @@ pickup (Boxed (Weapon weapon)) me =
     if me `shouldEquip` Left weapon
         then me & hand ?~ weapon
         else me
-pickup (Boxed (Armour (SomeArmour armour))) me = if me `shouldEquip` Right armour
+pickup (Boxed (Armour (A.Boxed armour))) me = if me `shouldEquip` Right armour
         then case armour of
-            (Helmet _) -> me & helmet ?~ armour
-            (Cuirass _) -> me & cuirass ?~ armour
-            (Gloves _) -> me & gloves ?~ armour
-            (Boots _) -> me & boots ?~ armour
+            (A.Helmet _) -> me & helmet ?~ armour
+            (A.Cuirass _) -> me & cuirass ?~ armour
+            (A.Gloves _) -> me & gloves ?~ armour
+            (A.Boots _) -> me & boots ?~ armour
         else me
 
-shouldEquip :: Player -> Either W.Weapon (Armour s) ->  Bool
+shouldEquip :: Player -> Either W.Weapon (A.Armour s) ->  Bool
 shouldEquip me (Left weapon) = all (\w -> W.power weapon > W.power w) (me ^. hand)
-shouldEquip me (Right armour@(Helmet _))  = all (\a -> defence armour > defence a) (me ^. helmet)
-shouldEquip me (Right armour@(Cuirass _))  = all (\a -> defence armour > defence a) (me ^. cuirass)
-shouldEquip me (Right armour@(Gloves _))  = all (\a -> defence armour > defence a) (me ^. gloves)
-shouldEquip me (Right armour@(Boots _))  = all (\a -> defence armour > defence a) (me ^. boots)
+shouldEquip me (Right armour@(A.Helmet _))  = all (\a -> A.defence armour > A.defence a) (me ^. helmet)
+shouldEquip me (Right armour@(A.Cuirass _))  = all (\a -> A.defence armour > A.defence a) (me ^. cuirass)
+shouldEquip me (Right armour@(A.Gloves _))  = all (\a -> A.defence armour > A.defence a) (me ^. gloves)
+shouldEquip me (Right armour@(A.Boots _))  = all (\a -> A.defence armour > A.defence a) (me ^. boots)

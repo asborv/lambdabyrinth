@@ -3,7 +3,7 @@ Module      : Items.Armour
 Description : Armour, implementations, and their stats
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module Items.Armour (Armour (..), defence, Slot (..), SomeArmour(..)) where
+module Items.Armour (Armour (..), defence, Slot (..), BoxedArmour (..)) where
 
 import Brick (Widget, (<+>))
 import Brick.Widgets.Core (txt)
@@ -16,10 +16,6 @@ import System.Random
 -- |  The slot an armour piece can be equipped in
 data Slot = Head | Body | Hands | Feet deriving (Show, Bounded, Enum)
 
-instance Random Slot where
-    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
-    random = randomR (minBound, maxBound)
-
 {- | Armour for head, body, hands, and feet
 The GADT ensures that the type of the armour corresponds to the slot it can be equipped in
 -}
@@ -28,6 +24,13 @@ data Armour :: Slot -> Type where
     Cuirass :: Material -> Armour 'Body
     Gloves :: Material -> Armour 'Hands
     Boots :: Material -> Armour 'Feet
+
+data BoxedArmour where
+    Boxed :: Armour s -> BoxedArmour
+
+instance Random Slot where
+    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
+    random = randomR (minBound, maxBound)
 
 instance Show (Armour a) where
     show (Helmet material) = show material <> " Helmet"
@@ -47,22 +50,6 @@ instance Drawable (Armour a) where
         (False, Boots m) -> draw asciiOnly m <+> txt "👢\b "
         (True, Boots m) -> draw asciiOnly m <+> txt ",,"
 
-instance Random (Armour 'Head) where
-    random g = first Helmet (random g)
-    randomR _ = random
-
-instance Random (Armour 'Body) where
-    random g = first Cuirass (random g)
-    randomR _ = random
-
-instance Random (Armour 'Hands) where
-    random g = first Gloves (random g)
-    randomR _ = random
-
-instance Random (Armour 'Feet) where
-    random g = first Boots (random g)
-    randomR _ = random
-
 -- | Calculate the defence power of an armour piece
 defence :: Armour a -> Int
 defence (Helmet material) = materialBonus material * slotBonus Head
@@ -77,18 +64,15 @@ slotBonus Body = 8
 slotBonus Hands = 6
 slotBonus Feet = 4
 
-data SomeArmour where
-    SomeArmour :: Armour s -> SomeArmour
-
-instance Random SomeArmour where
+instance Random BoxedArmour where
     random g =
         let (material, g') = random g
          in case random g' of
-                (Head, g'') -> (SomeArmour $ Helmet material, g'')
-                (Body, g'') -> (SomeArmour $ Cuirass material, g'')
-                (Hands, g'') -> (SomeArmour $ Gloves material, g'')
-                (Feet, g'') -> (SomeArmour $ Boots material, g'')
+                (Head, g'') -> (Boxed $ Helmet material, g'')
+                (Body, g'') -> (Boxed $ Cuirass material, g'')
+                (Hands, g'') -> (Boxed $ Gloves material, g'')
+                (Feet, g'') -> (Boxed $ Boots material, g'')
     randomR _ = random
 
-instance Show SomeArmour where
-    show (SomeArmour armour) = show armour
+instance Show BoxedArmour where
+    show (Boxed armour) = show armour

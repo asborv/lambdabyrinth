@@ -15,7 +15,7 @@ data BoxedItem where
     Boxed :: Item a -> BoxedItem
 
 data Item :: ItemKind -> Type where
-    Armour :: A.SomeArmour -> Item 'ArmourK
+    Armour :: A.BoxedArmour -> Item 'ArmourK
     Weapon :: W.Weapon -> Item 'WeaponK
     Food :: F.Food -> Item 'FoodK
 
