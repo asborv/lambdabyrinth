@@ -24,9 +24,9 @@ instance Random ItemKind where
     randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
 
 instance Show BoxedItem where
-    show (Boxed (Armour a)) = "Armour: " <> show a
-    show (Boxed (Weapon w)) = "Weapon: " <> show w
-    show (Boxed (Food f)) = "Food: " <> show f
+    show (Boxed (Armour a)) = show a
+    show (Boxed (Weapon w)) = show w
+    show (Boxed (Food f)) = show f
 
 instance Random BoxedItem where
     random g = case random g of

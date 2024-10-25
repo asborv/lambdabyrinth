@@ -142,7 +142,7 @@ generateLevel = do
 
                 -- Placing chests and monsters
                 monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 floorCells
-                chests <- generateByRatioFromPositions @Chest 0.005 floorCells
+                chests <- generateByRatioFromPositions @Chest 0.5 floorCells
                 let chests' = map (Chest <$>) chests
                     monsters =
                         map (uncurry (position .~)) --                    Assign each monster a position
