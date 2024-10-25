@@ -16,7 +16,7 @@ import qualified Items.Weapons as W
 import World.Level
 import Draw
 import Brick (txt)
-import Items.Chests (BoxedChestItem (Boxed), ChestItem (Weapon, Armour, Food))
+import Items.Item
 
 data Class = Wizard | Warrior | Rogue deriving (Show, Eq)
 
@@ -67,7 +67,7 @@ classPower = \case
     Warrior -> 85
     Rogue -> 45
 
-pickup :: BoxedChestItem -> Player -> Player
+pickup :: BoxedItem -> Player -> Player
 pickup (Boxed (Food _)) me = me & health %~ (+ 10)
 pickup (Boxed (Weapon weapon)) me =
     if me `shouldEquip` Left weapon

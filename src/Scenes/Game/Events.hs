@@ -29,6 +29,7 @@ import Types
 import Utils
 import World.Cells
 import World.Level
+import Items.Item
 
 type GameEvent a name = ReaderT Config (WriterT Text (EventM name GameState)) a
 
@@ -119,7 +120,7 @@ environmentReactEvent position = do
         (Chest (Closed contents)) -> do
             case contents of
                 Nothing -> tell "The chest is empty..."
-                Just item -> equipEvent item
+                Just item -> pickupEvent item
             world . element curr . cells . ix position .= Chest Open
         (Chest Open) -> tell "The chest has already been opened..."
         _ -> return ()
@@ -127,8 +128,8 @@ environmentReactEvent position = do
 {- | Represents an event of a player considering equipping an item.
 Item is equipped if it is better than the current gear.
 -}
-equipEvent :: BoxedChestItem -> GameEvent () name
-equipEvent gear = do
+pickupEvent :: BoxedItem -> GameEvent () name
+pickupEvent gear = do
     player %= P.pickup gear
     tell $ "You picked up a " <> tshow gear <> "!"
 

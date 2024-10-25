@@ -61,7 +61,7 @@ library lambdabyrinth-lib
         Items.Armour
         Items.Chests
         Items.Food
-        Items.ItemKind
+        Items.Item
         Items.Materials
         Items.Weapons
         Scenes.CreateCharacter
