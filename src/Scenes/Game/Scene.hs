@@ -84,8 +84,8 @@ charToDirection 's' = Just South
 charToDirection 'd' = Just East
 charToDirection _ = Nothing
 
-playGame :: P.Player -> Config -> IO GameState
-playGame character config = do
+playGame :: Config -> P.Player -> IO GameState
+playGame config character = do
     (level : ls) <- interleaveSequenceIO $ repeat generateLevel
 
     let startingPosition = level ^. up

@@ -9,5 +9,4 @@ import Scenes.Result (showResult)
 main :: IO ()
 main = do
     options <- execParser configOptions
-    character <- createCharacter
-    playGame character options >>= showResult
+    createCharacter >>= playGame options >>= showResult
