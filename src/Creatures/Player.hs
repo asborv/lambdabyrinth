@@ -88,10 +88,10 @@ applyActiveEffects me@Player {_effects = es} =
      in me' & effects .~ es'
 
 applyEffect :: C.Effect -> Player -> Player
-applyEffect (C.Instant potency C.Heal) = health +~ C.power potency
-applyEffect (C.Instant potency C.Damage) = health -~ C.power potency
-applyEffect (C.Gradual potency C.Heal _) = health +~ C.power potency
-applyEffect (C.Gradual potency C.Damage _) = health -~ C.power potency
+applyEffect (C.Instant potency C.Heal) me = me & health .~ min (C.power potency) (me ^. maxHealth)
+applyEffect (C.Instant potency C.Damage) me = me & health -~ C.power potency
+applyEffect (C.Gradual potency C.Heal _) me = me & health +~ min (C.power potency) (me ^. maxHealth)
+applyEffect (C.Gradual potency C.Damage _) me = me & health -~ C.power potency
 
 pickup :: BoxedItem -> Player -> Player
 pickup (Boxed (Consumable consumable)) me = me `consume` consumable
