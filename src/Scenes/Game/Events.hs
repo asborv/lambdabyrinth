@@ -28,12 +28,12 @@ import Utils
 import World.Cells
 import World.Level
 
-type GameEvent a name = ReaderT Config (WriterT Text (EventM name GameState)) a
+type GameEvent a name = ReaderT Config (WriterT [Text] (EventM name GameState)) a
 
 runEvent :: Config -> GameEvent a name -> EventM name GameState a
 runEvent config event = do
     (a, s) <- runWriterT $ runReaderT event config
-    history %= (s :)
+    history %= (<> s)
     return a
 
 {- | Check if the game is currently paused
@@ -73,10 +73,27 @@ moveEvent direction = do
             Just m -> playerAttackEvent m
             Nothing -> player . P.pos .= target
 
+    -- When the player has moved, apply all gradual effects
+    playerEffectsEvent
+
+    -- If the player dies, end the game
     me <- use player
     if me ^. P.health <= 0
         then lift $ lift halt
         else environmentReactEvent target
+
+-- | Trigger all active effects on the player
+-- If the effect has run out, remove it, and inform the player
+playerEffectsEvent :: GameEvent () name
+playerEffectsEvent = do
+    me <- use player
+    let effects = me ^. P.effects
+        wornOffEffects = filter (\(_, _, d) -> d == 1) effects
+        showEffect (p, e, _) = tshow p <> " " <> tshow e
+    player %= P.applyActiveEffects
+
+    tell $ map (\e -> "You feel the effects of " <> showEffect e) effects
+    tell $ map (\e -> "The effects of " <> showEffect e <> " are wearing off...") wornOffEffects
 
 -- | Modify the game state as a reaction to a player entering a cell
 environmentReactEvent :: Coordinate -> GameEvent () name
@@ -100,7 +117,7 @@ encounterStairEvent Upwards = do
     curr <- use currentLevel
     if curr > 0
         then stairConfirmation ?= confirmationDialog Upwards
-        else tell "Ya gotta venture down the Lambdabyrinth, ya doofus!"
+        else tell ["Ya gotta venture down the Lambdabyrinth, ya doofus!"]
 
 -- |  Event triggered when the player either confirms or cancels the stair ascent/descent.
 confirmStairEvent :: Dialog VerticalDirection Bool -> GameEvent () name
@@ -120,24 +137,24 @@ traverseStairsEvent Upwards = do
     curr' <- use currentLevel
     l <- use (world . to (!! curr'))
     player . P.pos .= l ^. down
-    tell $ "You cowardly retreat back to level " <> tshow curr' <> "!"
+    tell ["You cowardly retreat back to level " <> tshow curr' <> "!"]
 traverseStairsEvent Downwards = do
     currentLevel += 1
     curr' <- use currentLevel
     l <- use (world . to (!! curr'))
     player . P.pos .= l ^. up
-    tell $ "You descend the stairs... Welcome to level " <> tshow curr' <> "!"
+    tell ["You descend the stairs... Welcome to level " <> tshow curr' <> "!"]
 
 {- |  Event triggered when the player walks into a chest.
  If it is already open, the player is informed.
  Otherwise, the player receives the item inside the chest.
 -}
 chestEvent :: Chest -> Coordinate -> GameEvent () name
-chestEvent Open _ = tell "The chest has already been opened..."
+chestEvent Open _ = tell ["The chest has already been opened..."]
 chestEvent ((Closed contents)) position = do
     curr <- use currentLevel
     case contents of
-        Nothing -> tell "The chest is empty..."
+        Nothing -> tell ["The chest is empty..."]
         Just item -> pickupEvent item
     world . element curr . cells . ix position .= Chest Open
 
@@ -147,7 +164,7 @@ Item is equipped if it is better than the current gear.
 pickupEvent :: BoxedItem -> GameEvent () name
 pickupEvent gear = do
     player %= P.pickup gear
-    tell $ "You picked up a " <> tshow gear <> "!"
+    tell ["You picked up a " <> tshow gear <> "!"]
 
 {- | Event triggered when the player attacks a monster.
 If the monster is dead, it is removed, and the player moves to its position.
@@ -177,14 +194,15 @@ harmMonsterEvent monster monster' = do
 
     let damage = monster ^. M.health - monster' ^. M.health
         weapon = maybe "hands" (tshow . weaponType) (me ^. P.hand)
-     in tell $
-            "You swung your "
+     in tell
+            [ "You swung your "
                 <> weapon
                 <> " towards the "
                 <> tshow (monster ^. M.monsterType)
                 <> " and dealt "
                 <> tshow damage
                 <> " damage!"
+            ]
 
 {- | Event triggered when a monster is killed.
 It is removed from the world, and the player moves to its position.
@@ -195,5 +213,5 @@ killMonsterEvent monster = do
 
     -- Remove the monster from the list of monsters in the current level
     world . element curr . monsters %= filter (/= monster)
-    tell $ "You slew the " <> tshow (monster ^. M.monsterType) <> "!"
+    tell ["You slew the " <> tshow (monster ^. M.monsterType) <> "!"]
     player . P.pos .= monster ^. M.position

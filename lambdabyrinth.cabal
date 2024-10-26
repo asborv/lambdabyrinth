@@ -60,7 +60,7 @@ library lambdabyrinth-lib
         Draw
         Items.Armour
         Items.Chest
-        Items.Food
+        Items.Consumable
         Items.Item
         Items.Material
         Items.Weapon

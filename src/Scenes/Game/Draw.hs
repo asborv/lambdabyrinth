@@ -61,7 +61,7 @@ drawLog game =
      in border
             . hLimit 30
             . vBox
-            $ txtWrapWith wrapSettings <$> game ^. history
+            $ txtWrapWith wrapSettings <$> game ^. history . to reverse
 
 drawHealth :: GameState -> Widget Name
 drawHealth game =
