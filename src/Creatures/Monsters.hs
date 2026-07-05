@@ -10,15 +10,16 @@ import Config (Config (difficulty), Difficulty (..))
 import Control.Lens ((%~), (^.))
 import Control.Lens.Lens ((&))
 import Control.Lens.TH (makeLenses)
-import Control.Monad.Random
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
 import Data.Bifunctor (first)
 import qualified Data.Text as T
 import Draw
 import Scenes.Game.Attributes
+import System.Random.Stateful
+import Data.Bool (bool)
 
-data MonsterType = Zombie | Ghost deriving (Show, Eq, Bounded, Enum)
+data MonsterType = Zombie | Ghost deriving (Show, Eq, Enum, Bounded)
 
 data Monster = Monster
     { _health :: Int
@@ -34,16 +35,14 @@ power monster = case monster ^. monsterType of
     Zombie -> 32
     Ghost -> 25
 
-instance Random MonsterType where
-    random = randomR (minBound, maxBound)
-    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
+instance Uniform MonsterType where
+    uniformM g = bool Zombie Ghost <$> uniformM @Bool g
 
-instance Random Monster where
-    random g =
-        let (monsterType', g') = random g
-            (health', g'') = randomR (40, 100) g'
-         in (Monster health' monsterType' (0, 0), g'')
-    randomR _ = random
+instance Uniform Monster where
+    uniformM g = Monster
+        <$> uniformRM (40, 100) g
+        <*> uniformM g
+        <*> pure (0, 0)
 
 instance Show Monster where
     show monster = case monster ^. monsterType of

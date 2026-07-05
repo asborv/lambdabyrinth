@@ -6,12 +6,14 @@ Maintainer  : asbjorn.orvedal@gmail.com
 module Items.Weapon (Weapon (..), WeaponType (..), power) where
 
 import Brick (txt, (<+>))
-import Data.Bifunctor (Bifunctor (..))
+
 import Draw
 import Items.Material
-import System.Random
+import System.Random.Stateful
 
-data WeaponType = Dagger | Spear deriving (Show, Enum, Bounded)
+data WeaponType = Dagger | Spear
+  deriving (Show, Enum, Bounded)
+
 data Weapon = Weapon {weaponType :: WeaponType, material :: Material}
 
 instance Show Weapon where
@@ -26,16 +28,11 @@ instance Drawable Weapon where
             (False, Dagger) -> "🗡️\b "
             (True, Dagger) -> "- "
 
-instance Random WeaponType where
-    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
-    random = randomR (minBound, maxBound)
+instance Uniform WeaponType where
+    uniformM = uniformEnumM
 
-instance Random Weapon where
-    random g =
-        let (wt, g') = random g
-            (material, g'') = random g'
-         in (Weapon wt material, g'')
-    randomR _ = random
+instance Uniform Weapon where
+    uniformM g = Weapon <$> uniformM g <*> uniformM g
 
 power :: Weapon -> Int
 power weapon = materialBonus (material weapon) * weaponBonus

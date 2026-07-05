@@ -9,8 +9,6 @@ import Control.Lens ((.~))
 import Control.Monad.Fix (fix)
 import Creatures.Monsters (Monster, position)
 import Data.Bifoldable (biList)
-import Data.Bifunctor (first)
-import Data.Bool (bool)
 import Data.Data (Proxy (..))
 import Data.Function (on)
 import Data.Functor ((<&>))
@@ -18,56 +16,87 @@ import Data.List (maximumBy)
 import GHC.Arr (Array, assocs, indices, listArray, (//))
 import GHC.TypeLits (KnownNat, natVal)
 import Items.Chest
-import System.Random (Random (random, randomR), randomIO, randomRIO)
+import System.Random.Stateful
 import Utils (count)
 import World.Cells
 import World.Level (Coordinate, Level (..))
 import World.Tree
+import Data.Bool (bool)
 
-data Direction = Vertical | Horizontal deriving (Show, Bounded, Enum)
+{-# DEPRECATED uniformIO "Use a proper stateful gen instead" #-}
+uniformIO :: Uniform a => IO a
+uniformIO = uniformM globalStdGen
 
-instance Random Direction where
-    random = randomR (minBound, maxBound)
-    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
+uniformRIO :: UniformRange a => (a, a) -> IO a
+uniformRIO range = uniformRM range globalStdGen
+
+data Direction = Vertical | Horizontal deriving (Show)
+
+instance Uniform Direction where
+    uniformM g = bool Vertical Horizontal <$> uniformM @Bool g
+
 
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
 
+data RectangleSplitSpec = RectangleSplitSpec
+    { ratio :: !Double
+    , direction :: !Direction }
+
+instance Uniform RectangleSplitSpec where
+    uniformM g = RectangleSplitSpec
+        <$> uniformRM (0.4, 0.6) g
+        <*> uniformM g
+
+splitRectangle :: Rectangle -> RectangleSplitSpec -> (BinaryTree Rectangle)
+splitRectangle (topLeft, bottomRight) (RectangleSplitSpec ratio Vertical) =
+    -- The available room for splitting
+    let splitBasis = fromIntegral $ snd bottomRight - snd topLeft
+
+        -- The offset from which to compute the split point
+        offset = snd topLeft
+
+        -- Split at some point in range of the split basis
+        splitPoint = round (ratio * splitBasis) + offset
+
+        -- The new bounding rectangle corners
+        bottomRight' = (fst bottomRight, splitPoint)
+        topLeft' = (fst topLeft, splitPoint)
+
+        -- The branches to split this leaf into
+        left = (topLeft, bottomRight')
+        right = (topLeft', bottomRight)
+     in Leaf left :-: Leaf right
+splitRectangle (topLeft, bottomRight)  (RectangleSplitSpec ratio Horizontal) =
+    -- he available room for splitting
+    let splitBasis = fromIntegral $ fst bottomRight - fst topLeft
+
+        -- The offset from which to compute the split point
+        offset = fst topLeft
+
+        -- Split at some point in range of the split basis
+        splitPoint = round (ratio * splitBasis) + offset
+
+        -- The new bounding rectangle corners
+        bottomRight' = (splitPoint, snd bottomRight)
+        topLeft' = (splitPoint, snd topLeft)
+
+        -- The branches to split this leaf into
+        left = (topLeft, bottomRight')
+        right = (topLeft', bottomRight)
+     in Leaf left :-: Leaf right
+
+
 {- | Split two random leaves in a binary tree into two new leaves
 The bisection is done by a random direction and a random point (within a ratio range) along that direction
 -}
-split :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
-split (left :-: right) = randomIO >>= bool (split left <&> (:-: right)) (split right <&> (:-: left))
-split (Leaf (upperLeft, lowerRight)) = do
-    splitRatio <- randomRIO (0.4, 0.6) :: IO Double
-    direction <- randomIO :: IO Direction
-
-    -- The available room for splitting
-    let splitBasis = fromIntegral $ case direction of
-            Vertical -> snd lowerRight - snd upperLeft
-            Horizontal -> fst lowerRight - fst upperLeft
-
-        -- Offset for which to compute the split
-        offset = case direction of
-            Vertical -> snd upperLeft
-            Horizontal -> fst upperLeft
-
-        -- Split at some point in range of the split basis
-        splitPoint = round (splitRatio * splitBasis) + offset
-
-        -- The new bounding rectangle corners
-        lowerRight' = case direction of
-            Vertical -> (fst lowerRight, splitPoint)
-            Horizontal -> (splitPoint, snd lowerRight)
-        upperLeft' = case direction of
-            Vertical -> (fst upperLeft, splitPoint)
-            Horizontal -> (splitPoint, snd upperLeft)
-
-        -- The branches to split this leaf into
-        left = (upperLeft, lowerRight')
-        right = (upperLeft', lowerRight)
-
-    return $ Leaf left :-: Leaf right
+splitTree :: BinaryTree Rectangle -> IO (BinaryTree Rectangle)
+splitTree (Leaf x)         = splitRectangle x <$> uniformIO
+splitTree (left :-: right) = do
+    shouldSplitLeft <- uniformIO @Bool
+    if shouldSplitLeft
+        then (left :-:) <$> splitTree right
+        else splitTree left <&> (:-: right)
 
 -- | Create an array representation of each room in the binarytree's leaves
 getRooms :: BinaryTree Rectangle -> [Array Coordinate Cell]
@@ -97,11 +126,11 @@ dig ((y0, x0), (y1, x1)) = map (,Tunnel) $ vertical <> horizontal
     horizontal = [(y1, x) | x <- [min x0 x1 .. max x0 x1]]
 
 -- | Given a ratio, and a list of coordinates, generate random items at some of the coordinates
-generateByRatioFromPositions :: Random a => Double -> [Coordinate] -> IO [(Coordinate, a)]
+generateByRatioFromPositions :: Uniform a => Double -> [Coordinate] -> IO [(Coordinate, a)]
 generateByRatioFromPositions ratio cells = do
-    rs <- mapM (const randomIO) cells :: IO [Double]
+    rs <- mapM (const (uniformRIO @Double (0.0, 1.0))) cells
     let cellsToPopulate = map fst $ filter ((< ratio) . snd) (zip cells rs)
-    items <- mapM (const randomIO) cellsToPopulate
+    items <- mapM (const uniformIO) cellsToPopulate
     return $ zip cellsToPopulate items
 
 {- | Generate staircases, one up, one down.
@@ -128,11 +157,11 @@ generateLevel = do
         initial = Leaf boundingRectangle
         allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
-        tree' <- split tree
+        tree' <- splitTree tree
         if leaves tree' <= 5
             then loop tree'
             else do
-                tree'' <- traverse shrinkWalls tree' <$> randomRIO (0.3, 0.4)
+                tree'' <- traverse shrinkWalls tree' <$> uniformRIO (0.3, 0.4)
                 let rooms = getRooms tree'' --                   Get the rooms of the (shrunken) binary tree
                     centers = map center $ flatten tree'' --     Get the center of each room
                     tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them

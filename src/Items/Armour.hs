@@ -11,10 +11,13 @@ import Control.Arrow (Arrow (first))
 import Data.Kind (Type)
 import Draw
 import Items.Material
-import System.Random
+import System.Random.Stateful
 
 -- |  The slot an armour piece can be equipped in
 data Slot = Head | Body | Hands | Feet deriving (Show, Bounded, Enum)
+
+instance Uniform Slot where
+    uniformM = uniformEnumM
 
 {- | Armour for head, body, hands, and feet
 The GADT ensures that the type of the armour corresponds to the slot it can be equipped in
@@ -27,10 +30,6 @@ data Armour :: Slot -> Type where
 
 data BoxedArmour where
     Boxed :: Armour s -> BoxedArmour
-
-instance Random Slot where
-    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
-    random = randomR (minBound, maxBound)
 
 instance Show (Armour a) where
     show (Helmet material) = show material <> " Helmet"
@@ -64,15 +63,12 @@ slotBonus Body = 8
 slotBonus Hands = 6
 slotBonus Feet = 4
 
-instance Random BoxedArmour where
-    random g =
-        let (material, g') = random g
-         in case random g' of
-                (Head, g'') -> (Boxed $ Helmet material, g'')
-                (Body, g'') -> (Boxed $ Cuirass material, g'')
-                (Hands, g'') -> (Boxed $ Gloves material, g'')
-                (Feet, g'') -> (Boxed $ Boots material, g'')
-    randomR _ = random
+instance Uniform BoxedArmour where
+    uniformM g = uniformM @Slot g >>= \case
+        Head -> Boxed . Helmet <$> uniformM g
+        Body -> Boxed . Cuirass <$> uniformM g
+        Hands -> Boxed . Gloves <$> uniformM g
+        Feet -> Boxed . Helmet <$> uniformM g
 
 instance Show BoxedArmour where
     show (Boxed armour) = show armour

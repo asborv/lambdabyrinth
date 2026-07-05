@@ -7,8 +7,7 @@ module Items.Material (Material (..), materialBonus) where
 
 import Brick (txt)
 import Draw
-import System.Random
-import Data.Bifunctor (first)
+import System.Random.Stateful
 
 data Material = Stone | Wood | Diamond deriving (Show, Enum, Bounded)
 
@@ -20,9 +19,8 @@ instance Drawable Material where
     draw True Wood = txt "W "
     draw True Diamond = txt "D "
 
-instance Random Material where
-    random = randomR (minBound, maxBound)
-    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
+instance Uniform Material where
+    uniformM = uniformEnumM
 
 materialBonus :: Material -> Int
 materialBonus = \case

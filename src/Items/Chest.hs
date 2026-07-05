@@ -1,17 +1,15 @@
 module Items.Chest where
 
-import Control.Monad.Random
-import Data.Bifunctor (first)
 import Items.Item
+import System.Random.Stateful
 
 data Chest where
     Open :: Chest
     Closed :: Maybe BoxedItem -> Chest
 
-instance Random Chest where
-    random g =
-        let (hasContent, g') = random g
-         in if hasContent
-                then first (Closed . Just) (random g')
-                else (Closed Nothing, g')
-    randomR _ = random
+instance Uniform Chest where
+    uniformM g = do
+        hasContent <- uniformM @Bool g
+        if hasContent
+            then return (Closed Nothing)
+            else Closed . Just <$> uniformM g

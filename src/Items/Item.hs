@@ -2,35 +2,32 @@
 
 module Items.Item where
 
-import Control.Monad.Random
-import Data.Bifunctor (first)
 import Data.Kind (Type)
+import System.Random.Stateful
 import Items.Armour qualified as A
 import Items.Consumable qualified as C
 import Items.Weapon qualified as W
 
 data ItemKind = ArmourK | WeaponK | ConsumableK deriving (Bounded, Enum)
 
-data BoxedItem where
-    Boxed :: Item a -> BoxedItem
+instance Uniform ItemKind where
+    uniformM = uniformEnumM
 
 data Item :: ItemKind -> Type where
     Armour :: A.BoxedArmour -> Item 'ArmourK
     Weapon :: W.Weapon -> Item 'WeaponK
     Consumable :: C.Consumable -> Item 'ConsumableK
 
-instance Random ItemKind where
-    random = randomR (minBound, maxBound)
-    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
+data BoxedItem where
+    Boxed :: Item a -> BoxedItem
 
 instance Show BoxedItem where
     show (Boxed (Armour a)) = show a
     show (Boxed (Weapon w)) = show w
     show (Boxed (Consumable c)) = show c
 
-instance Random BoxedItem where
-    random g = case random g of
-        (ArmourK, g') -> first (Boxed . Weapon) $ random g'
-        (WeaponK, g') -> first (Boxed . Armour) $ random g'
-        (ConsumableK, g') -> first (Boxed . Consumable) $ random g'
-    randomR _ = random
+instance Uniform BoxedItem where
+    uniformM g = uniformM @ItemKind g >>= \case
+        ArmourK -> Boxed . Armour <$> uniformM g
+        WeaponK -> Boxed . Weapon <$> uniformM g
+        ConsumableK -> Boxed . Consumable <$> uniformM g

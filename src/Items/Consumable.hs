@@ -1,7 +1,9 @@
 module Items.Consumable where
 
-import Control.Monad.Random
+import System.Random.Stateful
 import Data.Bifunctor (Bifunctor (first))
+import Data.Functor ((<&>))
+import Data.Bool (bool)
 
 type Duration = Int
 
@@ -14,6 +16,10 @@ data Effect
 
 newtype Consumable = Potion Effect
 
+instance Show Consumable where
+    show (Potion (Instant potency effectType)) = "instant potion of " <> show potency <> " " <> show effectType
+    show (Potion (Gradual potency effectType _)) = "gradual potion of " <> show potency <> " " <> show effectType
+
 instance Show Potency where
     show Minor = "minor"
     show Major = "major"
@@ -23,34 +29,19 @@ instance Show EffectType where
     show Heal = "healing"
     show Damage = "damage"
 
-instance Show Consumable where
-    show (Potion (Instant potency effectType)) = "instant potion of " <> show potency <> " " <> show effectType
-    show (Potion (Gradual potency effectType _)) = "gradual potion of " <> show potency <> " " <> show effectType
+instance Uniform EffectType where
+    uniformM = uniformEnumM
 
-instance Random EffectType where
-    random = randomR (minBound, maxBound)
-    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
+instance Uniform Potency where
+    uniformM = uniformEnumM
 
-instance Random Potency where
-    random = randomR (minBound, maxBound)
-    randomR (lower, upper) = first toEnum . randomR (fromEnum lower, fromEnum upper)
+instance Uniform Effect where
+    uniformM g = uniformM @Bool g >>= bool
+        (Instant <$> uniformM g <*> uniformM g)
+        (Gradual <$> uniformM g <*> uniformM g <*> uniformRM (2, 5) g)
 
-instance Random Effect where
-    random g = case random g of
-        (True, g') ->
-            let (potency, g'') = random g'
-                (effectType, g''') = random g''
-             in (Instant potency effectType, g''')
-        (False, g') ->
-            let (potency, g'') = random g'
-                (effectType, g''') = random g''
-                (duration, g'''') = randomR (2, 5) g'''
-             in (Gradual potency effectType duration, g'''')
-    randomR _ = random
-
-instance Random Consumable where
-    random g = first Potion $ random g
-    randomR _ = random
+instance Uniform Consumable where
+    uniformM g = Potion <$> uniformM g
 
 power :: Potency -> Int
 power Minor = 10
