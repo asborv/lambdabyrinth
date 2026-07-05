@@ -54,6 +54,7 @@ gameAttributes =
         [ (attrNameSymbol MonsterAttr, fg V.red)
         , (attrNameSymbol ChestAttr, fg V.green)
         , (attrNameSymbol WallAttr, bg $ V.rgbColor 100 100 100)
+        , (attrNameSymbol RememberedCellAttr, fg $ V.rgbColor 40 40 40)
         , (attrNameSymbol LowHealthAttr, bg V.red)
         , (attrNameSymbol MediumHealthAttr, bg V.yellow)
         , (attrNameSymbol HighHealthAttr, bg V.green)

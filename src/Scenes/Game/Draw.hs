@@ -100,29 +100,15 @@ drawEquipment asciiOnly game = hLimit 20 . border . vCenter $ vBox slots
 drawLevel :: (KnownNat rows, KnownNat cols) => Bool -> Level rows cols -> P.Player -> [M.Monster] -> Widget Name
 drawLevel asciiOnly level player monsters = borderWithLabel (txt "Lambdabyrinth") . center $ vBox (hBox <$> rows)
   where
-    rows = chunksOf
-        (width level)
-        (map (\(coord, cell) ->
-            drawContextualizedCell
-                (level ^. visibility . to (! coord))
-                asciiOnly
-                cell
-                coord
-                player
-                monsters) (level ^. cells & assocs))
---         (coord, cell) <- level ^. cells & assocs
---         let monster = find (\m -> m ^. M.position == coord) (level ^. monsters)
---
---         return $
---             if
---                 | player ^. P.pos == coord -> draw asciiOnly player
---                 | Just m <- monster -> draw asciiOnly m
---                 | otherwise -> draw asciiOnly cell
+    rows = chunksOf (width level) $ do
+        (coord, cell) <- level ^. cells & assocs
+        let vis = level ^. visibility . to (! coord)
+        return $ drawContextualizedCell vis asciiOnly cell coord player monsters
 
 drawContextualizedCell :: Visibility -> Bool -> Cell -> Coordinate -> P.Player -> [M.Monster] -> Widget Name
-drawContextualizedCell Unseen _ _ _ _ _ = txt "  "
-drawContextualizedCell Remembered asciiOnly cell _ _ _ = draw asciiOnly cell
-drawContextualizedCell Visible asciiOnly cell coord player' monsters'
+drawContextualizedCell Unseen     _         _    _     _       _ = txt "  "
+drawContextualizedCell Remembered asciiOnly cell _     _       _ = withSymbolAttr RememberedCellAttr $ draw asciiOnly cell
+drawContextualizedCell Visible    asciiOnly cell coord player' monsters'
   | player' ^. P.pos == coord = draw asciiOnly player'
   | Just monster <- find (\m -> m ^. M.position == coord) monsters' = draw asciiOnly monster
   | otherwise = draw asciiOnly cell

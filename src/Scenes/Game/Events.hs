@@ -68,8 +68,9 @@ moveEvent direction = do
 
     -- Update the player's position and POV only when the movement is legal
     when isLegalMove $ do
-        let currentlyVisible = surrounding target
-        world . element curr . visibility %= (// map (,Visible) currentlyVisible)
+        -- Remember the cells you no longer see, and extend POV to the new position
+        let povUpdates = map (,Remembered) (surrounding (y, x)) <> map (,Visible) (surrounding target)
+        world . element curr . visibility %= (// povUpdates)
 
         let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
         case monster of
@@ -80,6 +81,8 @@ moveEvent direction = do
     playerEffectsEvent
 
     -- If the player dies, end the game
+    -- BUG env reactions like chests opening can be
+    -- triggered even though there is a live monster on top of it
     me <- use player
     if me ^. P.health <= 0
         then lift $ lift halt

@@ -15,6 +15,7 @@ data AttrNameSymbol (s :: Symbol) where
     HighHealthAttr :: AttrNameSymbol "highHealth"
     MediumHealthAttr :: AttrNameSymbol "mediumHealth"
     LowHealthAttr :: AttrNameSymbol "lowHealth"
+    RememberedCellAttr :: AttrNameSymbol "rememberedCell"
 
 -- | Convert an attribute symbol to an attribute name
 attrNameSymbol :: KnownSymbol s => AttrNameSymbol s -> AttrName
