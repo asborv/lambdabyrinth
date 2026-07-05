@@ -17,6 +17,7 @@ data Direction = North | East | South | West deriving (Show)
 type World (cols :: Natural) (rows :: Natural) = [Level cols rows]
 data Level (cols :: Natural) (rows :: Natural) = Level
     { _cells :: Array Coordinate Cell
+    , _visibility :: Array Coordinate Visibility
     , _up :: Coordinate
     , _down :: Coordinate
     , _monsters :: [Monster]

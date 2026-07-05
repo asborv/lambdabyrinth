@@ -18,7 +18,7 @@ import qualified Creatures.Player as P
 import Data.Foldable (find)
 import Data.Maybe (isNothing)
 import Data.Text (Text)
-import GHC.Arr (indices, (!))
+import GHC.Arr (indices, (!), (//))
 import Items.Chest
 import Items.Item
 import Items.Weapon (Weapon (weaponType))
@@ -75,6 +75,9 @@ moveEvent direction = do
 
     -- When the player has moved, apply all gradual effects
     playerEffectsEvent
+
+    let currentlyVisible = [(y - 1, x), (y, x + 1), (y + 1, x), (y, x - 1)]
+    world . element curr . visibility %= (// map (,Visible) currentlyVisible)
 
     -- If the player dies, end the game
     me <- use player

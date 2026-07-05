@@ -3,7 +3,7 @@ Module      : World.Cells
 Description : All kinds of cells - and their data - that exist in the game
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module World.Cells (Cell (..), isTraversible, VerticalDirection (..)) where
+module World.Cells (Cell (..), isTraversible, VerticalDirection (..), Visibility(..)) where
 
 import Brick (txt)
 import Draw
@@ -17,6 +17,9 @@ data Cell
     | Tunnel
     | Wall
     | Chest !Chest
+
+data Visibility = Unseen | Remembered | Visible
+    deriving (Eq)
 
 isTraversible :: Cell -> Bool
 isTraversible Floor = True

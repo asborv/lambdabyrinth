@@ -179,4 +179,4 @@ generateLevel = do
                     -- (As suggested by the name, order matters here, as we use painter's algorithm)
                     cellsToPaint = concatMap assocs rooms <> chests' <> tunnels <> [(up, Stair Upwards), (down, Stair Downwards)]
 
-                return $ Level (allWalls // cellsToPaint) up down monsters
+                return $ Level (allWalls // cellsToPaint) (listArray boundingRectangle (repeat Unseen)) up down monsters

@@ -34,8 +34,9 @@ import Text.Wrap
     , WrapSettings (..)
     )
 import Types
-import World.Cells (VerticalDirection (..))
+import World.Cells (VerticalDirection (..), Visibility (..), Cell)
 import World.Level
+import GHC.TypeLits (KnownNat)
 
 type Name = Bool
 
@@ -43,8 +44,9 @@ drawGame :: Bool -> GameState -> [Widget Name]
 drawGame asciiOnly game =
     let ui =
             drawLog game
-                <+> (drawLevel asciiOnly game <=> drawHealth game)
+                <+> (drawLevel asciiOnly current (game ^. player) (current ^. monsters) <=> drawHealth game)
                 <+> drawEquipment asciiOnly game
+        current = game ^. world . to (!! (game ^. currentLevel))
      in case game ^. stairConfirmation of
             Nothing -> [ui]
             Just d -> [drawConfirmationDialog d, ui]
@@ -95,17 +97,32 @@ drawEquipment asciiOnly game = hLimit 20 . border . vCenter $ vBox slots
     itemSlot Nothing = border $ txt "    "
     itemSlot (Just item) = border (draw asciiOnly item)
 
-drawLevel :: Bool -> GameState -> Widget Name
-drawLevel asciiOnly game = borderWithLabel (txt "Lambdabyrinth") . center $ vBox (hBox <$> rows)
+drawLevel :: (KnownNat rows, KnownNat cols) => Bool -> Level rows cols -> P.Player -> [M.Monster] -> Widget Name
+drawLevel asciiOnly level player monsters = borderWithLabel (txt "Lambdabyrinth") . center $ vBox (hBox <$> rows)
   where
-    curr = game ^. currentLevel
-    level = game ^. world . to (!! curr)
-    rows = chunksOf (width level) $ do
-        (coord, cell) <- level ^. cells & assocs
-        let monster = find (\m -> m ^. M.position == coord) (level ^. monsters)
+    rows = chunksOf
+        (width level)
+        (map (\(coord, cell) ->
+            drawContextualizedCell
+                (level ^. visibility . to (! coord))
+                asciiOnly
+                cell
+                coord
+                player
+                monsters) (level ^. cells & assocs))
+--         (coord, cell) <- level ^. cells & assocs
+--         let monster = find (\m -> m ^. M.position == coord) (level ^. monsters)
+--
+--         return $
+--             if
+--                 | player ^. P.pos == coord -> draw asciiOnly player
+--                 | Just m <- monster -> draw asciiOnly m
+--                 | otherwise -> draw asciiOnly cell
 
-        return $
-            if
-                | game ^. player . P.pos == coord -> draw asciiOnly $ game ^. player
-                | Just m <- monster -> draw asciiOnly m
-                | otherwise -> draw asciiOnly cell
+drawContextualizedCell :: Visibility -> Bool -> Cell -> Coordinate -> P.Player -> [M.Monster] -> Widget Name
+drawContextualizedCell Unseen _ _ _ _ _ = txt "  "
+drawContextualizedCell Remembered asciiOnly cell _ _ _ = draw asciiOnly cell
+drawContextualizedCell Visible asciiOnly cell coord player' monsters'
+  | player' ^. P.pos == coord = draw asciiOnly player'
+  | Just monster <- find (\m -> m ^. M.position == coord) monsters' = draw asciiOnly monster
+  | otherwise = draw asciiOnly cell
