@@ -18,3 +18,10 @@ count x = length . filter (== x)
 -- |  Replaces all occurrences of a with b in a list
 replace :: Eq a => a -> a -> [a] -> [a]
 replace a b = map (\x -> if x == a then b else x)
+
+-- | Delete the first occurrence of @x@
+delete :: Eq a => a -> [a] -> [a]
+delete _ [] = []
+delete x (y : ys)
+  | x == y = ys
+  | otherwise = y : delete x ys

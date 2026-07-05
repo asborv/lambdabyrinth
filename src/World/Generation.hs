@@ -79,7 +79,7 @@ getRooms = map (\rectangle -> listArray rectangle (repeat Floor)) . flatten
 -}
 shrinkWalls :: Rectangle -> IO Rectangle
 shrinkWalls ((y0, x0), (y1, x1)) = do
-    ratio <- randomRIO (0.2, 0.3) :: IO Double
+    ratio <- randomRIO (0.3, 0.4) :: IO Double
     let width = fromIntegral (x1 - x0) :: Double
         height = fromIntegral (y1 - y0) :: Double
         dx = max 1 (round (ratio * width))
@@ -130,7 +130,7 @@ generateLevel = do
         allWalls = listArray boundingRectangle (repeat Wall)
     flip fix initial $ \loop tree -> do
         tree' <- split tree
-        if leaves tree' <= 9
+        if leaves tree' <= 5
             then loop tree'
             else do
                 tree'' <- traverse shrinkWalls tree'

@@ -1,16 +1,18 @@
-module World.Tree where
+module World.Tree (Edge, BinaryTree(..), leaves, flatten, distance, weight, mst) where
 
 import Data.Foldable (minimumBy)
 import Data.Function (on)
 import World.Level (Coordinate)
-import Control.Applicative (liftA2)
+import Data.List.NonEmpty
+import Utils (delete)
+
 
 type Edge = (Coordinate, Coordinate)
 
 -- | Binary tree with data only in its leaves
 data BinaryTree a
-    = Leaf a
-    | (BinaryTree a) :-: (BinaryTree a)
+    = Leaf !a
+    | !(BinaryTree a) :-: !(BinaryTree a)
     deriving (Eq, Show)
 
 instance Functor BinaryTree where
@@ -50,13 +52,12 @@ Inspired by: https://stackoverflow.com/questions/65546555/implementing-prims-alg
 -}
 mst :: [Coordinate] -> [Edge]
 mst [] = []
-mst (n : ns) = mst' ns [n] []
+mst (n : ns) = go ns (singleton n) []
   where
-    mst' :: [Coordinate] -> [Coordinate] -> [Edge] -> [Edge]
-    mst' [] _ edges = edges
-    mst' (x : xs) visited edges
-        | x `elem` visited = mst' xs visited edges
-        | otherwise =
-            let shortest = minimumBy (compare `on` weight) candidates
-                candidates = (x,) <$> visited
-             in mst' xs (x : visited) (shortest : edges)
+    go :: [Coordinate] -> NonEmpty Coordinate -> [Edge] -> [Edge]
+    go [] _ edges = edges
+    go (x : xs) visited edges =
+        let shortest = minimumBy (compare `on` weight) candidates
+            candidates = (x :| xs) >>= (\x' -> (x',) <$> visited)
+            newVisited = fst shortest
+         in go (delete newVisited (x : xs)) (newVisited <| visited) (shortest : edges)
