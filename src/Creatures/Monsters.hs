@@ -12,7 +12,6 @@ import Control.Lens.Lens ((&))
 import Control.Lens.TH (makeLenses)
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
-import Data.Bifunctor (first)
 import qualified Data.Text as T
 import Draw
 import Scenes.Game.Attributes
@@ -22,9 +21,9 @@ import Data.Bool (bool)
 data MonsterType = Zombie | Ghost deriving (Show, Eq, Enum, Bounded)
 
 data Monster = Monster
-    { _health :: Int
-    , _monsterType :: MonsterType
-    , _position :: (Int, Int)
+    { _health :: !Int
+    , _monsterType :: !MonsterType
+    , _position :: !(Int, Int)
     }
     deriving (Eq)
 

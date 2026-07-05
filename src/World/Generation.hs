@@ -39,9 +39,7 @@ instance Uniform Direction where
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
 
-data RectangleSplitSpec = RectangleSplitSpec
-    { ratio :: !Double
-    , direction :: !Direction }
+data RectangleSplitSpec = RectangleSplitSpec !Double !Direction
 
 instance Uniform RectangleSplitSpec where
     uniformM g = RectangleSplitSpec

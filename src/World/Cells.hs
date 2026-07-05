@@ -13,10 +13,10 @@ import Scenes.Game.Attributes (AttrNameSymbol (..), withSymbolAttr)
 data VerticalDirection = Upwards | Downwards deriving (Eq)
 data Cell
     = Floor
-    | Stair VerticalDirection
+    | Stair !VerticalDirection
     | Tunnel
     | Wall
-    | Chest Chest
+    | Chest !Chest
 
 isTraversible :: Cell -> Bool
 isTraversible Floor = True

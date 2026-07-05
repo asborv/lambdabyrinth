@@ -1,8 +1,8 @@
 module Items.Consumable where
 
 import System.Random.Stateful
-import Data.Bifunctor (Bifunctor (first))
-import Data.Functor ((<&>))
+
+
 import Data.Bool (bool)
 
 type Duration = Int
@@ -11,8 +11,8 @@ data EffectType = Heal | Damage deriving (Bounded, Enum)
 data Potency = Minor | Major | Extreme deriving (Bounded, Enum)
 
 data Effect
-    = Instant Potency EffectType
-    | Gradual Potency EffectType Duration
+    = Instant !Potency !EffectType
+    | Gradual !Potency !EffectType !Duration
 
 newtype Consumable = Potion Effect
 

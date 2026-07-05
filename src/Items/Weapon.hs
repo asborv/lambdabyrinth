@@ -14,7 +14,7 @@ import System.Random.Stateful
 data WeaponType = Dagger | Spear
   deriving (Show, Enum, Bounded)
 
-data Weapon = Weapon {weaponType :: WeaponType, material :: Material}
+data Weapon = Weapon {weaponType :: !WeaponType, material :: !Material}
 
 instance Show Weapon where
     show weapon = show (material weapon) <> " " <> show (weaponType weapon)
