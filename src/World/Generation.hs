@@ -19,7 +19,7 @@ import Items.Chest
 import System.Random.Stateful
 import Utils (count)
 import World.Cells
-import World.Level (Coordinate, Level (..))
+import World.Level (Coordinate, Level (..), surrounding)
 import World.Tree
 import Data.Bool (bool)
 
@@ -178,5 +178,6 @@ generateLevel = do
                     -- Determine whcih cells to paint over
                     -- (As suggested by the name, order matters here, as we use painter's algorithm)
                     cellsToPaint = concatMap assocs rooms <> chests' <> tunnels <> [(up, Stair Upwards), (down, Stair Downwards)]
+                    visibleCells = listArray boundingRectangle (repeat Unseen) // map (,Visible) (surrounding up)
 
-                return $ Level (allWalls // cellsToPaint) (listArray boundingRectangle (repeat Unseen)) up down monsters
+                return $ Level (allWalls // cellsToPaint) visibleCells up down monsters

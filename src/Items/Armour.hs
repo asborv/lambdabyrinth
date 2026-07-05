@@ -7,7 +7,7 @@ module Items.Armour (Armour (..), defence, Slot (..), BoxedArmour (..)) where
 
 import Brick (Widget, (<+>))
 import Brick.Widgets.Core (txt)
-import Control.Arrow (Arrow (first))
+
 import Data.Kind (Type)
 import Draw
 import Items.Material

@@ -66,8 +66,11 @@ moveEvent direction = do
             South -> (y + 1, x)
             West -> (y, x - 1)
 
-    -- Update the player's position only when the movement is legal
+    -- Update the player's position and POV only when the movement is legal
     when isLegalMove $ do
+        let currentlyVisible = surrounding target
+        world . element curr . visibility %= (// map (,Visible) currentlyVisible)
+
         let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
         case monster of
             Just m -> playerAttackEvent m
@@ -75,9 +78,6 @@ moveEvent direction = do
 
     -- When the player has moved, apply all gradual effects
     playerEffectsEvent
-
-    let currentlyVisible = [(y - 1, x), (y, x + 1), (y + 1, x), (y, x - 1)]
-    world . element curr . visibility %= (// map (,Visible) currentlyVisible)
 
     -- If the player dies, end the game
     me <- use player
