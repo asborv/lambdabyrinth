@@ -1,12 +1,10 @@
-{-# LANGUAGE ImportQualifiedPost #-}
-
 module Items.Item where
 
-import Data.Kind (Type)
-import System.Random.Stateful
-import Items.Armour qualified as A
-import Items.Consumable qualified as C
-import Items.Weapon qualified as W
+import           Data.Kind (Type)
+import           System.Random.Stateful
+import qualified Items.Armour as A
+import qualified Items.Consumable as C
+import qualified Items.Weapon as W
 
 data ItemKind = ArmourK | WeaponK | ConsumableK deriving (Bounded, Enum)
 
