@@ -73,18 +73,17 @@ split (Leaf (upperLeft, lowerRight)) = do
 getRooms :: BinaryTree Rectangle -> [Array Coordinate Cell]
 getRooms = map (\rectangle -> listArray rectangle (repeat Floor)) . flatten
 
-{- |  Take a room, and push its walls inwards by a random ratio.
+{- | Take a room, and push its walls inwards by a random ratio.
  The shrinking is symmetric on the horizontal and vertical axis, respecitvely.
  (The walls will be pushed in by _at least_ 1 cell)
 -}
-shrinkWalls :: Rectangle -> IO Rectangle
-shrinkWalls ((y0, x0), (y1, x1)) = do
-    ratio <- randomRIO (0.3, 0.4) :: IO Double
+shrinkWalls :: Rectangle -> Double -> Rectangle
+shrinkWalls ((y0, x0), (y1, x1)) ratio = do
     let width = fromIntegral (x1 - x0) :: Double
         height = fromIntegral (y1 - y0) :: Double
         dx = max 1 (round (ratio * width))
         dy = max 1 (round (ratio * height))
-    return ((y0 + dy, x0 + dx), (y1 - dy, x1 - dx))
+     in ((y0 + dy, x0 + dx), (y1 - dy, x1 - dx))
 
 -- | Calculate the center of a rectangle
 center :: Rectangle -> Coordinate
@@ -133,7 +132,7 @@ generateLevel = do
         if leaves tree' <= 5
             then loop tree'
             else do
-                tree'' <- traverse shrinkWalls tree'
+                tree'' <- traverse shrinkWalls tree' <$> randomRIO (0.3, 0.4)
                 let rooms = getRooms tree'' --                   Get the rooms of the (shrunken) binary tree
                     centers = map center $ flatten tree'' --     Get the center of each room
                     tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them
