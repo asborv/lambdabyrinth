@@ -35,7 +35,7 @@ power monster = case monster ^. monsterType of
     Ghost -> 25
 
 instance Uniform MonsterType where
-    uniformM g = bool Zombie Ghost <$> uniformM @Bool g
+    uniformM = uniformEnumM
 
 instance Uniform Monster where
     uniformM g = Monster

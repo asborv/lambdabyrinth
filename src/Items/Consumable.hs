@@ -17,7 +17,7 @@ data Effect
 newtype Consumable = Potion Effect
 
 instance Show Consumable where
-    show (Potion (Instant potency effectType)) = "instant potion of " <> show potency <> " " <> show effectType
+    show (Potion (Instant potency effectType))   = "instant potion of " <> show potency <> " " <> show effectType
     show (Potion (Gradual potency effectType _)) = "gradual potion of " <> show potency <> " " <> show effectType
 
 instance Show Potency where
