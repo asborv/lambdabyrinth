@@ -35,7 +35,6 @@ data Direction = Vertical | Horizontal deriving (Show)
 instance Uniform Direction where
     uniformM g = bool Vertical Horizontal <$> uniformM @Bool g
 
-
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
 
@@ -46,7 +45,7 @@ instance Uniform RectangleSplitSpec where
         <$> uniformRM (0.4, 0.6) g
         <*> uniformM g
 
-splitRectangle :: Rectangle -> RectangleSplitSpec -> (BinaryTree Rectangle)
+splitRectangle :: Rectangle -> RectangleSplitSpec -> BinaryTree Rectangle
 splitRectangle (topLeft, bottomRight) (RectangleSplitSpec ratio Vertical) =
     -- The available room for splitting
     let splitBasis = fromIntegral $ snd bottomRight - snd topLeft

@@ -16,7 +16,6 @@ import qualified Data.Text as T
 import Draw
 import Scenes.Game.Attributes
 import System.Random.Stateful
-import Data.Bool (bool)
 
 data MonsterType = Zombie | Ghost deriving (Show, Eq, Enum, Bounded)
 
