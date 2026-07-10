@@ -19,7 +19,7 @@ import Items.Chest
 import System.Random.Stateful
 import Utils (count)
 import World.Cells
-import World.Level (Coordinate, Level (..), surrounding)
+import World.Level (Coordinate, Level (..), surrounding, transposeCoordinate)
 import World.Tree
 
 {-# DEPRECATED uniformIO "Use a proper stateful gen instead" #-}
@@ -47,44 +47,27 @@ instance Uniform RectangleSplitSpec where
         <$> uniformRM (0.4, 0.6) g
         <*> uniformM g
 
+transposeRect :: Rectangle -> Rectangle
+transposeRect (p, q) = (transposeCoordinate q, transposeCoordinate p)
+
+-- | Split a rectangle according to a @RectangleSplitSpec@
+-- into a branch of rectangle leaves.
+-- Horizontal splitting is done by transposition of vertical splitting
 splitRectangle :: Rectangle -> RectangleSplitSpec -> BinaryTree Rectangle
+splitRectangle rect (RectangleSplitSpec ratio Horizontal) =
+    transposeRect
+    <$> splitRectangle
+        (transposeRect rect)
+        (RectangleSplitSpec ratio Vertical)
 splitRectangle (topLeft, bottomRight) (RectangleSplitSpec ratio Vertical) =
-    -- The available room for splitting
-    let splitBasis = fromIntegral $ snd bottomRight - snd topLeft
-
-        -- The offset from which to compute the split point
-        offset = snd topLeft
-
-        -- Split at some point in range of the split basis
-        splitPoint = round (ratio * splitBasis) + offset
-
-        -- The new bounding rectangle corners
-        bottomRight' = (fst bottomRight, splitPoint)
-        topLeft' = (fst topLeft, splitPoint)
-
-        -- The branches to split this leaf into
-        left = (topLeft, bottomRight')
-        right = (topLeft', bottomRight)
+    let splitBasis   = fromIntegral $ snd bottomRight - snd topLeft
+        offset       = snd topLeft                         -- The offset from which to compute the split point
+        splitPoint   = round (ratio * splitBasis) + offset -- Split at some point in range of the split basis
+        bottomRight' = (fst bottomRight, splitPoint)       -- The new bounding rectangle corners
+        topLeft'     = (fst topLeft, splitPoint)
+        left         = (topLeft, bottomRight')             -- The branches to split this leaf into
+        right        = (topLeft', bottomRight)
      in Leaf left :-: Leaf right
-splitRectangle (topLeft, bottomRight)  (RectangleSplitSpec ratio Horizontal) =
-    -- he available room for splitting
-    let splitBasis = fromIntegral $ fst bottomRight - fst topLeft
-
-        -- The offset from which to compute the split point
-        offset = fst topLeft
-
-        -- Split at some point in range of the split basis
-        splitPoint = round (ratio * splitBasis) + offset
-
-        -- The new bounding rectangle corners
-        bottomRight' = (splitPoint, snd bottomRight)
-        topLeft' = (splitPoint, snd topLeft)
-
-        -- The branches to split this leaf into
-        left = (topLeft, bottomRight')
-        right = (topLeft', bottomRight)
-     in Leaf left :-: Leaf right
-
 
 {- | Split two random leaves in a binary tree into two new leaves
 The bisection is done by a random direction and a random point (within a ratio range) along that direction

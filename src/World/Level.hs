@@ -13,8 +13,11 @@ import GHC.TypeLits (KnownNat, Natural, natVal)
 import World.Cells
 
 type Coordinate = (Int, Int)
+
 data Direction = North | East | South | West deriving (Show)
+
 type World (cols :: Natural) (rows :: Natural) = [Level cols rows]
+
 data Level (cols :: Natural) (rows :: Natural) = Level
     { _cells :: Array Coordinate Cell
     , _visibility :: Array Coordinate Visibility
@@ -57,3 +60,6 @@ surrounding (y, x) =
   , (y, x - 1)    , (y, x)    , (y, x + 1)
   , (y + 1, x - 1), (y + 1, x), (y + 1, x + 1)
   ]
+
+transposeCoordinate :: Coordinate -> Coordinate
+transposeCoordinate (y, x) = (x, y)
