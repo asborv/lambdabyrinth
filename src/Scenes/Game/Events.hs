@@ -218,6 +218,6 @@ killMonsterEvent monster = do
     curr <- use currentLevel
 
     -- Remove the monster from the list of monsters in the current level
-    world . element curr . monsters %= filter (/= monster)
+    world . element curr . monsters %= delete monster
     tell ["You slew the " <> tshow (monster ^. M.monsterType) <> "!"]
     player . P.pos .= monster ^. M.position
