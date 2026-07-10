@@ -21,7 +21,6 @@ import Utils (count)
 import World.Cells
 import World.Level (Coordinate, Level (..), surrounding)
 import World.Tree
-import Data.Bool (bool)
 
 {-# DEPRECATED uniformIO "Use a proper stateful gen instead" #-}
 uniformIO :: Uniform a => IO a
@@ -30,10 +29,13 @@ uniformIO = uniformM globalStdGen
 uniformRIO :: UniformRange a => (a, a) -> IO a
 uniformRIO range = uniformRM range globalStdGen
 
-data Direction = Vertical | Horizontal deriving (Show)
+data Direction
+    = Vertical
+    | Horizontal
+    deriving (Show, Enum, Bounded)
 
 instance Uniform Direction where
-    uniformM g = bool Vertical Horizontal <$> uniformM @Bool g
+    uniformM = uniformEnumM
 
 -- | A rectangle that is defined by its upper right and lower right corners
 type Rectangle = (Coordinate, Coordinate)
