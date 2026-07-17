@@ -19,7 +19,7 @@ import Items.Chest
 import System.Random.Stateful
 import Utils (count)
 import World.Cells
-import World.Level (Coordinate, Level (..), surrounding, transposeCoordinate)
+import World.Level (Coordinate, Level (..), surrounding, transposeCoordinate, Visibility (..))
 import World.Tree
 
 {-# DEPRECATED uniformIO "Use a proper stateful gen instead" #-}

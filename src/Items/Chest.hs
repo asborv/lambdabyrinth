@@ -2,6 +2,9 @@ module Items.Chest where
 
 import Items.Item
 import System.Random.Stateful
+import Draw
+import Brick (txt)
+import Scenes.Game.Attributes
 
 data Chest where
     Open :: Chest
@@ -13,3 +16,9 @@ instance Uniform Chest where
         if hasContent
             then return (Closed Nothing)
             else Closed . Just <$> uniformM g
+
+instance Drawable Chest where
+    draw False Open       = txt "📭\b "
+    draw False (Closed _) = txt "📫\b "
+    draw True  Open       = withSymbolAttr ChestAttr $ txt "()"
+    draw True  (Closed _) = withSymbolAttr ChestAttr $ txt "[]"

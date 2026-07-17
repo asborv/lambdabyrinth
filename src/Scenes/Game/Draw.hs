@@ -34,7 +34,7 @@ import Text.Wrap
     , WrapSettings (..)
     )
 import Types
-import World.Cells (VerticalDirection (..), Visibility (..), Cell)
+import World.Cells (VerticalDirection (..), Cell)
 import World.Level
 import GHC.TypeLits (KnownNat)
 
