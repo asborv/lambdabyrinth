@@ -18,7 +18,7 @@ import Draw
 import Brick (txt)
 import Items.Item
 import qualified Items.Consumable as C
-import Items.Consumable (Effect(Gradual))
+import Items.Consumable
 
 data Class = Wizard | Warrior | Rogue deriving (Show, Eq)
 
@@ -39,12 +39,11 @@ data Player = Player
 makeLenses ''Player
 
 instance Drawable Player where
-    draw asciiOnly player = txt symbol
-      where
-        symbol = if asciiOnly then "P " else case player ^. characterClass of
-            Warrior -> "⚔ "
-            Rogue -> "🦹\b "
-            Wizard -> "🧙\b "
+    draw True _ = txt "P "
+    draw False player = txt $ case player ^. characterClass of
+        Warrior -> "⚔ "
+        Rogue -> "🦹\b "
+        Wizard -> "🧙\b "
 
 instance Combatant Player where
     attack :: (Combatant c, Monad m) => Player -> c -> ReaderT Config m c
@@ -71,14 +70,13 @@ classPower = \case
     Rogue -> 45
 
 consume :: Player -> C.Consumable -> Player
-consume me (C.Potion e@(C.Instant _ _)) = applyEffect e me
-consume me (C.Potion (C.Gradual p e t)) = me & effects %~ ((p, e, t) :)
+consume me (C.Potion e) = applyEffect e me
 
 applyActiveEffects :: Player -> Player
 applyActiveEffects me@Player {_effects = es} =
     let me' =
             foldr
-                (applyEffect . \(potency, effectType, duration) -> Gradual potency effectType duration)
+                (applyEffect . \(potency, effectType, duration) -> Effect (Gradual duration) potency effectType)
                 me
                 es
         es' =
@@ -88,10 +86,10 @@ applyActiveEffects me@Player {_effects = es} =
      in me' & effects .~ es'
 
 applyEffect :: C.Effect -> Player -> Player
-applyEffect (C.Instant potency C.Heal) me = me & health .~ min (C.power potency) (me ^. maxHealth)
-applyEffect (C.Instant potency C.Damage) me = me & health -~ C.power potency
-applyEffect (C.Gradual potency C.Heal _) me = me & health +~ min (C.power potency) (me ^. maxHealth)
-applyEffect (C.Gradual potency C.Damage _) me = me & health -~ C.power potency
+applyEffect (Effect C.Instant     potency C.Heal)   me = me & health .~ min (C.power potency) (me ^. maxHealth)
+applyEffect (Effect C.Instant     potency C.Damage) me = me & health -~ C.power potency
+applyEffect (Effect (C.Gradual _) potency C.Heal)   me = me & health +~ min (C.power potency) (me ^. maxHealth)
+applyEffect (Effect (C.Gradual _) potency C.Damage) me = me & health -~ C.power potency
 
 pickup :: BoxedItem -> Player -> Player
 pickup (Boxed (Consumable consumable)) me = me `consume` consumable
@@ -109,8 +107,8 @@ pickup (Boxed (Armour (A.Boxed armour))) me =
         else me
 
 shouldEquip :: Player -> Either W.Weapon (A.Armour s) -> Bool
-shouldEquip me (Left weapon) = all (\w -> W.power weapon > W.power w) (me ^. hand)
-shouldEquip me (Right armour@(A.Helmet _)) = all (\a -> A.defence armour > A.defence a) (me ^. helmet)
+shouldEquip me (Left weapon)                = all (\w -> W.power weapon > W.power w) (me ^. hand)
+shouldEquip me (Right armour@(A.Helmet _))  = all (\a -> A.defence armour > A.defence a) (me ^. helmet)
 shouldEquip me (Right armour@(A.Cuirass _)) = all (\a -> A.defence armour > A.defence a) (me ^. cuirass)
-shouldEquip me (Right armour@(A.Gloves _)) = all (\a -> A.defence armour > A.defence a) (me ^. gloves)
-shouldEquip me (Right armour@(A.Boots _)) = all (\a -> A.defence armour > A.defence a) (me ^. boots)
+shouldEquip me (Right armour@(A.Gloves _))  = all (\a -> A.defence armour > A.defence a) (me ^. gloves)
+shouldEquip me (Right armour@(A.Boots _))   = all (\a -> A.defence armour > A.defence a) (me ^. boots)

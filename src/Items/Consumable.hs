@@ -3,6 +3,7 @@ module Items.Consumable
     , Potency(..)
     , Consumable(..)
     , Duration
+    , Immediacy(..)
     , Effect(..)
     , power
     ) where
@@ -14,16 +15,21 @@ type Duration = Int
 
 data EffectType = Heal | Damage deriving (Bounded, Enum)
 data Potency = Minor | Major | Extreme deriving (Bounded, Enum)
+data Immediacy = Instant | Gradual !Duration
 
-data Effect
-    = Instant !Potency !EffectType
-    | Gradual !Potency !EffectType !Duration
+data Effect = Effect !Immediacy !Potency !EffectType
 
 newtype Consumable = Potion Effect
 
+instance Show Immediacy where
+    show Instant     = "instant"
+    show (Gradual _) = "gradual"
+
 instance Show Consumable where
-    show (Potion (Instant potency effectType))   = "instant potion of " <> show potency <> " " <> show effectType
-    show (Potion (Gradual potency effectType _)) = "gradual potion of " <> show potency <> " " <> show effectType
+    show (Potion (Effect immediacy potency effectType)) = show immediacy
+        <> show potency
+        <> " "
+        <> show effectType
 
 instance Show Potency where
     show Minor = "minor"
@@ -40,10 +46,16 @@ instance Uniform EffectType where
 instance Uniform Potency where
     uniformM = uniformEnumM
 
-instance Uniform Effect where
+instance Uniform Immediacy where
     uniformM g = uniformM @Bool g >>= bool
-        (Instant <$> uniformM g <*> uniformM g)
-        (Gradual <$> uniformM g <*> uniformM g <*> uniformRM (2, 5) g)
+        (pure Instant)
+        (Gradual <$> uniformRM (2, 5) g)
+
+instance Uniform Effect where
+    uniformM g = Effect
+        <$> uniformM g
+        <*> uniformM g
+        <*> uniformM g
 
 instance Uniform Consumable where
     uniformM g = Potion <$> uniformM g
