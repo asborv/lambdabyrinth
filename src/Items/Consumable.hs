@@ -1,6 +1,8 @@
 module Items.Consumable
     ( EffectType(..)
+    , Potency(..)
     , Consumable(..)
+    , Duration
     , Effect(..)
     , power
     ) where
