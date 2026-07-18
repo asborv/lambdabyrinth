@@ -13,9 +13,13 @@ import System.Random.Stateful
 
 type Duration = Int
 
-data EffectType = Heal | Damage deriving (Bounded, Enum)
-data Potency = Minor | Major | Extreme deriving (Bounded, Enum)
 data Immediacy = Instant | Gradual !Duration
+
+data Potency = Minor | Major | Extreme
+    deriving (Bounded, Enum)
+
+data EffectType = Heal | Damage
+    deriving (Bounded, Enum)
 
 data Effect = Effect !Immediacy !Potency !EffectType
 
@@ -27,17 +31,18 @@ instance Show Immediacy where
 
 instance Show Consumable where
     show (Potion (Effect immediacy potency effectType)) = show immediacy
+        <> " potion of "
         <> show potency
         <> " "
         <> show effectType
 
 instance Show Potency where
-    show Minor = "minor"
-    show Major = "major"
+    show Minor   = "minor"
+    show Major   = "major"
     show Extreme = "extreme"
 
 instance Show EffectType where
-    show Heal = "healing"
+    show Heal   = "healing"
     show Damage = "damage"
 
 instance Uniform EffectType where
