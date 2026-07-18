@@ -1,0 +1,10 @@
+cradle:
+  cabal:
+    - path: "app/Main.hs"
+      component: "lambdabyrinth:exe:lambdabyrinth"
+
+    - path: "src"
+      component: "lambdabyrinth:lib:lambdabyrinth-lib"
+
+    - path: "tests"
+      component: "lambdabyrinth:test:test-lambdabyrinth"
