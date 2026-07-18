@@ -23,17 +23,17 @@ import Items.Consumable (Effect(Gradual))
 data Class = Wizard | Warrior | Rogue deriving (Show, Eq)
 
 data Player = Player
-    { _name :: T.Text
-    , _pos :: Coordinate
-    , _hand :: Maybe W.Weapon
-    , _helmet :: Maybe (A.Armour 'A.Head)
-    , _cuirass :: Maybe (A.Armour 'A.Body)
-    , _gloves :: Maybe (A.Armour 'A.Hands)
-    , _boots :: Maybe (A.Armour 'A.Feet)
-    , _health :: Int
-    , _maxHealth :: Int
-    , _characterClass :: Class
-    , _effects :: [(C.Potency, C.EffectType, C.Duration)]
+    { _name           :: !T.Text
+    , _pos            :: !Coordinate
+    , _hand           :: !(Maybe W.Weapon)
+    , _helmet         :: !(Maybe (A.Armour 'A.Head))
+    , _cuirass        :: !(Maybe (A.Armour 'A.Body))
+    , _gloves         :: !(Maybe (A.Armour 'A.Hands))
+    , _boots          :: !(Maybe (A.Armour 'A.Feet))
+    , _health         :: !Int
+    , _maxHealth      :: !Int
+    , _characterClass :: !Class
+    , _effects        :: ![(C.Potency, C.EffectType, C.Duration)]
     }
 
 makeLenses ''Player
