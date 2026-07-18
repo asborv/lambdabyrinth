@@ -3,31 +3,44 @@ Module      : World.Level
 Description : Definition of the game world's levels, and util functions
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module World.Level where
+module World.Level
+    ( Coordinate
+    , Direction(..)
+    , World
+    , Visibility(..)
+    , Level(..)
+    , cells, visibility, up, down, monsters
+    , dimensions
+    , width
+    , height
+    , surrounding
+    , transposeCoordinate
+    ) where
 
 import Control.Lens.TH (makeLenses)
-import Creatures.Monsters
 import Data.Data (Proxy (..))
 import GHC.Arr (Array)
 import GHC.TypeLits (KnownNat, Natural, natVal)
+
+import Creatures.Monsters
 import World.Cells
 
 type Coordinate = (Int, Int)
 
 data Direction = North | East | South | West deriving (Show)
 
-type World (cols :: Natural) (rows :: Natural) = [Level cols rows]
-
 data Visibility = Unseen | Remembered | Visible
     deriving (Eq)
 
 data Level (cols :: Natural) (rows :: Natural) = Level
-    { _cells :: Array Coordinate Cell
-    , _visibility :: Array Coordinate Visibility
-    , _up :: Coordinate
-    , _down :: Coordinate
-    , _monsters :: [Monster]
+    { _cells      :: !(Array Coordinate Cell)
+    , _visibility :: !(Array Coordinate Visibility)
+    , _up         :: !Coordinate
+    , _down       :: !Coordinate
+    , _monsters   :: ![Monster]
     }
+
+type World (cols :: Natural) (rows :: Natural) = [Level cols rows]
 
 makeLenses ''Level
 

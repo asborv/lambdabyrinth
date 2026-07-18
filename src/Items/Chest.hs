@@ -1,9 +1,10 @@
 module Items.Chest where
 
-import Items.Item
-import System.Random.Stateful
-import Draw
 import Brick (txt)
+import System.Random.Stateful
+
+import Draw
+import Items.Item
 import Scenes.Game.Attributes
 
 data Chest where

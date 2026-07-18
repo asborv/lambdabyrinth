@@ -1,18 +1,26 @@
-module World.Tree (Edge, BinaryTree(..), leaves, flatten, distance, weight, mst) where
+module World.Tree
+    ( Edge
+    , BinaryTree(..)
+    , leaves
+    , flatten
+    , distance
+    , weight
+    , mst
+    ) where
 
 import Data.Foldable (minimumBy)
 import Data.Function (on)
-import World.Level (Coordinate)
 import Data.List.NonEmpty
-import Utils (delete)
 
+import Utils (delete)
+import World.Level (Coordinate)
 
 type Edge = (Coordinate, Coordinate)
 
 -- | Binary tree with data only in its leaves
 data BinaryTree a
     = Leaf !a
-    | !(BinaryTree a) :-: !(BinaryTree a)
+    | (BinaryTree a) :-: (BinaryTree a)
     deriving (Eq, Show)
 
 instance Functor BinaryTree where

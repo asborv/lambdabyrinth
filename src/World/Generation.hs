@@ -5,18 +5,18 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module World.Generation (generateLevel) where
 
-import Control.Lens ((.~))
-import Control.Monad.Fix (fix)
-import Creatures.Monsters (Monster, position)
-import Data.Bifoldable (biList)
-import Data.Data (Proxy (..))
-import Data.Function (on)
-import Data.Functor ((<&>))
-import Data.List (maximumBy)
-import GHC.Arr (Array, assocs, indices, listArray, (//))
-import GHC.TypeLits (KnownNat, natVal)
-import Items.Chest
+import Control.Lens.Operators
+import Control.Monad.Fix
+import Data.Bifoldable
+import Data.Data
+import Data.Function
+import Data.List
+import GHC.Arr
+import GHC.TypeLits
 import System.Random.Stateful
+
+import Creatures.Monsters
+import Items.Chest
 import Utils (count)
 import World.Cells
 import World.Level (Coordinate, Level (..), surrounding, transposeCoordinate, Visibility (..))

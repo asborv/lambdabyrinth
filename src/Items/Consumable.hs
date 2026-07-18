@@ -1,9 +1,12 @@
-module Items.Consumable where
-
-import System.Random.Stateful
-
+module Items.Consumable
+    ( EffectType(..)
+    , Consumable(..)
+    , Effect(..)
+    , power
+    ) where
 
 import Data.Bool (bool)
+import System.Random.Stateful
 
 type Duration = Int
 

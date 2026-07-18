@@ -3,18 +3,24 @@ Module      : Items.Armour
 Description : Armour, implementations, and their stats
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module Items.Armour (Armour (..), defence, Slot (..), BoxedArmour (..)) where
+module Items.Armour
+    ( Armour (..)
+    , defence
+    , Slot (..)
+    , BoxedArmour (..)
+    ) where
 
 import Brick (Widget, (<+>))
 import Brick.Widgets.Core (txt)
-
 import Data.Kind (Type)
-import Draw
-import Items.Material
 import System.Random.Stateful
 
--- |  The slot an armour piece can be equipped in
-data Slot = Head | Body | Hands | Feet deriving (Show, Bounded, Enum)
+import Draw
+import Items.Material
+
+-- | The slot an armour piece can be equipped in
+data Slot = Head | Body | Hands | Feet
+    deriving (Show, Bounded, Enum)
 
 instance Uniform Slot where
     uniformM = uniformEnumM

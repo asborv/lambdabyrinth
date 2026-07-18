@@ -9,21 +9,21 @@ import Brick (txt)
 import Draw
 import System.Random.Stateful
 
-data Material = Stone | Wood | Diamond deriving (Show, Enum, Bounded)
+data Material = Stone | Wood | Diamond
+    deriving (Show, Enum, Bounded)
 
 instance Drawable Material where
-    draw False Stone = txt "🪨\b "
-    draw False Wood = txt "🪵\b "
+    draw False Stone   = txt "🪨\b "
+    draw False Wood    = txt "🪵\b "
     draw False Diamond = txt "💎\b "
-    draw True Stone = txt "S "
-    draw True Wood = txt "W "
-    draw True Diamond = txt "D "
+    draw True Stone    = txt "S "
+    draw True Wood     = txt "W "
+    draw True Diamond  = txt "D "
 
 instance Uniform Material where
     uniformM = uniformEnumM
 
 materialBonus :: Material -> Int
-materialBonus = \case
-    Wood -> 5
-    Stone -> 15
-    Diamond -> 30
+materialBonus Wood    = 5
+materialBonus Stone   = 15
+materialBonus Diamond = 30

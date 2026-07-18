@@ -3,30 +3,38 @@ Module      : Items.Weapon
 Description : All weapons, implementations, and stats in the game
 Maintainer  : asbjorn.orvedal@gmail.com
 -}
-module Items.Weapon (Weapon (..), WeaponType (..), power) where
+module Items.Weapon
+    ( Weapon (..)
+    , WeaponType (..)
+    , power
+    ) where
 
-import Brick (txt, (<+>))
+import Brick
 
 import Draw
 import Items.Material
 import System.Random.Stateful
 
 data WeaponType = Dagger | Spear
-  deriving (Show, Enum, Bounded)
+    deriving (Show, Enum, Bounded)
 
-data Weapon = Weapon {weaponType :: !WeaponType, material :: !Material}
+data Weapon = Weapon
+    { material   :: !Material
+    , weaponType :: !WeaponType
+    }
 
 instance Show Weapon where
-    show weapon = show (material weapon) <> " " <> show (weaponType weapon)
+    show (Weapon {material, weaponType}) = show material <> " " <> show weaponType
+
+instance Drawable WeaponType where
+    draw False Spear  = txt "🔱\b "
+    draw True Spear   = txt "/ "
+    draw False Dagger = txt "🗡️\b "
+    draw True Dagger  = txt "- "
 
 instance Drawable Weapon where
-    draw asciiOnly weapon = draw asciiOnly (material weapon) <+> txt symbol
-      where
-        symbol = case (asciiOnly, weaponType weapon) of
-            (False, Spear) -> "🔱\b "
-            (True, Spear) -> "/ "
-            (False, Dagger) -> "🗡️\b "
-            (True, Dagger) -> "- "
+    draw asciiOnly (Weapon {material, weaponType}) =
+        draw asciiOnly material <+> draw asciiOnly weaponType
 
 instance Uniform WeaponType where
     uniformM = uniformEnumM
@@ -34,9 +42,10 @@ instance Uniform WeaponType where
 instance Uniform Weapon where
     uniformM g = Weapon <$> uniformM g <*> uniformM g
 
+weaponBonus :: WeaponType -> Int
+weaponBonus Dagger = 5
+weaponBonus Spear  = 3
+
 power :: Weapon -> Int
-power weapon = materialBonus (material weapon) * weaponBonus
-  where
-    weaponBonus = case weaponType weapon of
-        Dagger -> 5
-        Spear -> 3
+power (Weapon {material, weaponType}) =
+    materialBonus material * weaponBonus weaponType
