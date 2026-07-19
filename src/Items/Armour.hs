@@ -29,31 +29,29 @@ instance Uniform Slot where
 The GADT ensures that the type of the armour corresponds to the slot it can be equipped in
 -}
 data Armour :: Slot -> Type where
-    Helmet :: Material -> Armour 'Head
+    Helmet  :: Material -> Armour 'Head
     Cuirass :: Material -> Armour 'Body
-    Gloves :: Material -> Armour 'Hands
-    Boots :: Material -> Armour 'Feet
+    Gloves  :: Material -> Armour 'Hands
+    Boots   :: Material -> Armour 'Feet
 
 data BoxedArmour where
     Boxed :: Armour s -> BoxedArmour
 
 instance Show (Armour a) where
-    show (Helmet material) = show material <> " Helmet"
+    show (Helmet material)  = show material <> " Helmet"
     show (Cuirass material) = show material <> " Cuirass"
-    show (Gloves material) = show material <> " Gloves"
-    show (Boots material) = show material <> " Boots"
+    show (Gloves material)  = show material <> " Gloves"
+    show (Boots material)   = show material <> " Boots"
 
 instance Drawable (Armour a) where
-    draw :: Bool -> Armour a -> Widget n
-    draw asciiOnly armour = case (asciiOnly, armour) of
-        (False, Cuirass m) -> draw asciiOnly m <+> txt "🛡️\b "
-        (True, Cuirass m) -> draw asciiOnly m <+> txt "# "
-        (False, Helmet m) -> draw asciiOnly m <+> txt "🪖\b "
-        (True, Helmet m) -> draw asciiOnly m <+> txt "^ "
-        (False, Gloves m) -> draw asciiOnly m <+> txt "🧤\b "
-        (True, Gloves m) -> draw asciiOnly m <+> txt "''"
-        (False, Boots m) -> draw asciiOnly m <+> txt "👢\b "
-        (True, Boots m) -> draw asciiOnly m <+> txt ",,"
+    draw False (Helmet m)  = draw False m <+> txt "🪖\b "
+    draw True  (Helmet m)  = draw True m  <+> txt "^ "
+    draw False (Cuirass m) = draw False m <+> txt "🛡️\b "
+    draw True  (Cuirass m) = draw True m  <+> txt "# "
+    draw False (Gloves m)  = draw False m <+> txt "🧤\b "
+    draw True  (Gloves m)  = draw True m  <+> txt "''"
+    draw False (Boots m)   = draw False m <+> txt "👢\b "
+    draw True  (Boots m)   = draw True m  <+> txt ",,"
 
 -- | Calculate the defence power of an armour piece
 defence :: Armour a -> Int
