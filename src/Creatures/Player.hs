@@ -43,7 +43,7 @@ instance Drawable Player where
     draw False player = txt $ case player ^. characterClass of
         Warrior -> "⚔ "
         Rogue -> "🦹\b "
-        Wizard -> "🧙\b "
+        Wizard -> "🧙 "
 
 instance Combatant Player where
     attack :: (Combatant c, Monad m) => Player -> c -> ReaderT Config m c

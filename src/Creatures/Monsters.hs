@@ -12,7 +12,6 @@ import Control.Lens.Lens ((&))
 import Control.Lens.TH (makeLenses)
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
-import qualified Data.Text as T
 import Draw
 import Scenes.Game.Attributes
 import System.Random.Stateful
@@ -42,17 +41,12 @@ instance Uniform Monster where
         <*> uniformM g
         <*> pure (0, 0)
 
-instance Show Monster where
-    show monster = case monster ^. monsterType of
-        Zombie -> "🧟\b "
-        Ghost -> "👻\b "
-
 instance Drawable Monster where
-    draw False monster = txt . T.pack $ show monster
-    draw True (Monster {_monsterType}) =
-        withSymbolAttr MonsterAttr $ case _monsterType of
-            Zombie -> txt "Z "
-            Ghost -> txt "G "
+    draw asciiOnly monster =
+        let glyph = case monster ^. monsterType of
+              Zombie -> Glyph (txt "🧟\b ") (txt "Z ")
+              Ghost  -> Glyph (txt "👻\b ") (txt "G ")
+         in withSymbolAttr MonsterAttr (draw asciiOnly glyph)
 
 instance Combatant Monster where
     attack :: (Combatant c, Monad m) => Monster -> c -> ReaderT Config m c
