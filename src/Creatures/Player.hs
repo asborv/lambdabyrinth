@@ -38,12 +38,15 @@ data Player = Player
 
 makeLenses ''Player
 
+classEmoji :: Class -> T.Text
+classEmoji Warrior = "⚔︎ "
+classEmoji Rogue   = "🦹 "
+classEmoji Wizard  = "🧙 "
+
 instance Drawable Player where
-    draw True _ = txt "P "
-    draw False player = txt $ case player ^. characterClass of
-        Warrior -> "⚔ "
-        Rogue -> "🦹\b "
-        Wizard -> "🧙 "
+    draw asciiOnly player =
+         let glyph = Glyph (txt . classEmoji $ player ^. characterClass) (txt "P ")
+          in draw asciiOnly glyph
 
 instance Combatant Player where
     attack :: (Combatant c, Monad m) => Player -> c -> ReaderT Config m c
