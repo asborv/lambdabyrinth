@@ -67,10 +67,9 @@ instance Combatant Player where
     takeDamage me damage = me & health %~ subtract damage
 
 classPower :: Class -> Int
-classPower = \case
-    Wizard -> 15
-    Warrior -> 85
-    Rogue -> 45
+classPower Wizard  = 15
+classPower Warrior = 85
+classPower Rogue   = 45
 
 consume :: Player -> C.Consumable -> Player
 consume me (C.Potion e) = applyEffect e me
