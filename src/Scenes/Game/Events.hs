@@ -15,7 +15,7 @@ import Control.Monad.Writer (WriterT (runWriterT), tell)
 import Creatures.Combatant
 import qualified Creatures.Monsters as M
 import qualified Creatures.Player as P
-import Data.Foldable (find)
+import qualified Data.Map as Map
 import Data.Maybe (isNothing)
 import Data.Text (Text)
 import GHC.Arr (indices, (!), (//))
@@ -72,9 +72,9 @@ moveEvent direction = do
         let povUpdates = map (,Remembered) (surrounding (y, x)) <> map (,Visible) (surrounding target)
         world . element curr . visibility %= (// povUpdates)
 
-        let monster = find (\m -> m ^. M.position == target) (level ^. monsters)
+        let monster = Map.lookup target (level ^. monsters)
         case monster of
-            Just m -> playerAttackEvent m
+            Just m -> playerAttackEvent m target
             Nothing -> player . P.pos .= target
 
     -- When the player has moved, apply all gradual effects
@@ -175,8 +175,8 @@ pickupEvent gear = do
 {- | Event triggered when the player attacks a monster.
 If the monster is dead, it is removed, and the player moves to its position.
 -}
-playerAttackEvent :: M.Monster -> GameEvent () name
-playerAttackEvent monster = do
+playerAttackEvent :: M.Monster -> Coordinate -> GameEvent () name
+playerAttackEvent monster monsterPos = do
     me <- use player
     monster' <- me `attack` monster
     player <~ monster' `attack` me
@@ -184,19 +184,19 @@ playerAttackEvent monster = do
     let monsterIsAlive = monster' ^. M.health > 0
 
     if monsterIsAlive
-        then harmMonsterEvent monster monster'
-        else killMonsterEvent monster
+        then harmMonsterEvent monster monster' monsterPos
+        else killMonsterEvent monster  monsterPos
 
 {- | Event triggered when a monster takes damage, but does not die.
 The first argument is the monster before taking damage, and the second is the monster after taking damage.
 We use this to update the monster's state in the world.
 -}
-harmMonsterEvent :: M.Monster -> M.Monster -> GameEvent () name
-harmMonsterEvent monster monster' = do
+harmMonsterEvent :: M.Monster -> M.Monster -> Coordinate -> GameEvent () name
+harmMonsterEvent monster monster' monsterPos = do
     curr <- use currentLevel
     me <- use player
 
-    world . element curr . monsters %= replace monster monster'
+    world . element curr . monsters %= Map.insert monsterPos monster'
 
     let damage = monster ^. M.health - monster' ^. M.health
         weapon = maybe "hands" (tshow . weaponType) (me ^. P.hand)
@@ -213,11 +213,11 @@ harmMonsterEvent monster monster' = do
 {- | Event triggered when a monster is killed.
 It is removed from the world, and the player moves to its position.
 -}
-killMonsterEvent :: M.Monster -> GameEvent () name
-killMonsterEvent monster = do
+killMonsterEvent :: M.Monster -> Coordinate -> GameEvent () name
+killMonsterEvent monster monsterPos = do
     curr <- use currentLevel
 
     -- Remove the monster from the list of monsters in the current level
-    world . element curr . monsters %= delete monster
+    world . element curr . monsters %= Map.delete monsterPos
     tell ["You slew the " <> tshow (monster ^. M.monsterType) <> "!"]
-    player . P.pos .= monster ^. M.position
+    player . P.pos .= monsterPos

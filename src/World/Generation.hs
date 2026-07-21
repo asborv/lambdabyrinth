@@ -21,6 +21,7 @@ import Utils (count)
 import World.Cells
 import World.Level (Coordinate, Level (..), surrounding, transposeCoordinate, Visibility (..))
 import World.Tree
+import qualified Data.Map as Map
 
 {-# DEPRECATED uniformIO "Use a proper stateful gen instead" #-}
 uniformIO :: Uniform a => IO a
@@ -149,7 +150,7 @@ buildLevelFromTree tree = do
     monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 (floorCells \\ [up, down])
     chests <- generateByRatioFromPositions @Chest 0.005 (floorCells \\ [up, down])
     let chests' = map (Chest <$>) chests
-        monsters = uncurry (position .~) <$> monstersAndPositions
+        monsters = Map.fromList monstersAndPositions
 
         -- Order matters since we "paint over"
         cellsToPaint = concatMap assocs rooms                  -- Rooms to be carved

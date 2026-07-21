@@ -10,7 +10,7 @@ module Items.Armour
     , BoxedArmour (..)
     ) where
 
-import Brick (Widget, (<+>))
+import Brick ((<+>))
 import Brick.Widgets.Core (txt)
 import Data.Kind (Type)
 import System.Random.Stateful

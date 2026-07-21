@@ -37,6 +37,7 @@ import Types
 import World.Cells (VerticalDirection (..), Cell)
 import World.Level
 import GHC.TypeLits (KnownNat)
+import qualified Data.Map as Map
 
 type Name = Bool
 
@@ -97,7 +98,7 @@ drawEquipment asciiOnly game = hLimit 20 . border . vCenter $ vBox slots
     itemSlot Nothing = border $ txt "    "
     itemSlot (Just item) = border (draw asciiOnly item)
 
-drawLevel :: (KnownNat rows, KnownNat cols) => Bool -> Level rows cols -> P.Player -> [M.Monster] -> Widget Name
+drawLevel :: (KnownNat rows, KnownNat cols) => Bool -> Level rows cols -> P.Player -> Map.Map Coordinate M.Monster -> Widget Name
 drawLevel asciiOnly level player monsters = borderWithLabel (txt "Lambdabyrinth") . center $ vBox (hBox <$> rows)
   where
     rows = chunksOf (width level) $ do
@@ -105,10 +106,10 @@ drawLevel asciiOnly level player monsters = borderWithLabel (txt "Lambdabyrinth"
         let vis = level ^. visibility . to (! coord)
         return $ drawContextualizedCell vis asciiOnly cell coord player monsters
 
-drawContextualizedCell :: Visibility -> Bool -> Cell -> Coordinate -> P.Player -> [M.Monster] -> Widget Name
+drawContextualizedCell :: Visibility -> Bool -> Cell -> Coordinate -> P.Player -> Map.Map Coordinate M.Monster -> Widget Name
 drawContextualizedCell Unseen     _         _    _     _       _ = txt "  "
 drawContextualizedCell Remembered asciiOnly cell _     _       _ = withSymbolAttr RememberedCellAttr $ draw asciiOnly cell
 drawContextualizedCell Visible    asciiOnly cell coord player' monsters'
   | player' ^. P.pos == coord = draw asciiOnly player'
-  | Just monster <- find (\m -> m ^. M.position == coord) monsters' = draw asciiOnly monster
+  | Just monster <- Map.lookup coord monsters' = draw asciiOnly monster
   | otherwise = draw asciiOnly cell

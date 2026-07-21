@@ -21,7 +21,6 @@ data MonsterType = Zombie | Ghost deriving (Show, Eq, Enum, Bounded)
 data Monster = Monster
     { _health :: !Int
     , _monsterType :: !MonsterType
-    , _position :: !(Int, Int)
     }
     deriving (Eq)
 
@@ -39,7 +38,6 @@ instance Uniform Monster where
     uniformM g = Monster
         <$> uniformRM (40, 100) g
         <*> uniformM g
-        <*> pure (0, 0)
 
 instance Drawable Monster where
     draw asciiOnly monster =

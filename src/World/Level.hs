@@ -19,6 +19,7 @@ module World.Level
 
 import Control.Lens.TH (makeLenses)
 import Data.Data (Proxy (..))
+import qualified Data.Map as Map
 import GHC.Arr (Array)
 import GHC.TypeLits (KnownNat, Natural, natVal)
 
@@ -37,7 +38,7 @@ data Level (cols :: Natural) (rows :: Natural) = Level
     , _visibility :: !(Array Coordinate Visibility)
     , _up         :: !Coordinate
     , _down       :: !Coordinate
-    , _monsters   :: ![Monster]
+    , _monsters   :: !(Map.Map Coordinate Monster)
     }
 
 type World (cols :: Natural) (rows :: Natural) = [Level cols rows]
