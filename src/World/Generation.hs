@@ -145,21 +145,26 @@ buildLevelFromTree tree = do
         boundingRectangle = ((0, 0), (height, width))
         allWalls          = listArray boundingRectangle (repeat Wall)  -- Level's dimensions filled with walls
 
-    -- Placing chests and monsters
-    monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 floorCells
-    chests <- generateByRatioFromPositions @Chest 0.005 floorCells
+    -- Placing chests and monsters on floor (not on stairs)
+    monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 (floorCells \\ [up, down])
+    chests <- generateByRatioFromPositions @Chest 0.005 (floorCells \\ [up, down])
     let chests' = map (Chest <$>) chests
-        monsters =
-            map (uncurry (position .~)) --                    Assign each monster a position
-                . filter (\(c, _) -> c /= up && c /= down) -- Don't place monsters on the stairs
-                $ monstersAndPositions
+        monsters = uncurry (position .~) <$> monstersAndPositions
 
-        -- Determine whcih cells to paint over
-        -- (As suggested by the name, order matters here, as we use painter's algorithm)
-        cellsToPaint = concatMap assocs rooms <> chests' <> tunnels <> [(up, Stair Upwards), (down, Stair Downwards)]
-        visibleCells = listArray boundingRectangle (repeat Unseen) // map (,Visible) (surrounding up)
+        -- Order matters since we "paint over"
+        cellsToPaint = concatMap assocs rooms                  -- Rooms to be carved
+            <> chests'                                         -- Chests to be placed
+            <> tunnels                                         -- Tunnels between rooms
+            <> [(up, Stair Upwards), (down, Stair Downwards)]  -- Stairs up and down
 
-    return $ Level (allWalls // cellsToPaint) visibleCells up down monsters
+        visibleCells = map (, Visible) (surrounding up)
+
+    return $ Level
+        (allWalls // cellsToPaint)
+        (listArray boundingRectangle (repeat Unseen) // visibleCells)
+        up
+        down
+        monsters
 
 generateLevel ::
     forall cols rows.
