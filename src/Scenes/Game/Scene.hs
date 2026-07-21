@@ -94,7 +94,7 @@ playGame config character = do
     let startingPosition = level ^. up
         initialState =
             GameState
-                (character & P.pos .~ startingPosition)
+                (character & P.position .~ startingPosition)
                 (Z.fromNonEmpty (level :| ls))
                 ["Welcome to the Lambdabyrinth!"]
                 Nothing

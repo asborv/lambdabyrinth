@@ -88,7 +88,7 @@ createCharacter = formState <$> defaultMain app (mkForm initialPlayer)
     initialPlayer =
         Player
             { _name = ""
-            , _pos = (0, 0)
+            , _position = (0, 0)
             , _hand = Nothing
             , _helmet = Nothing
             , _cuirass = Nothing

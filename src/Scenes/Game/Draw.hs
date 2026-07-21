@@ -109,6 +109,6 @@ drawContextualizedCell :: Visibility -> Bool -> Cell -> Coordinate -> P.Player -
 drawContextualizedCell Unseen     _         _    _     _       _ = txt "  "
 drawContextualizedCell Remembered asciiOnly cell _     _       _ = withSymbolAttr RememberedCellAttr $ draw asciiOnly cell
 drawContextualizedCell Visible    asciiOnly cell coord player' monsters'
-  | player' ^. P.pos == coord = draw asciiOnly player'
+  | player' ^. P.position == coord = draw asciiOnly player'
   | Just monster <- Map.lookup coord monsters' = draw asciiOnly monster
   | otherwise = draw asciiOnly cell

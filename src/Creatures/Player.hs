@@ -24,7 +24,7 @@ data Class = Wizard | Warrior | Rogue deriving (Show, Eq)
 
 data Player = Player
     { _name           :: !T.Text
-    , _pos            :: !Coordinate
+    , _position        :: !Coordinate
     , _hand           :: !(Maybe W.Weapon)
     , _helmet         :: !(Maybe (A.Armour 'A.Head))
     , _cuirass        :: !(Maybe (A.Armour 'A.Body))

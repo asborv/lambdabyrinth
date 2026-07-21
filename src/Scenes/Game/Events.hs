@@ -55,7 +55,7 @@ the player's position is updated accordingly. Otherwise, nothing happens.
 moveEvent :: Direction -> GameEvent () name
 moveEvent direction = do
     -- Get the player's position and the current level
-    (y, x) <- use (player . P.pos)
+    (y, x) <- use (player . P.position)
     level <- use currentLevel
     let levelCells = level ^. cells
         cell = levelCells ! target
@@ -76,7 +76,7 @@ moveEvent direction = do
         let monster = level ^. monsters . at target
         case monster of
             Just m -> playerAttackEvent m target
-            Nothing -> player . P.pos .= target
+            Nothing -> player . P.position .= target
 
     -- When the player has moved, apply all gradual effects
     playerEffectsEvent
@@ -140,13 +140,13 @@ traverseStairsEvent Upwards = do
     world  %= goLeft
     l <- use currentLevel
     levelIndex <- use currentLevelIndex
-    player . P.pos .= l ^. down
+    player . P.position .= l ^. down
     tell ["You cowardly retreat back to level " <> tshow levelIndex <> "!"]
 traverseStairsEvent Downwards = do
     world %= goRight
     l <- use currentLevel
     levelIndex <- use currentLevelIndex
-    player . P.pos .= l ^. up
+    player . P.position .= l ^. up
     tell ["You descend the stairs... Welcome to level " <> tshow levelIndex <> "!"]
 
 {- |  Event triggered when the player walks into a chest.
@@ -214,4 +214,4 @@ killMonsterEvent monster monsterPos = do
     -- Remove the monster from the list of monsters in the current level
     currentLevel . monsters %= Map.delete monsterPos
     tell ["You slew the " <> tshow (monster ^. M.monsterType) <> "!"]
-    player . P.pos .= monsterPos
+    player . P.position .= monsterPos
