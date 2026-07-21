@@ -85,9 +85,9 @@ moveEvent direction = do
     -- BUG env reactions like chests opening can be
     -- triggered even though there is a live monster on top of it
     me <- use player
-    if me ^. P.health <= 0
-        then lift $ lift halt
-        else environmentReactEvent target
+    if me ^. P.isAlive
+        then environmentReactEvent target
+        else lift $ lift halt
 
 -- | Trigger all active effects on the player
 -- If the effect has run out, remove it, and inform the player

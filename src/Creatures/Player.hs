@@ -6,7 +6,7 @@ Maintainer  : asbjorn.orvedal@gmail.com
 module Creatures.Player where
 
 import Config (Config (difficulty), Difficulty (..))
-import Control.Lens (makeLenses, (%~), (&), (?~), (^.), (+~), (-~), (.~))
+import Control.Lens (makeLenses, (%~), (&), (?~), (^.), (+~), (-~), (.~), Getter)
 import Control.Lens.Combinators (to)
 import Control.Monad.Reader (ReaderT, asks)
 import Creatures.Combatant
@@ -37,6 +37,9 @@ data Player = Player
     }
 
 makeLenses ''Player
+
+isAlive :: Getter Player Bool
+isAlive = health . to (> 0)
 
 classEmoji :: Class -> T.Text
 classEmoji Warrior = "⚔︎ "
