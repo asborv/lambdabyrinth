@@ -8,7 +8,7 @@ module Scenes.Game.Events where
 import Brick (EventM, halt)
 import Brick.Widgets.Dialog (Dialog, dialogSelection)
 import Config
-import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (<~), (?=), (^.))
+import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (<~), (?=), (^.), at)
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT (runReaderT))
 import Control.Monad.Writer (WriterT (runWriterT), tell)
@@ -69,10 +69,11 @@ moveEvent direction = do
     -- Update the player's position and POV only when the movement is legal
     when isLegalMove $ do
         -- Remember the cells you no longer see, and extend POV to the new position
+        -- BUG FOV moves when player harms a monster, without moving
         let povUpdates = map (,Remembered) (surrounding (y, x)) <> map (,Visible) (surrounding target)
         world . element curr . visibility %= (// povUpdates)
 
-        let monster = Map.lookup target (level ^. monsters)
+        let monster = level ^. monsters . at target
         case monster of
             Just m -> playerAttackEvent m target
             Nothing -> player . P.pos .= target
