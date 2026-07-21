@@ -28,6 +28,7 @@ import qualified Data.Text as T
 import Graphics.Vty (Event (..), defAttr)
 import Types
 import Utils
+import World.Level (currentLevelIndex)
 
 type Name = ()
 
@@ -54,7 +55,7 @@ drawScene game =
         . padAll 1
         $ centerLines
             [ "YOU DIED!"
-            , game ^. player . name <> " got to level " <> tshow (game ^. currentLevelIndex)
+            , game ^. player . name <> " got to level " <> tshow (game ^. world . currentLevelIndex)
             , "Press any key to quit"
             ]
     ]

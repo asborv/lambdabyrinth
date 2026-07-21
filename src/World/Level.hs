@@ -19,6 +19,8 @@ module World.Level
     , height
     , surrounding
     , transposeCoordinate
+    , currentLevel
+    , currentLevelIndex
     ) where
 
 import Control.Lens.TH (makeLenses)
@@ -29,7 +31,8 @@ import GHC.TypeLits (KnownNat, Natural, natVal)
 
 import Creatures.Monsters
 import World.Cells
-import Utils.Zipper (Zipper)
+import Utils.Zipper (Zipper(..), middleIndex)
+import Control.Lens (Lens', lens, Getter, to)
 
 type Coordinate = (Int, Int)
 
@@ -47,6 +50,12 @@ data Level (cols :: Natural) (rows :: Natural) = Level
     }
 
 type World (cols :: Natural) (rows :: Natural) = Zipper (Level cols rows)
+
+currentLevel :: Lens' (World cols rows) (Level cols rows)
+currentLevel =  lens middle (\z newLvl -> z { middle = newLvl })
+
+currentLevelIndex :: Getter (World cols rows) Int
+currentLevelIndex = to middleIndex
 
 makeLenses ''Level
 

@@ -46,7 +46,7 @@ drawGame asciiOnly game =
             drawLog game
                 <+> (drawLevel asciiOnly current (game ^. player) (current ^. monsters) <=> drawHealth game)
                 <+> drawEquipment asciiOnly game
-        current = game ^. currentLevel
+        current = game ^. world . currentLevel
      in case game ^. stairConfirmation of
             Nothing -> [ui]
             Just d -> [drawConfirmationDialog d, ui]

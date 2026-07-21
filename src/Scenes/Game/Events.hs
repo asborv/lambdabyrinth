@@ -56,7 +56,7 @@ moveEvent :: Direction -> GameEvent () name
 moveEvent direction = do
     -- Get the player's position and the current level
     (y, x) <- use (player . P.position)
-    level <- use currentLevel
+    level <- use (world . currentLevel)
     let levelCells = level ^. cells
         cell = levelCells ! target
         isLegalMove = target `elem` indices levelCells && isTraversible cell
@@ -71,7 +71,7 @@ moveEvent direction = do
         -- Remember the cells you no longer see, and extend POV to the new position
         -- BUG FOV moves when player harms a monster, without moving
         let povUpdates = map (,Remembered) (surrounding (y, x)) <> map (,Visible) (surrounding target)
-        currentLevel . visibility %= (// povUpdates)
+        world . currentLevel . visibility %= (// povUpdates)
 
         let monster = level ^. monsters . at target
         case monster of
@@ -105,7 +105,7 @@ playerEffectsEvent = do
 -- | Modify the game state as a reaction to a player entering a cell
 environmentReactEvent :: Coordinate -> GameEvent () name
 environmentReactEvent position = do
-    cell <- use (currentLevel . cells . to (! position))
+    cell <- use (world . currentLevel . cells . to (! position))
     case cell of
         (Stair direction) -> encounterStairEvent direction
         (Chest chest) -> chestEvent chest position
@@ -138,14 +138,14 @@ traverseStairsEvent :: VerticalDirection -> GameEvent () name
 traverseStairsEvent Upwards = do
     -- Move to previous level only if the player is not on the starting level
     world  %= goLeft
-    l <- use currentLevel
-    levelIndex <- use currentLevelIndex
+    l <- use (world . currentLevel)
+    levelIndex <- use $ world . currentLevelIndex
     player . P.position .= l ^. down
     tell ["You cowardly retreat back to level " <> tshow levelIndex <> "!"]
 traverseStairsEvent Downwards = do
     world %= goRight
-    l <- use currentLevel
-    levelIndex <- use currentLevelIndex
+    l <- use (world . currentLevel)
+    levelIndex <- use $ world . currentLevelIndex
     player . P.position .= l ^. up
     tell ["You descend the stairs... Welcome to level " <> tshow levelIndex <> "!"]
 
@@ -159,7 +159,7 @@ chestEvent ((Closed contents)) position = do
     case contents of
         Nothing -> tell ["The chest is empty..."]
         Just item -> pickupEvent item
-    currentLevel . cells . ix position .= Chest Open
+    world . currentLevel . cells . ix position .= Chest Open
 
 {- | Represents an event of a player considering equipping an item.
 Item is equipped if it is better than the current gear.
@@ -192,7 +192,7 @@ harmMonsterEvent :: M.Monster -> M.Monster -> Coordinate -> GameEvent () name
 harmMonsterEvent monster monster' monsterPos = do
     me <- use player
 
-    currentLevel . monsters %= Map.insert monsterPos monster'
+    world . currentLevel . monsters %= Map.insert monsterPos monster'
 
     let damage = monster ^. M.health - monster' ^. M.health
         weapon = maybe "hands" (tshow . weaponType) (me ^. P.hand)
@@ -212,6 +212,6 @@ It is removed from the world, and the player moves to its position.
 killMonsterEvent :: M.Monster -> Coordinate -> GameEvent () name
 killMonsterEvent monster monsterPos = do
     -- Remove the monster from the list of monsters in the current level
-    currentLevel . monsters %= Map.delete monsterPos
+    world . currentLevel . monsters %= Map.delete monsterPos
     tell ["You slew the " <> tshow (monster ^. M.monsterType) <> "!"]
     player . P.position .= monsterPos

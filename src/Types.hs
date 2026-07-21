@@ -12,8 +12,6 @@ import Data.Text (Text)
 import World.Level
 import World.Cells (VerticalDirection(..))
 import Brick.Widgets.Dialog (Dialog)
-import Control.Lens (Lens', lens, Getter, to)
-import Utils.Zipper
 
 data GameState = GameState
     { _player :: P.Player
@@ -25,9 +23,3 @@ data GameState = GameState
 makeLenses ''GameState
 
 type Scene a name = App a () name
-
-currentLevel :: Lens' GameState (Level 40 40)
-currentLevel = world . lens middle (\z newLvl -> z { middle = newLvl })
-
-currentLevelIndex :: Getter GameState Int
-currentLevelIndex = world . to middleIndex
