@@ -128,40 +128,50 @@ generateStairs edges = longest
             (compare `on` weight)
             [(a, b) | a <- deadEnds, b <- deadEnds]
 
+buildLevelFromTree ::
+    forall cols rows. (KnownNat cols, KnownNat rows) =>
+    BinaryTree Rectangle ->
+    IO (Level cols rows)
+buildLevelFromTree tree = do
+    tree' <- traverse shrinkWalls tree <$> uniformRIO (0.3, 0.4)
+    let rooms             = getRooms tree'                             -- Get the rooms of the (shrunken) binary tree
+        centers           = center <$> flatten tree'                   -- Get the center of each room
+        connectedRooms    = mst centers                                -- Use the rooms' centers to calculate an MST between them
+        tunnels           = concatMap dig connectedRooms               -- Connect rooms by tunnels by the MST
+        (up, down)        = generateStairs connectedRooms              -- Place the up- and downwards staircases as long away from each other as possible
+        floorCells        = concatMap indices rooms                    -- Positions where items and monsters can be placed
+        width             = fromInteger $ natVal (Proxy @cols) - 1
+        height            = fromInteger $ natVal (Proxy @rows) - 1
+        boundingRectangle = ((0, 0), (height, width))
+        allWalls          = listArray boundingRectangle (repeat Wall)  -- Level's dimensions filled with walls
+
+    -- Placing chests and monsters
+    monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 floorCells
+    chests <- generateByRatioFromPositions @Chest 0.005 floorCells
+    let chests' = map (Chest <$>) chests
+        monsters =
+            map (uncurry (position .~)) --                    Assign each monster a position
+                . filter (\(c, _) -> c /= up && c /= down) -- Don't place monsters on the stairs
+                $ monstersAndPositions
+
+        -- Determine whcih cells to paint over
+        -- (As suggested by the name, order matters here, as we use painter's algorithm)
+        cellsToPaint = concatMap assocs rooms <> chests' <> tunnels <> [(up, Stair Upwards), (down, Stair Downwards)]
+        visibleCells = listArray boundingRectangle (repeat Unseen) // map (,Visible) (surrounding up)
+
+    return $ Level (allWalls // cellsToPaint) visibleCells up down monsters
+
 generateLevel ::
     forall cols rows.
     (KnownNat cols, KnownNat rows) =>
     IO (Level cols rows)
-generateLevel = do
+generateLevel =
     let width = fromInteger $ natVal (Proxy @cols) - 1
         height = fromInteger $ natVal (Proxy @rows) - 1
         boundingRectangle = ((0, 0), (height, width))
         initial = Leaf boundingRectangle
-        allWalls = listArray boundingRectangle (repeat Wall)
-    flip fix initial $ \loop tree -> do
-        tree' <- splitTree tree
-        if leaves tree' <= 5
-            then loop tree'
-            else do
-                tree'' <- traverse shrinkWalls tree' <$> uniformRIO (0.3, 0.4)
-                let rooms = getRooms tree'' --                   Get the rooms of the (shrunken) binary tree
-                    centers = map center $ flatten tree'' --     Get the center of each room
-                    tunnels = concatMap dig $ mst centers --     Use the rooms' centers to calculate an MST between them
-                    (up, down) = generateStairs $ mst centers -- Place the up- and downwards staircases as long away from each other as possible
-                    floorCells = concatMap indices rooms --      Positions where items and monsters can be placed
-
-                -- Placing chests and monsters
-                monstersAndPositions <- generateByRatioFromPositions @Monster 0.05 floorCells
-                chests <- generateByRatioFromPositions @Chest 0.005 floorCells
-                let chests' = map (Chest <$>) chests
-                    monsters =
-                        map (uncurry (position .~)) --                    Assign each monster a position
-                            . filter (\(c, _) -> c /= up && c /= down) -- Don't place monsters on the stairs
-                            $ monstersAndPositions
-
-                    -- Determine whcih cells to paint over
-                    -- (As suggested by the name, order matters here, as we use painter's algorithm)
-                    cellsToPaint = concatMap assocs rooms <> chests' <> tunnels <> [(up, Stair Upwards), (down, Stair Downwards)]
-                    visibleCells = listArray boundingRectangle (repeat Unseen) // map (,Visible) (surrounding up)
-
-                return $ Level (allWalls // cellsToPaint) visibleCells up down monsters
+     in flip fix initial $ \loop tree -> do
+            tree' <- splitTree tree
+            if leaves tree' <= 5
+                then loop tree'
+                else buildLevelFromTree tree'
