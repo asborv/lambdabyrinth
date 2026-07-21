@@ -23,7 +23,6 @@ import Control.Lens ((&), (^.))
 import Control.Lens.Combinators (to)
 import qualified Creatures.Monsters as M
 import qualified Creatures.Player as P
-import Data.List (find)
 import Data.List.Split
 import Draw
 import GHC.Arr
