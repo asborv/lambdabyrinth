@@ -73,6 +73,7 @@ library lambdabyrinth-lib
         Scenes.Result
         Types
         Utils
+        Utils.Zipper
         World.Cells
         World.Generation
         World.Level

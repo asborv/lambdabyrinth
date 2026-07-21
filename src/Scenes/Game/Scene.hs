@@ -26,7 +26,7 @@ import Control.Lens (use, (&), (.=), (?=), (^.), _Just)
 import Control.Lens.Operators ((.~))
 import qualified Creatures.Player as P
 import qualified Graphics.Vty as V
-import HaskellWorks.Control.Monad.Lazy (interleaveSequenceM, interleaveTraverseM)
+import HaskellWorks.Control.Monad.Lazy (interleaveSequenceM)
 import Scenes.Game.Attributes
 import Scenes.Game.Draw
 import Scenes.Game.Events
@@ -36,6 +36,8 @@ import Utils (guarded)
 import World.Cells (VerticalDirection (..))
 import World.Generation (generateLevel)
 import World.Level
+import qualified Utils.Zipper as Z
+import Data.List.NonEmpty (NonEmpty((:|)))
 
 app :: Config -> Scene GameState Name
 app config@(Config {asciiOnly}) =
@@ -93,7 +95,7 @@ playGame config character = do
         initialState =
             GameState
                 (character & P.pos .~ startingPosition)
-                (fromList (level : ls))
+                (Z.fromNonEmpty (level :| ls))
                 ["Welcome to the Lambdabyrinth!"]
                 Nothing
 
