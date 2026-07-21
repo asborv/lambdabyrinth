@@ -9,12 +9,18 @@ module World.Level
     , World
     , Visibility(..)
     , Level(..)
+    , Zipper(..)
+    , goUp
+    , goDown
+    , focusIndex
+    , fromList
     , cells, visibility, up, down, monsters
     , dimensions
     , width
     , height
     , surrounding
     , transposeCoordinate
+    , currentLevel
     ) where
 
 import Control.Lens.TH (makeLenses)
@@ -25,6 +31,7 @@ import GHC.TypeLits (KnownNat, Natural, natVal)
 
 import Creatures.Monsters
 import World.Cells
+import Control.Lens (Lens', lens)
 
 type Coordinate = (Int, Int)
 
@@ -41,7 +48,33 @@ data Level (cols :: Natural) (rows :: Natural) = Level
     , _monsters   :: !(Map.Map Coordinate Monster)
     }
 
-type World (cols :: Natural) (rows :: Natural) = [Level cols rows]
+data Zipper a = Zipper
+    { left   :: [a]
+    , middle :: a
+    , right  :: [a]
+    }
+    deriving (Show)
+
+goDown :: Zipper a -> Zipper a
+goDown z@(Zipper _  _ [])       = z
+goDown   (Zipper ls m (r : rs)) = Zipper (m : ls) r rs
+
+goUp :: Zipper a -> Zipper a
+goUp z@(Zipper [] _ _)        = z
+goUp   (Zipper (l : ls) m rs) = Zipper ls l (m : rs)
+
+focusIndex :: Zipper a -> Int
+focusIndex   (Zipper []      _ _) = 0
+focusIndex z@(Zipper (_ : _) _ _) = 1 + focusIndex (goUp z)
+
+fromList :: [a] -> Zipper a
+fromList []       = error "Can't make zipper from empty list"
+fromList (x : xs) = Zipper [] x xs
+
+currentLevel :: Lens' (Zipper (Level cols rows)) (Level cols rows)
+currentLevel = lens middle (\z newLevel -> z { middle = newLevel })
+
+type World (cols :: Natural) (rows :: Natural) = Zipper (Level cols rows)
 
 makeLenses ''Level
 

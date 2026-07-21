@@ -15,7 +15,6 @@ import Brick.Widgets.Dialog (Dialog)
 
 data GameState = GameState
     { _player :: P.Player
-    , _currentLevel :: Int
     , _world :: World 40 40
     , _history :: [Text]
     , _stairConfirmation :: Maybe (Dialog VerticalDirection Bool)

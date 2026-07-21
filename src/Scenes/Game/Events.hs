@@ -8,7 +8,7 @@ module Scenes.Game.Events where
 import Brick (EventM, halt)
 import Brick.Widgets.Dialog (Dialog, dialogSelection)
 import Config
-import Control.Lens (Ixed (ix), element, to, use, (%=), (+=), (-=), (.=), (<~), (?=), (^.), at)
+import Control.Lens (Ixed (ix), to, use, (%=), (.=), (<~), (?=), (^.), at)
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT (runReaderT))
 import Control.Monad.Writer (WriterT (runWriterT), tell)
@@ -55,8 +55,7 @@ moveEvent :: Direction -> GameEvent () name
 moveEvent direction = do
     -- Get the player's position and the current level
     (y, x) <- use (player . P.pos)
-    curr <- use currentLevel
-    level <- use (world . to (!! curr))
+    level <- use (world . currentLevel)
     let levelCells = level ^. cells
         cell = levelCells ! target
         isLegalMove = target `elem` indices levelCells && isTraversible cell
@@ -71,7 +70,7 @@ moveEvent direction = do
         -- Remember the cells you no longer see, and extend POV to the new position
         -- BUG FOV moves when player harms a monster, without moving
         let povUpdates = map (,Remembered) (surrounding (y, x)) <> map (,Visible) (surrounding target)
-        world . element curr . visibility %= (// povUpdates)
+        world . currentLevel . visibility %= (// povUpdates)
 
         let monster = level ^. monsters . at target
         case monster of
@@ -105,8 +104,7 @@ playerEffectsEvent = do
 -- | Modify the game state as a reaction to a player entering a cell
 environmentReactEvent :: Coordinate -> GameEvent () name
 environmentReactEvent position = do
-    curr <- use currentLevel
-    cell <- use (world . to (!! curr) . cells . to (! position))
+    cell <- use (world . currentLevel . cells . to (! position))
     case cell of
         (Stair direction) -> encounterStairEvent direction
         (Chest chest) -> chestEvent chest position
@@ -120,11 +118,9 @@ If the player is going up, the player is moved to the previous level (unless the
 -}
 encounterStairEvent :: VerticalDirection -> GameEvent () name
 encounterStairEvent Downwards = stairConfirmation ?= confirmationDialog Downwards
-encounterStairEvent Upwards = do
-    curr <- use currentLevel
-    if curr > 0
-        then stairConfirmation ?= confirmationDialog Upwards
-        else tell ["Ya gotta venture down the Lambdabyrinth, ya doofus!"]
+encounterStairEvent Upwards   = use world >>= \case
+    (Zipper []      _ _) -> tell ["Ya gotta venture down the Lambdabyrinth, ya doofus!"]
+    (Zipper (_ : _) _ _) -> stairConfirmation ?= confirmationDialog Upwards
 
 -- |  Event triggered when the player either confirms or cancels the stair ascent/descent.
 confirmStairEvent :: Dialog VerticalDirection Bool -> GameEvent () name
@@ -140,17 +136,17 @@ This should happen after the player has encountered the stairs and confirmed the
 traverseStairsEvent :: VerticalDirection -> GameEvent () name
 traverseStairsEvent Upwards = do
     -- Move to previous level only if the player is not on the starting level
-    currentLevel -= 1
-    curr' <- use currentLevel
-    l <- use (world . to (!! curr'))
+    world  %= goUp
+    l <- use (world . currentLevel)
+    levelIndex <- use (world . to focusIndex)
     player . P.pos .= l ^. down
-    tell ["You cowardly retreat back to level " <> tshow curr' <> "!"]
+    tell ["You cowardly retreat back to level " <> tshow levelIndex <> "!"]
 traverseStairsEvent Downwards = do
-    currentLevel += 1
-    curr' <- use currentLevel
-    l <- use (world . to (!! curr'))
+    world %= goDown
+    l <- use (world . currentLevel)
+    levelIndex <- use (world . to focusIndex)
     player . P.pos .= l ^. up
-    tell ["You descend the stairs... Welcome to level " <> tshow curr' <> "!"]
+    tell ["You descend the stairs... Welcome to level " <> tshow levelIndex <> "!"]
 
 {- |  Event triggered when the player walks into a chest.
  If it is already open, the player is informed.
@@ -159,11 +155,10 @@ traverseStairsEvent Downwards = do
 chestEvent :: Chest -> Coordinate -> GameEvent () name
 chestEvent Open _ = tell ["The chest has already been opened..."]
 chestEvent ((Closed contents)) position = do
-    curr <- use currentLevel
     case contents of
         Nothing -> tell ["The chest is empty..."]
         Just item -> pickupEvent item
-    world . element curr . cells . ix position .= Chest Open
+    world . currentLevel . cells . ix position .= Chest Open
 
 {- | Represents an event of a player considering equipping an item.
 Item is equipped if it is better than the current gear.
@@ -194,10 +189,9 @@ We use this to update the monster's state in the world.
 -}
 harmMonsterEvent :: M.Monster -> M.Monster -> Coordinate -> GameEvent () name
 harmMonsterEvent monster monster' monsterPos = do
-    curr <- use currentLevel
     me <- use player
 
-    world . element curr . monsters %= Map.insert monsterPos monster'
+    world . currentLevel . monsters %= Map.insert monsterPos monster'
 
     let damage = monster ^. M.health - monster' ^. M.health
         weapon = maybe "hands" (tshow . weaponType) (me ^. P.hand)
@@ -216,9 +210,7 @@ It is removed from the world, and the player moves to its position.
 -}
 killMonsterEvent :: M.Monster -> Coordinate -> GameEvent () name
 killMonsterEvent monster monsterPos = do
-    curr <- use currentLevel
-
     -- Remove the monster from the list of monsters in the current level
-    world . element curr . monsters %= Map.delete monsterPos
+    world . currentLevel . monsters %= Map.delete monsterPos
     tell ["You slew the " <> tshow (monster ^. M.monsterType) <> "!"]
     player . P.pos .= monsterPos

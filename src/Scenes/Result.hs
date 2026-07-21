@@ -21,13 +21,14 @@ import Brick
 import Brick.Main (neverShowCursor)
 import Brick.Widgets.Border (borderWithLabel)
 import Brick.Widgets.Center (center, hCenter)
-import Control.Lens ((^.))
+import Control.Lens ((^.), to)
 import Control.Monad (void)
 import Creatures.Player
 import qualified Data.Text as T
 import Graphics.Vty (Event (..), defAttr)
 import Types
 import Utils
+import World.Level (focusIndex)
 
 type Name = ()
 
@@ -54,7 +55,7 @@ drawScene game =
         . padAll 1
         $ centerLines
             [ "YOU DIED!"
-            , game ^. player . name <> " got to level " <> tshow (game ^. currentLevel)
+            , game ^. player . name <> " got to level " <> tshow (game ^. world . to focusIndex)
             , "Press any key to quit"
             ]
     ]
