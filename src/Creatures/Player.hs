@@ -77,19 +77,6 @@ classPower Rogue   = 45
 consume :: Player -> C.Consumable -> Player
 consume me (C.Potion e) = applyEffect e me
 
-applyActiveEffects :: Player -> Player
-applyActiveEffects me@Player {_effects = es} =
-    let me' =
-            foldr
-                (applyEffect . \(potency, effectType, duration) -> Effect (Gradual duration) potency effectType)
-                me
-                es
-        es' =
-            filter (\(_, _, duration) -> duration > 0)
-                . map (\(potency, effectType, duration) -> (potency, effectType, duration - 1))
-                $ es
-     in me' & effects .~ es'
-
 applyEffect :: C.Effect -> Player -> Player
 applyEffect (Effect C.Instant     potency C.Heal)   me = me & health .~ min (C.power potency) (me ^. maxHealth)
 applyEffect (Effect C.Instant     potency C.Damage) me = me & health -~ C.power potency

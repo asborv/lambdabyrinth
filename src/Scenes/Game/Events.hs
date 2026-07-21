@@ -5,10 +5,10 @@ Maintainer  : asbjorn.orvedal@gmail.com
 -}
 module Scenes.Game.Events where
 
-import Brick (EventM, halt)
+import Brick (EventM, halt, zoom, modify)
 import Brick.Widgets.Dialog (Dialog, dialogSelection)
 import Config
-import Control.Lens (Ixed (ix), to, use, (%=), (.=), (<~), (?=), (^.), at)
+import Control.Lens (Ixed (ix), to, use, (%=), (.=), (<~), (?=), (^.), at, Each (each), _3, (-=))
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT (runReaderT))
 import Control.Monad.Writer (WriterT (runWriterT), tell)
@@ -28,6 +28,9 @@ import Utils
 import World.Cells
 import World.Level
 import Utils.Zipper
+import Data.List (partition)
+import qualified Items.Consumable as C
+import Data.Foldable (for_)
 
 type GameEvent a name = ReaderT Config (WriterT [Text] (EventM name GameState)) a
 
@@ -92,15 +95,20 @@ moveEvent direction = do
 -- | Trigger all active effects on the player
 -- If the effect has run out, remove it, and inform the player
 playerEffectsEvent :: GameEvent () name
-playerEffectsEvent = do
-    me <- use player
-    let effects = me ^. P.effects
-        wornOffEffects = filter (\(_, _, d) -> d == 1) effects
-        showEffect (p, e, _) = tshow p <> " " <> tshow e
-    player %= P.applyActiveEffects
+playerEffectsEvent = zoom player $ do
+    P.effects . each . _3 -= 1
+    effects <- use P.effects
 
-    tell $ map (\e -> "You feel the effects of " <> showEffect e) effects
-    tell $ map (\e -> "The effects of " <> showEffect e <> " are wearing off...") wornOffEffects
+    for_ effects $ \(p, e, d) ->
+        modify (P.applyEffect (C.Effect (C.Gradual d) p e))
+
+    let (wornOff, active) = partition (\(_, _, d) -> d <= 0) effects
+    P.effects .= active
+
+    lift . tell $ map (\e -> "You feel the effects of " <> showEffect e) active
+    lift . tell $ map (\e -> "The effects of " <> showEffect e <> " are wearing off...") wornOff
+  where
+    showEffect (p, e, _) = tshow p <> " " <> tshow e
 
 -- | Modify the game state as a reaction to a player entering a cell
 environmentReactEvent :: Coordinate -> GameEvent () name
