@@ -87,15 +87,15 @@ createCharacter = formState <$> defaultMain app (mkForm initialPlayer)
   where
     initialPlayer =
         Player
-            { _name = ""
-            , _position = (0, 0)
-            , _hand = Nothing
-            , _helmet = Nothing
-            , _cuirass = Nothing
-            , _gloves = Nothing
-            , _boots = Nothing
-            , _health = 200
-            , _maxHealth = 200
+            { _name           = ""
+            , _position       = (0, 0)
+            , _hand           = Nothing
+            , _helmet         = Nothing
+            , _cuirass        = Nothing
+            , _gloves         = Nothing
+            , _boots          = Nothing
+            , _health         = 200
+            , _maxHealth      = 200
             , _characterClass = Wizard
-            , _effects = []
+            , _effects        = []
             }
