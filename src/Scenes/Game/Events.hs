@@ -8,7 +8,7 @@ module Scenes.Game.Events where
 import Brick (EventM, halt, zoom, modify)
 import Brick.Widgets.Dialog (Dialog, dialogSelection)
 import Config
-import Control.Lens (Ixed (ix), to, use, (%=), (.=), (<~), (?=), (^.), at, Each (each), _3, (-=))
+import Control.Lens (Ixed (ix), to, use, (%=), (.=), (<~), (?=), (^.), at, Each (each), _3, (-=), uses)
 import Control.Monad (when)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT (runReaderT))
 import Control.Monad.Writer (WriterT (runWriterT), tell)
@@ -143,19 +143,19 @@ confirmStairEvent d = do
 This should happen after the player has encountered the stairs and confirmed the ascent/descent.
 -}
 traverseStairsEvent :: VerticalDirection -> GameEvent () name
-traverseStairsEvent Upwards = do
-    -- Move to previous level only if the player is not on the starting level
-    world  %= goLeft
-    l <- use (world . currentLevel)
-    levelIndex <- use $ world . currentLevelIndex
-    player . P.position .= l ^. down
-    tell ["You cowardly retreat back to level " <> tshow levelIndex <> "!"]
-traverseStairsEvent Downwards = do
-    world %= goRight
-    l <- use (world . currentLevel)
-    levelIndex <- use $ world . currentLevelIndex
-    player . P.position .= l ^. up
-    tell ["You descend the stairs... Welcome to level " <> tshow levelIndex <> "!"]
+traverseStairsEvent dir = do
+    -- Move the level zipper up or down one level
+    world  %= changeLevel
+
+    -- Set the player's position to the stairs (up/down, depending on direction)
+    player . P.position <~ use (world . currentLevel . stair)
+
+    levelIndex <- uses (world . currentLevelIndex) tshow
+    tell [mkMsg levelIndex]
+  where
+    (changeLevel, stair, mkMsg) = case dir of
+      Upwards   -> (goLeft, down, \i -> "You cowardly retreat back to level " <> i <> "!")
+      Downwards -> (goRight, up,  \i -> "You descend the stairs... Welcome to level " <> i <> "!")
 
 {- |  Event triggered when the player walks into a chest.
  If it is already open, the player is informed.
