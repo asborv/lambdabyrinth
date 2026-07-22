@@ -7,7 +7,7 @@ module Creatures.Monsters where
 
 import Brick (txt)
 import Config (Config (difficulty), Difficulty (..))
-import Control.Lens ((%~), (^.))
+import Control.Lens ((%~), (^.), Getter, to)
 import Control.Lens.Lens ((&))
 import Control.Lens.TH (makeLenses)
 import Control.Monad.Reader (ReaderT, asks)
@@ -30,6 +30,9 @@ power :: Monster -> Int
 power monster = case monster ^. monsterType of
     Zombie -> 32
     Ghost -> 25
+
+isAlive :: Getter Monster Bool
+isAlive = health . to (> 0)
 
 instance Uniform MonsterType where
     uniformM = uniformEnumM

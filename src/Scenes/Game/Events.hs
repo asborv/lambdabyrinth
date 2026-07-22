@@ -186,9 +186,7 @@ playerAttackEvent monster monsterPos = do
     monster' <- me `attack` monster
     player <~ monster' `attack` me
 
-    let monsterIsAlive = monster' ^. M.health > 0
-
-    if monsterIsAlive
+    if monster' ^. M.isAlive
         then harmMonsterEvent monster monster' monsterPos
         else killMonsterEvent monster  monsterPos
 
