@@ -162,7 +162,7 @@ traverseStairsEvent dir = do
  Otherwise, the player receives the item inside the chest.
 -}
 chestEvent :: Chest -> Coordinate -> GameEvent () name
-chestEvent Open _ = tell ["The chest has already been opened..."]
+chestEvent Open                _        = tell ["The chest has already been opened..."]
 chestEvent ((Closed contents)) position = do
     case contents of
         Nothing -> tell ["The chest is empty..."]
