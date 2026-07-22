@@ -24,7 +24,7 @@ data Class = Wizard | Warrior | Rogue deriving (Show, Eq)
 
 data Player = Player
     { _name           :: !T.Text
-    , _position        :: !Coordinate
+    , _position       :: !Coordinate
     , _hand           :: !(Maybe W.Weapon)
     , _helmet         :: !(Maybe (A.Armour 'A.Head))
     , _cuirass        :: !(Maybe (A.Armour 'A.Body))
@@ -48,7 +48,7 @@ classEmoji Wizard  = "🧙 "
 
 instance Drawable Player where
     draw asciiOnly player =
-         let glyph = Glyph (txt . classEmoji $ player ^. characterClass) (txt "P ")
+         let glyph = Glyph (player ^. characterClass . to (txt . classEmoji)) (txt "P ")
           in draw asciiOnly glyph
 
 instance Combatant Player where

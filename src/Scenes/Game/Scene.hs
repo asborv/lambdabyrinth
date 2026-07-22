@@ -77,8 +77,8 @@ handleEvent config = \case
                 guarded
                     (runEvent config isPaused)
                     (runEvent config $ moveEvent direction)
-        _ -> zoom (stairConfirmation . _Just) $ handleDialogEvent e
-    _ -> return ()
+        _dialogInput -> zoom (stairConfirmation . _Just) (handleDialogEvent e)
+    _unhandled -> return ()
 
 charToDirection :: Char -> Maybe Direction
 charToDirection 'w' = Just North
