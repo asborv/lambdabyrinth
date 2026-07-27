@@ -1,4 +1,8 @@
-module Scenes.Game.Attributes where
+module Scenes.Game.Attributes
+    ( AttrNameSymbol(..)
+    , attrNameSymbol
+    , withSymbolAttr
+    ) where
 
 import Brick (Widget)
 import Brick.AttrMap (AttrName, attrName)
