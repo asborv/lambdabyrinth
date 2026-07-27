@@ -14,7 +14,7 @@ import Brick
     , (<+>)
     , (<=>)
     )
-import Brick.AttrMap (mapAttrName)
+import Brick.AttrMap (mapAttrName, AttrName)
 import Brick.Widgets.Border
 import Brick.Widgets.Center
 import Brick.Widgets.Dialog (Dialog, renderDialog)
@@ -65,22 +65,23 @@ drawLog game =
             . vBox
             $ txtWrapWith wrapSettings <$> game ^. history . to reverse
 
+healthAttr :: Float -> AttrName
+healthAttr healthPercent
+  | healthPercent <= 0.25  = attrNameSymbol LowHealthAttr
+  | healthPercent <= 0.5   = attrNameSymbol MediumHealthAttr
+  | otherwise              = attrNameSymbol HighHealthAttr
+
 drawHealth :: GameState -> Widget Name
 drawHealth game =
     let health = game ^. player . P.health
         maxHealth = game ^. player . P.maxHealth
         healthPercent = fromIntegral health / fromIntegral maxHealth
         healthBar = progressBar (Just . show $ game ^. player . P.health) healthPercent
-        healthAttr =
-            if
-                | healthPercent <= 0.25 -> attrNameSymbol LowHealthAttr
-                | healthPercent <= 0.5 -> attrNameSymbol MediumHealthAttr
-                | otherwise -> attrNameSymbol HighHealthAttr
      in border
             . vLimit 3
             . center
             . hLimit 40
-            . updateAttrMap (mapAttrName healthAttr progressCompleteAttr)
+            . updateAttrMap (mapAttrName (healthAttr healthPercent) progressCompleteAttr)
             $ healthBar
 
 drawEquipment :: Bool -> GameState -> Widget Name
