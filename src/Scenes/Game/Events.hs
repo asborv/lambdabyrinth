@@ -9,7 +9,7 @@ import Brick (EventM, halt, zoom, modify)
 import Brick.Widgets.Dialog (Dialog, dialogSelection)
 import Config
 import Control.Lens (Ixed (ix), to, use, (%=), (.=), (<~), (?=), (^.), at, Each (each), _3, (-=), uses)
-import Control.Monad (when)
+import Control.Monad (when, unless)
 import Control.Monad.Reader (MonadTrans (lift), ReaderT (runReaderT))
 import Control.Monad.Writer (WriterT (runWriterT), tell)
 import Creatures.Combatant
@@ -71,11 +71,6 @@ moveEvent direction = do
 
     -- Update the player's position and POV only when the movement is legal
     when isLegalMove $ do
-        -- Remember the cells you no longer see, and extend POV to the new position
-        -- BUG FOV moves when player harms a monster, without moving
-        let povUpdates = map (,Remembered) (surrounding (y, x)) <> map (,Visible) (surrounding target)
-        world . currentLevel . visibility %= (// povUpdates)
-
         let monster = level ^. monsters . at target
         case monster of
             Just m -> playerAttackEvent m target
@@ -84,13 +79,23 @@ moveEvent direction = do
     -- When the player has moved, apply all gradual effects
     playerEffectsEvent
 
-    -- If the player dies, end the game
-    -- BUG env reactions like chests opening can be
-    -- triggered even though there is a live monster on top of it
     me <- use player
-    if me ^. P.isAlive
-        then environmentReactEvent target
-        else lift $ lift halt
+    let didMove = me ^. P.position . to (/= (y, x))
+
+    unless (me ^. P.isAlive) (lift $ lift halt)
+
+    -- If the player actually moved, update their  POV
+    -- and have the environment react
+    when
+      (me ^. P.isAlive && didMove)
+      (environmentReactEvent target >> povUpdateEvent (y, x) target)
+
+-- | Given where the player moved @from@ and the @target@
+-- coordinate they move to, update their POV map
+povUpdateEvent :: Coordinate -> Coordinate -> GameEvent () name
+povUpdateEvent from target =
+    let povUpdates = map (,Remembered) (surrounding from) <> map (,Visible) (surrounding target)
+     in world . currentLevel . visibility %= (// povUpdates)
 
 -- | Trigger all active effects on the player
 -- If the effect has run out, remove it, and inform the player
