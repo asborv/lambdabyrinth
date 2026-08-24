@@ -1,7 +1,7 @@
 module Scenes.Game.Attributes
     ( AttrNameSymbol(..)
     , attrNameSymbol
-    , withSymbolAttr
+    , withAttrSymbol
     ) where
 
 import Brick (Widget)
@@ -26,5 +26,5 @@ attrNameSymbol :: KnownSymbol s => AttrNameSymbol s -> AttrName
 attrNameSymbol = attrName . symbolVal
 
 -- |  Apply an attribute by symbol to a widget
-withSymbolAttr :: KnownSymbol s => AttrNameSymbol s -> Widget n -> Widget n
-withSymbolAttr = withAttr . attrNameSymbol
+withAttrSymbol :: KnownSymbol s => AttrNameSymbol s -> Widget n -> Widget n
+withAttrSymbol = withAttr . attrNameSymbol

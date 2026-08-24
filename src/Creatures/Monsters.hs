@@ -47,7 +47,7 @@ instance Drawable Monster where
         let glyph = case monster ^. monsterType of
               Zombie -> Glyph (txt "🧟\b ") (txt "Z ")
               Ghost  -> Glyph (txt "👻\b ") (txt "G ")
-         in withSymbolAttr MonsterAttr (draw asciiOnly glyph)
+         in withAttrSymbol MonsterAttr (draw asciiOnly glyph)
 
 instance Combatant Monster where
     attack :: (Combatant c, Monad m) => Monster -> c -> ReaderT Config m c

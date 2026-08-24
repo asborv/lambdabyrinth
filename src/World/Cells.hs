@@ -36,5 +36,5 @@ instance Drawable Cell where
     draw _         (Stair Upwards)   = txt "Λ "
     draw _         Floor             = txt ". "
     draw _         Tunnel            = txt ". "
-    draw _         Wall              = withSymbolAttr WallAttr $ txt "  "
+    draw _         Wall              = withAttrSymbol WallAttr $ txt "  "
     draw asciiOnly (Chest c)         = draw asciiOnly c

@@ -21,5 +21,5 @@ instance Uniform Chest where
 instance Drawable Chest where
     draw False Open       = txt "📭\b "
     draw False (Closed _) = txt "📫\b "
-    draw True  Open       = withSymbolAttr ChestAttr $ txt "()"
-    draw True  (Closed _) = withSymbolAttr ChestAttr $ txt "[]"
+    draw True  Open       = withAttrSymbol ChestAttr $ txt "()"
+    draw True  (Closed _) = withAttrSymbol ChestAttr $ txt "[]"
